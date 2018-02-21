@@ -44,7 +44,7 @@ Update include path of Python header files in Makefile (INCLUDES_PYTHON) corresp
 
 And set LIBRARY_PATH. 
 
-    export LIBRARY_APTH=$LIBRARY_PATH:<C client library file directory path>
+    export LIBRARY_PATH=$LIBRARY_PATH:<C client library file directory path>
 
 ### Build and Run 
 
