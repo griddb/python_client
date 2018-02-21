@@ -40,7 +40,7 @@ Install SWIG as below.
     $ make
     $ make install
 
-Update include path of Python/Ruby header files in Makefile (INCLUDES_PYTHON) corresponding to Python header files directory path in OS.
+Update include path of Python header files in Makefile (INCLUDES_PYTHON) corresponding to Python header files directory path in OS.
 
 And set LIBRARY_PATH. 
 
