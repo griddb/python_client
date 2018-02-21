@@ -112,4 +112,4 @@ Note:
 
 ## License
   
-  The Python/Ruby client for GridDB source license is Apache License, version 2.0.
+  GridDB Python Client source license is Apache License, version 2.0.
