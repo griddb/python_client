@@ -8,7 +8,8 @@ LDFLAGS = -Llibs -lpthread -lrt -lgridstore
 CPPFLAGS = -fPIC -std=c++0x -g -O2
 INCLUDES = -Iinclude -Isrc
 
-INCLUDES_PYTHON = $(INCLUDES)
+INCLUDES_PYTHON = $(INCLUDES)	\
+				-I/usr/include/python3.6
 
 PROGRAM = _griddb_python.so
 EXTRA = griddb_python.py griddb_python.pyc

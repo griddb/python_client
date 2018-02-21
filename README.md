@@ -14,7 +14,7 @@ Main differences to [the old Python Client](https://github.com/griddb/griddb_cli
 
 Building of the library and execution of the sample programs have been checked in the following environment.
 
-    OS:              CentOS 7.3(x64)
+    OS:              CentOS 6.7(x64)
     SWIG:            3.0.12
     GCC:             4.4.7
     Python:          3.6
@@ -40,10 +40,10 @@ Install SWIG as below.
     $ make
     $ make install
 
-And set INCLUDE_PATH and LIBRARY_PATH. 
+Update include path of Python/Ruby header files in Makefile (INCLUDES_PYTHON) corresponding to Python header files directory path in OS.
 
-    export INCLUDE_PATH=$INCLUDE_PATH:<Python header file directory path>
-    
+And set LIBRARY_PATH. 
+
     export LIBRARY_APTH=$LIBRARY_PATH:<C client library file directory path>
 
 ### Build and Run 
