@@ -79,7 +79,7 @@ GridDB Server need to be started in advance.
 - put single row, get row with key
 - normal query, aggregation with TQL
 - Multi-Put/Get/Query (batch processing)
-- Array type for GridDB (comming soon)
+- Array type for GridDB
 
 (not available)
 - GEOMETRY type for GridDB
@@ -91,7 +91,7 @@ Please refer to the following files for more detailed information.
 - [Python Client API Reference](https://griddb.github.io/python_client/PythonAPIReference.htm)
 
 Note:
-1. The current API might be changed in the next version. e.g. put_container
+1. The current API might be changed in the next version. e.g. ContainerInfo
 2. References to objects obtained using the get method described below must be referenced prior to executing the methods. When referencing after the execution of the get methods, please copy the basic data type such as string from the object and reference it to the copied data.
     - get_container_info
 
