@@ -66,7 +66,7 @@ GSTimestamp TimestampUtils::parse(char* str) {
  * Convert from Python timestamp to GridDB timestamp
  */
 long TimestampUtils::get_time_mills(double timestamp){
-	return long(timestamp) * 1000;
+	return long(timestamp * 1000);
 }
 
 } /* namespace griddb */
