@@ -40,9 +40,9 @@ Install SWIG as below.
     $ make
     $ make install
 
-Update include path of Python header files in Makefile (INCLUDES_PYTHON) corresponding to Python header files directory path in OS.
+Set CPATH and LIBRARY_PATH. 
 
-And set LIBRARY_PATH. 
+	export CPATH=$CPATH:<Python header file directory path>
 
     export LIBRARY_PATH=$LIBRARY_PATH:<C client library file directory path>
 
