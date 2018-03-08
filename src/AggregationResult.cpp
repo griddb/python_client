@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2017 TOSHIBA Digital Solutions Corporation.
+   Copyright (c) 2017 TOSHIBA Digital Solutions Corporation
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ namespace griddb {
 	 * Release AggregationResult resource
 	 */
 	void AggregationResult::close() {
-		if(mAggResult != NULL) {
+		if (mAggResult != NULL) {
 			gsCloseAggregationResult(&mAggResult);
 		}
 		mAggResult = NULL;
@@ -38,20 +38,33 @@ namespace griddb {
 	/**
 	 *Obtains the result of aggregating numeric-type values.
 	 */
-	void AggregationResult::get(GSType valueType, Field *agValue) {
-		void *value;
-		agValue->type = valueType;
-		if (valueType == GS_TYPE_DOUBLE || valueType == GS_TYPE_FLOAT) {
-			value = &agValue->value.asDouble;
-		} else if (valueType == GS_TYPE_LONG || valueType == GS_TYPE_INTEGER) {
-			value = &agValue->value.asLong;
-		}
-		else {
-			value = &agValue->value.asTimestamp;
-		}
-		GSBool ret = gsGetAggregationValue(mAggResult, value, valueType);
-		if(ret == GS_FALSE) {
-			throw GSException(mAggResult, "Value cannot be retrieved from Aggregation result");
-		}
-	}
+    void AggregationResult::get(GSType valueType, griddb::Field *agValue) {
+        void *value;
+        agValue->type = valueType;
+        switch (valueType) {
+        case GS_TYPE_DOUBLE:
+            value = &agValue->value.asDouble;
+            break;
+        case GS_TYPE_FLOAT:
+            value = &agValue->value.asFloat;
+            break;
+        case GS_TYPE_LONG:
+            value = &agValue->value.asLong;
+            break;
+        case GS_TYPE_INTEGER:
+            value = &agValue->value.asInteger;
+            break;
+        case GS_TYPE_TIMESTAMP:
+            value = &agValue->value.asTimestamp;
+            break;
+        default:
+            throw GSException(mAggResult, "Not support type from Aggregation result");
+            break;
+        }
+        GSBool ret = gsGetAggregationValue(mAggResult, value, valueType);
+        if (ret == GS_FALSE) {
+            throw GSException(mAggResult,
+                    "Value cannot be retrieved from Aggregation result");
+        }
+    }
 } /* namespace griddb */

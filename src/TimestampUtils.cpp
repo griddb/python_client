@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-#include <TimestampUtils.h>
+#include "TimestampUtils.h"
 
 namespace griddb {
 
@@ -43,7 +43,7 @@ GSTimestamp TimestampUtils::add_time(GSTimestamp timestamp, int32_t amount,
  * Format timestamp. Convert from C-API: gsFormatTime .
  */
 string TimestampUtils::format_time(GSTimestamp timestamp, size_t bufSize) {
-	char* strBuf =  new char[bufSize];
+	char* strBuf = new char[bufSize];
 	size_t stringSize = gsFormatTime(timestamp, strBuf, bufSize);
 	string ret(strBuf, stringSize);
 	delete [] strBuf;

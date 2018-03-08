@@ -123,12 +123,13 @@ enum GSTimeUnitTag {
 enum GSTypeOptionTag {
 
     GS_TYPE_OPTION_KEY = 1 << 0,
-
+    
 #if GS_COMPATIBILITY_SUPPORT_3_5
     GS_TYPE_OPTION_NULLABLE = 1 << 1,
 
     GS_TYPE_OPTION_NOT_NULL = 1 << 2,
 #endif
+
 };
 
 typedef int32_t GSTypeOption;

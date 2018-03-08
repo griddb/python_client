@@ -19,11 +19,8 @@
 #include "QueryAnalysisEntry.h"
 
 namespace griddb {
-RowSet::RowSet(GSRowSet *rowSet) :
-		mRowSet(rowSet) {
-}
 
-RowSet::RowSet(GSRowSet *rowSet, GSContainerInfo *containerInfo,  GSRow *gsRow) :
+RowSet::RowSet(GSRowSet *rowSet, GSContainerInfo *containerInfo, GSRow *gsRow) :
 		mRowSet(rowSet), mContainerInfo(containerInfo), mRow(gsRow) {
 	if (mRowSet != NULL) {
 		mType = gsGetRowSetType(mRowSet);
@@ -41,7 +38,7 @@ bool RowSet::has_next() {
 	bool hasNextRow = false;
 	type = this->type();
 	switch(type) {
-		case (GS_ROW_SET_CONTAINER_ROWS) :
+		case (GS_ROW_SET_CONTAINER_ROWS):
 		case (GS_ROW_SET_AGGREGATION_RESULT):
 			return (bool) gsHasNextRow(mRowSet);
 			break;
@@ -99,7 +96,7 @@ void RowSet::next(GSRowSetType* type, Row* row, bool* hasNextRow,
 		QueryAnalysisEntry** queryAnalysis, AggregationResult** aggResult){
 	*type = this->type();
 	switch(*type) {
-		case (GS_ROW_SET_CONTAINER_ROWS) :
+		case (GS_ROW_SET_CONTAINER_ROWS):
 			this->next_row(row, hasNextRow);
 			break;
 		case (GS_ROW_SET_AGGREGATION_RESULT):
@@ -117,10 +114,7 @@ void RowSet::next(GSRowSetType* type, Row* row, bool* hasNextRow,
  * Return size of this rowset
  */
 int32_t RowSet::size() {
-	int32_t size;
-	size = gsGetRowSetSize(mRowSet);
-
-	return size;
+	return gsGetRowSetSize(mRowSet);
 }
 
 /**
@@ -173,11 +167,10 @@ QueryAnalysisEntry* RowSet::get_next_query_analysis(){
 void RowSet::get_column_name(char*** listName, int* num){
 	if (mContainerInfo){
 		//Memory will be free from typemap
-		(*listName) = (char **)malloc(mContainerInfo->columnCount * sizeof(char*));
+		(*listName) = (char **) malloc(mContainerInfo->columnCount * sizeof(char*));
 		*num = mContainerInfo->columnCount;
 		for(int i = 0; i < mContainerInfo->columnCount; i++){
-			(*listName)[i] =  (char *)malloc(strlen(mContainerInfo->columnInfoList[i].name) * sizeof(char));
-			strcpy((char*)(*listName)[i], mContainerInfo->columnInfoList[i].name);
+			(*listName)[i] = (char*) mContainerInfo->columnInfoList[i].name;
 		}
 	}
 }

@@ -22,23 +22,43 @@ QueryAnalysisEntry::QueryAnalysisEntry(GSQueryAnalysisEntry* queryAnalysis) :
 	if (queryAnalysis) {
 		mQueryAnalysis = (GSQueryAnalysisEntry*) malloc(sizeof(GSQueryAnalysisEntry));
 		//Copy value which queryAnalysis point to
-		*mQueryAnalysis = *queryAnalysis;
+		mQueryAnalysis->id = queryAnalysis->id;
+		mQueryAnalysis->depth = queryAnalysis->depth;
+		mQueryAnalysis->statement = strdup(queryAnalysis->statement);
+		mQueryAnalysis->type = strdup(queryAnalysis->type);
+		mQueryAnalysis->value = strdup(queryAnalysis->value);
+		mQueryAnalysis->valueType = strdup(queryAnalysis->valueType);
 	}
 }
 
 QueryAnalysisEntry::~QueryAnalysisEntry() {
 	if (mQueryAnalysis) {
+	    if (mQueryAnalysis->statement) {
+	        free((void*) mQueryAnalysis->statement);
+	    }
+        if (mQueryAnalysis->type) {
+            free((void*) mQueryAnalysis->type);
+        }
+        if (mQueryAnalysis->value) {
+            free((void*) mQueryAnalysis->value);
+        }
+        if (mQueryAnalysis->valueType) {
+            free((void*) mQueryAnalysis->valueType);
+        }
 		free((void *) mQueryAnalysis);
 		mQueryAnalysis = NULL;
 	}
 }
 
+/**
+ * get QueryAnalysisEntry data
+ */
 void QueryAnalysisEntry::get(GSQueryAnalysisEntry* queryAnalysis) {
 	queryAnalysis->id = mQueryAnalysis->id;
 	queryAnalysis->depth = mQueryAnalysis->depth;
-	queryAnalysis->type = mQueryAnalysis->type;
-	queryAnalysis->valueType = mQueryAnalysis->valueType;
-	queryAnalysis->value = mQueryAnalysis->value;
-	queryAnalysis->statement = mQueryAnalysis->statement;
+	queryAnalysis->statement = strdup(mQueryAnalysis->statement);
+	queryAnalysis->type = strdup(mQueryAnalysis->type);
+	queryAnalysis->value = strdup(mQueryAnalysis->value);
+	queryAnalysis->valueType = strdup(mQueryAnalysis->valueType);
 }
 }

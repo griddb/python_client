@@ -46,7 +46,6 @@ namespace griddb {
 
 		GSQuery* gs_ptr();
 	private:
-		Query(GSQuery *query);
 		Query(GSQuery *query, GSContainerInfo *containerInfo, GSRow *gsRow);
 	};
 }

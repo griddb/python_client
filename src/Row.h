@@ -22,17 +22,36 @@
 
 using namespace std;
 
-struct Field {
-	GSChar *name;
-	GSType type;
-	GSValue value;
-	Field() : name(NULL), type(0) {
-		value.asString = NULL;
-		value.asBlob.data = NULL;
-	};
-};
-
 namespace griddb {
+
+struct Field {
+    GSChar *name;
+    GSType type;
+    GSValue value;
+    Field() : name(NULL), type(GS_TYPE_STRING) {
+        value.asString = NULL;
+        value.asBlob.data = NULL;
+#if GS_COMPATIBILITY_VALUE_1_1_106
+        value.asBoolArray.elements = NULL;
+        value.asStringArray.elements = NULL;
+        value.asByteArray.elements = NULL;
+        value.asShortArray.elements = NULL;
+        value.asIntegerArray.elements = NULL;
+        value.asTimestampArray.elements = NULL;
+        value.asLongArray.elements = NULL;
+        value.asDoubleArray.elements = NULL;
+#else
+        value.asArray.elements.asBool = NULL;
+        value.asArray.elements.asString = NULL;
+        value.asArray.elements.asByte = NULL;
+        value.asArray.elements.asShort = NULL;
+        value.asArray.elements.asInteger = NULL;
+        value.asArray.elements.asTimestamp = NULL;
+        value.asArray.elements.asLong = NULL;
+        value.asArray.elements.asDouble = NULL;
+#endif
+    };
+};
 
 class Row {
 	Field* mFields;
@@ -42,7 +61,7 @@ public:
 	Row(int size = 0, GSRow* gsRow = NULL);
 	~Row();
 	void set_from_row(GSRow* row);
-	void set_for_row(GSRow* row);
+	void set_for_row(GSRow* row, GSContainerInfo* containerInfo = NULL);
 	Field* get_field_ptr();
 	int get_count();
 	void resize(int size);

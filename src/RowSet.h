@@ -61,7 +61,6 @@ namespace griddb {
 		AggregationResult* get_next_aggregation();
 		void next_row(Row* rowdata, bool* hasNextRow);
 	private:
-		RowSet(GSRowSet *rowSet);
 		RowSet(GSRowSet *rowSet, GSContainerInfo *containerInfo, GSRow *mRow);
 	};
 }

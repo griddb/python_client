@@ -30,7 +30,7 @@ namespace griddb {
 	 * Release all resources created by this gridstore object
 	 */
 	void Store::close(GSBool allRelated) {
-		if(mStore != NULL) {
+		if (mStore != NULL) {
 			gsCloseGridStore(&mStore, allRelated);
 			mStore = NULL;
 		}
@@ -42,7 +42,7 @@ namespace griddb {
 	void Store::drop_container(const char* name) {
 		GSResult ret = gsDropContainer(mStore, name);
 
-		if(ret != GS_RESULT_OK) {
+		if (ret != GS_RESULT_OK) {
 			throw GSException(mStore, ret);
 		}
 	}
@@ -56,7 +56,7 @@ namespace griddb {
 
 		GSResult ret = gsGetContainerInfo(mStore, name, &containerInfo, &bExists);
 
-		if(ret != GS_RESULT_OK) {
+		if (ret != GS_RESULT_OK) {
 			throw GSException(mStore, ret);
 		}
 
@@ -80,7 +80,7 @@ namespace griddb {
 			throw GSException(mStore, ret);
 		}
 
-		return new Container(pContainer, *gsInfo);
+		return new Container(pContainer, gsInfo);
 	}
 
 	/**
@@ -91,7 +91,7 @@ namespace griddb {
 
 		GSResult ret = gsGetContainerGeneral(mStore, name, &pContainer);
 
-		if(ret != GS_RESULT_OK) {
+		if (ret != GS_RESULT_OK) {
 			throw GSException(mStore, ret);
 		}
 
@@ -100,10 +100,10 @@ namespace griddb {
 
 		ret = gsGetContainerInfo(mStore, name, &containerInfo, &bExists);
 
-		if(ret != GS_RESULT_OK) {
+		if (ret != GS_RESULT_OK) {
 			throw GSException(mStore, ret);
 		}
-		return new Container(pContainer, containerInfo);
+		return new Container(pContainer, &containerInfo);
 	}
 
 	/**
@@ -111,7 +111,7 @@ namespace griddb {
 	 */
 	void Store::fetch_all(GSQuery* const* queryList, size_t queryCount) {
 		GSResult ret = gsFetchAll(mStore, queryList, queryCount);
-		if(ret != GS_RESULT_OK) {
+		if (ret != GS_RESULT_OK) {
 			throw GSException(mStore, ret);
 		}
 	}
@@ -124,7 +124,7 @@ namespace griddb {
 
 		GSResult ret = gsGetPartitionController(mStore, &partitionController);
 
-		if(ret != GS_RESULT_OK) {
+		if (ret != GS_RESULT_OK) {
 			throw GSException(mStore, ret);
 		}
 
@@ -139,7 +139,7 @@ namespace griddb {
 
 		GSResult ret = gsCreateRowKeyPredicate(mStore, type, &predicate);
 
-		if(ret != GS_RESULT_OK) {
+		if (ret != GS_RESULT_OK) {
 			throw GSException(mStore, ret);
 		}
 
@@ -156,11 +156,11 @@ namespace griddb {
 		GSContainerRowEntry * entryList = (GSContainerRowEntry*) malloc (containerCount * sizeof(GSContainerRowEntry));
 		std::map<string,griddb::Container*>::iterator it;
 
-		for(int i= 0; i < containerCount; i++) {
+		for (int i= 0; i < containerCount; i++) {
 			containerName = listContainerName[i];
 			entryList[i].containerName = containerName;
 			entryList[i].rowCount = listRowContainerCount[i];
-			GSRow** listContainerRow = (GSRow**)malloc(listRowContainerCount[i] * sizeof(GSRow*));
+			GSRow** listContainerRow = (GSRow**) malloc(listRowContainerCount[i] * sizeof(GSRow*));
 			string tmpString(containerName);
 			it = mContainerList.find(tmpString);
 			Container* pContainer;
@@ -175,16 +175,17 @@ namespace griddb {
 			for (int j = 0; j < listRowContainerCount[i]; j++) {
 				GSRow* gsrow;
 				gsCreateRowByContainer(pContainer->getGSContainerPtr(), &gsrow);
-				listRow[i][j]->set_for_row(gsrow);
+				listRow[i][j]->set_for_row(gsrow, NULL);
 				listContainerRow[j] = gsrow;
 			}
-			entryList[i].rowList = (void* const*)listContainerRow;
+			entryList[i].rowList = (void* const*) listContainerRow;
+			pContainer = NULL;
 
 		}
 		ret = gsPutMultipleContainerRows(mStore, entryList, containerCount);
 
 		//Free memory
-		for(int i = 0; i < containerCount; i++) {
+		for (int i = 0; i < containerCount; i++) {
 			containerName = listContainerName[i];
 			string tmpString(containerName);
 			it = mContainerList.find(tmpString);
@@ -201,10 +202,11 @@ namespace griddb {
 				GSRow* gsrow = (GSRow*)entryList[i].rowList[j];
 				gsCloseRow(&gsrow);
 			}
-			free((void*)entryList[i].rowList);
+			free((void*) entryList[i].rowList);
+			pContainer = NULL;
 		}
 		free((void*) entryList);
-		if(ret != GS_RESULT_OK) {
+		if (ret != GS_RESULT_OK) {
 			throw GSException(mStore, ret);
 		}
 	}
@@ -235,7 +237,7 @@ namespace griddb {
 		std::map<string,griddb::Container*>::iterator it;
 
 		GSContainerRowEntry* rowKeyEntry;
-		for(int i = 0; i< *containerCount; i++) {
+		for (int i = 0; i< *containerCount; i++) {
 			//data for each container
 			rowKeyEntry = &(entryList[i]);
 
@@ -252,15 +254,15 @@ namespace griddb {
 			}
 		}
 
-		for(int i = 0; i< *containerCount; i++) {
+		for (int i = 0; i< *containerCount; i++) {
 			for (int j = 0; j < (*listRowContainerCount)[i]; j++){
 				//Dummy row
 				Row* tmpRow = new Row(1, NULL);
 				tmpRow->set_from_row((listGsRow)[i][j]);
 				(*listRow).push_back(tmpRow);
 			}
-			free((void *)(listGsRow)[i]);
+			free((void *) (listGsRow)[i]);
 		}
-		free((void *)(listGsRow));
+		free((void *) listGsRow);
 	}
 }

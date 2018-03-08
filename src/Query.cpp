@@ -17,9 +17,6 @@
 #include "Query.h"
 
 namespace griddb {
-	Query::Query(GSQuery *query) : mQuery(query) {
-
-	}
 
 	Query::Query(GSQuery *query, GSContainerInfo *containerInfo, GSRow *gsRow) : mQuery(query), mContainerInfo(containerInfo), mRow(gsRow) {
 
@@ -61,7 +58,7 @@ namespace griddb {
 	 */
 	RowSet* Query::get_row_set() {
 		GSRowSet *rowSet;
-		GSResult ret =  gsGetRowSet(mQuery, &rowSet);
+		GSResult ret = gsGetRowSet(mQuery, &rowSet);
 
 		// Check ret, if error, throw exception
 		if (ret != GS_RESULT_OK) {
@@ -76,7 +73,7 @@ namespace griddb {
 	 */
 	void Query::set_fetch_option_integer(GSFetchOption fetchOption, int32_t value) {
 		GSResult ret = gsSetFetchOption(mQuery, fetchOption, &value, GS_TYPE_INTEGER);
-		if(ret != GS_RESULT_OK) {
+		if (ret != GS_RESULT_OK) {
 			throw GSException(mQuery, ret);
 		}
 	}
@@ -86,7 +83,7 @@ namespace griddb {
 	 */
 	void Query::set_fetch_option_long(GSFetchOption fetchOption, int64_t value) {
 		GSResult ret = gsSetFetchOption(mQuery, fetchOption, &value, GS_TYPE_LONG);
-		if(ret != GS_RESULT_OK) {
+		if (ret != GS_RESULT_OK) {
 			throw GSException(mQuery, ret);
 		}
 	}
@@ -102,12 +99,10 @@ namespace griddb {
 	 * Set fetch limit option
 	 */
 	void Query::set_fetch_options(int limit){
-		if (limit) {
-			GSFetchOption fetchOption = GS_FETCH_LIMIT;
-			GSResult ret = gsSetFetchOption(mQuery, fetchOption, &limit, GS_TYPE_INTEGER);
-			if(ret != GS_RESULT_OK) {
-				throw GSException(mQuery, ret);
-			}
-		}
+        GSFetchOption fetchOption = GS_FETCH_LIMIT;
+        GSResult ret = gsSetFetchOption(mQuery, fetchOption, &limit, GS_TYPE_INTEGER);
+        if (ret != GS_RESULT_OK) {
+            throw GSException(mQuery, ret);
+        }
 	}
 }

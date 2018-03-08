@@ -181,17 +181,18 @@ namespace griddb {
 		GSType key_type = get_key_type();
 		startField->type = key_type;
 		finishField->type = key_type;
-		const GSValue *tmpValue;
-		GSResult ret = gsGetPredicateStartKeyGeneral(mPredicate,&tmpValue);
+		const GSValue *startKey;
+		GSResult ret = gsGetPredicateStartKeyGeneral(mPredicate, &startKey);
 		if (ret != GS_RESULT_OK) {
 			throw GSException(mPredicate, ret);
 		}
-		startField->value = *tmpValue;
-		ret = gsGetPredicateFinishKeyGeneral(mPredicate, &tmpValue);
+		startField->value = *startKey;
+		const GSValue *endKey;
+		ret = gsGetPredicateFinishKeyGeneral(mPredicate, &endKey);
 		if (ret != GS_RESULT_OK) {
 			throw GSException(mPredicate, ret);
 		}
-		finishField->value = *tmpValue;
+		finishField->value = *endKey;
 	}
 
 	/*

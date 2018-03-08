@@ -25,12 +25,10 @@ using namespace std;
 namespace griddb {
 
 	class Container {
-		GSContainerInfo mContainerInfo;
+		GSContainerInfo* mContainerInfo;
 		GSContainer *mContainer;
 		friend class Store;
 		GSRow* mRow;
-		GSType* typeList;
-		int columnCount;
 
 	public:
 		~Container();
@@ -39,27 +37,21 @@ namespace griddb {
 		GSContainerType get_type();
 		void create_index(const char* columnName, GSIndexTypeFlags indexType=GS_INDEX_FLAG_DEFAULT, const char* name=NULL);
 		void drop_index(const char* columnName, GSIndexTypeFlags indexType=GS_INDEX_FLAG_DEFAULT, const char* name=NULL);
-
 		bool put(Row *rowContainer);
 		Query* query(const char *queryString);
-
 		void abort();
 		void flush();
 		void set_auto_commit(bool enabled);
 		void commit();
-
 		GSBool get(Field* keyFields, Row *rowdata);
-
 		bool remove(Field* keyFields);
 		void multi_put(Row** listRowdata, int rowCount);
 		GSContainer* getGSContainerPtr();
+		GSContainerInfo* getGSContainerInfoPtr();
 
-		GSType* getGSTypeList();
-		int getColumnCount();
 	private:
-		Container(GSContainer *container);
-		Container(GSContainer *container, GSContainerInfo containerInfo);
-
+		Container(GSContainer *container, GSContainerInfo* containerInfo);
+		int get_column_index(const char* columnName);
 	};
 }
 

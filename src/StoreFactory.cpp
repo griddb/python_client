@@ -51,14 +51,12 @@ namespace griddb {
 	void StoreFactory::set_property_entry(GSPropertyEntry *prop, const char* name, const char* value) {
 		if (name) {
 			prop->name = strdup(name);
-		}
-		else {
+		} else {
 			prop->name = "";
 		}
 		if (value) {
 			prop->value = strdup(value);
-		}
-		else {
+		} else {
 			prop->value = "";
 		}
 	}
@@ -74,6 +72,7 @@ namespace griddb {
 				int firstOctet = atoi(octets);
 				int first4Bits = firstOctet >> 4 & 0x0f;
 				if (first4Bits == 0x0E) {
+				    free((void *) tmp);
 					return true;
 				}
 			}
@@ -98,23 +97,20 @@ namespace griddb {
 			set_property_entry(&props[0], "notificationAddress", host);
 			set_property_entry(&props[1], "notificationPort", to_string((long long int) port).c_str());
 			index = 2;
-		}
-		else {
+		} else {
 			if (host && strlen(host)) {
 				propsCount = 7;
 				props = (GSPropertyEntry*) malloc(propsCount * sizeof(GSPropertyEntry));
 				set_property_entry(&props[0], "host", host);
 				set_property_entry(&props[1], "port", to_string((long long int) port).c_str());
 				index = 2;
-			}
-			else {
+			} else {
 				propsCount = 5;
 				props = (GSPropertyEntry*) malloc(propsCount * sizeof(GSPropertyEntry));
 			}
 			if (notification_member && strlen(notification_member) != 0) {
 				set_property_entry(&props[propsCount - 1], "notificationMember", notification_member);
-			}
-			else {
+			} else {
 				set_property_entry(&props[propsCount - 1], "notificationProvider", notification_provider);
 			}
 		}

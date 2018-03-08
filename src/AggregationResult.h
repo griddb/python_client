@@ -19,7 +19,7 @@
 
 #include "GSException.h"
 #include "Row.h"
-#include<gridstore.h>
+#include "gridstore.h"
 
 using namespace std;
 
@@ -32,7 +32,7 @@ namespace griddb {
 		~AggregationResult();
 		void close();
 
-		void get(GSType valueType, Field *agValue);
+		void get(GSType valueType, griddb::Field *agValue);
 		AggregationResult(GSAggregationResult* aggResult);
 	private:
 

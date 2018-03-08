@@ -25,19 +25,19 @@ namespace griddb {
 				containerInfo->rowKeyAssigned, NULL);
 		//Assign values from argument to mContainer
 		GSTimeSeriesProperties* gsProps = NULL;
-		if(containerInfo->timeSeriesProperties) {
+		if (containerInfo->timeSeriesProperties) {
 			gsProps = (GSTimeSeriesProperties*) malloc(sizeof(GSTimeSeriesProperties));
 			memcpy(gsProps, containerInfo->timeSeriesProperties, sizeof(GSTimeSeriesProperties));
 		}
 		mContainerInfo.timeSeriesProperties = gsProps;
 		GSTriggerInfo* triggerInfoList = NULL;
-		if(containerInfo->triggerInfoList) {
+		if (containerInfo->triggerInfoList) {
 			triggerInfoList = (GSTriggerInfo*) malloc(sizeof(GSTriggerInfo));
 			memcpy(triggerInfoList, containerInfo->triggerInfoList, sizeof(GSTriggerInfo));
 		}
 		mContainerInfo.triggerInfoList = triggerInfoList;
 		GSChar* dataAffinity = NULL;
-		if(containerInfo->dataAffinity) {
+		if (containerInfo->dataAffinity) {
 			dataAffinity = (GSChar*) malloc(sizeof(GSChar));
 			memcpy(dataAffinity, containerInfo->dataAffinity, sizeof(GSChar));
 		}
@@ -61,12 +61,12 @@ namespace griddb {
 		GSChar* containerName = NULL;
 		GSTimeSeriesProperties* timeProps = NULL;
 
-		if(propsCount > 0 && props != NULL) {
+		if (propsCount > 0 && props != NULL) {
 			columnInfoList = (GSColumnInfo *) malloc(propsCount*sizeof(GSColumnInfo));
 			//Copy memory of GSColumnInfo list
 			memcpy(columnInfoList, props, propsCount*sizeof(GSColumnInfo));
 			//Copy memory of columns name
-			for(int i = 0; i < propsCount; i++) {
+			for (int i = 0; i < propsCount; i++) {
 				if (props[i].name != NULL) {
 					columnInfoList[i].name = strdup(props[i].name);
 				} else {
@@ -75,14 +75,14 @@ namespace griddb {
 			}
 		}
 
-		if(expiration != NULL) {
+		if (expiration != NULL) {
 			timeProps = (GSTimeSeriesProperties*) malloc(sizeof(GSTimeSeriesProperties));
 			memcpy(timeProps, expiration->gs_ts(), sizeof(GSTimeSeriesProperties));
 		}
 
 		//Container name memory is copied via strdup function
-		if(name != NULL) {
-			containerName = (GSChar*) malloc(strlen(name) *sizeof(GSChar));
+		if (name != NULL) {
+//			containerName = (GSChar*) malloc(strlen(name) *sizeof(GSChar));
 			containerName = strdup(name);
 		}
 
@@ -94,12 +94,12 @@ namespace griddb {
 
 	ContainerInfo::~ContainerInfo() {
 		//Free memory for the copy of container name
-		if(mContainerInfo.name) {
+		if (mContainerInfo.name) {
 			free((void*) mContainerInfo.name);
 		}
 
 		//Free memory for the copy of ColumnInfo list
-		if(mContainerInfo.columnInfoList) {
+		if (mContainerInfo.columnInfoList) {
 			//Free memory of columns name
 			for(int i = 0; i < mContainerInfo.columnCount; i++) {
 				if(mContainerInfo.columnInfoList[i].name) {
@@ -110,23 +110,23 @@ namespace griddb {
 		}
 
 		//Free memory of TimeSeriesProperties if existed
-		if(mContainerInfo.timeSeriesProperties) {
+		if (mContainerInfo.timeSeriesProperties) {
 			free((void *) mContainerInfo.timeSeriesProperties);
 		}
 
 		//Free memory of dataAffinity if existed
-		if(mContainerInfo.dataAffinity) {
-			free ((void *)mContainerInfo.dataAffinity);
+		if (mContainerInfo.dataAffinity) {
+			free((void *) mContainerInfo.dataAffinity);
 		}
 
 		//Free memory of triggerInfoList if existed
 		if(mContainerInfo.triggerInfoList) {
-			free ((void *)mContainerInfo.triggerInfoList);
+			free((void *) mContainerInfo.triggerInfoList);
 		}
 	}
 
 	void ContainerInfo::set_name(GSChar* containerName) {
-		if(mContainerInfo.name) {
+		if (mContainerInfo.name) {
 			free((void*) mContainerInfo.name);
 		}
 		mContainerInfo.name = strdup(containerName);
@@ -146,7 +146,7 @@ namespace griddb {
 
 	void ContainerInfo::set_time_series_properties(TimeSeriesProperties& tsProps) {
 		GSTimeSeriesProperties* gsProps = NULL;
-		if(tsProps.gs_ptr() != NULL) {
+		if (tsProps.gs_ptr() != NULL) {
 			gsProps = (GSTimeSeriesProperties*) malloc(sizeof(GSTimeSeriesProperties));
 			memcpy(gsProps, tsProps.gs_ptr(), sizeof(GSTimeSeriesProperties));
 		}
@@ -154,10 +154,10 @@ namespace griddb {
 	}
 
 	void ContainerInfo::set_data_affinity(GSChar* dataAffinity) {
-		if(mContainerInfo.dataAffinity) {
+		if (mContainerInfo.dataAffinity) {
 			free((void *) mContainerInfo.dataAffinity);
 		}
-		if(dataAffinity != NULL) {
+		if (dataAffinity != NULL) {
 			mContainerInfo.dataAffinity = strdup(dataAffinity);
 		}
 	}
@@ -191,7 +191,7 @@ namespace griddb {
 	}
 
 	TimeSeriesProperties* ContainerInfo::get_time_series_properties() {
-		if(mContainerInfo.timeSeriesProperties) {
+		if (mContainerInfo.timeSeriesProperties) {
 			return new TimeSeriesProperties(mContainerInfo.timeSeriesProperties);
 		} else {
 			return NULL;
@@ -214,7 +214,7 @@ namespace griddb {
 	 */
 	void ContainerInfo::set_column_info_list(ColumnInfoList columnInfoList) {
 		//Free current stored ColumnInfo list
-		if(mContainerInfo.columnInfoList) {
+		if (mContainerInfo.columnInfoList) {
 			//Free memory of columns name
 			for(int i = 0; i < mContainerInfo.columnCount; i++) {
 				free((void *) mContainerInfo.columnInfoList[i].name);
@@ -224,12 +224,12 @@ namespace griddb {
 
 		//Copy memory of new ColumnInfo list
 		GSColumnInfo* tmpColumnInfoList = NULL;
-		if(columnInfoList.size > 0 && columnInfoList.columnInfo != NULL) {
+		if (columnInfoList.size > 0 && columnInfoList.columnInfo != NULL) {
 			tmpColumnInfoList = (GSColumnInfo *) malloc(columnInfoList.size*sizeof(GSColumnInfo));
 			//Copy memory of GSColumnInfo list
 			memcpy(tmpColumnInfoList, columnInfoList.columnInfo, columnInfoList.size*sizeof(GSColumnInfo));
 			//Copy memory of columns name
-			for(int i = 0; i < columnInfoList.size; i++) {
+			for (int i = 0; i < columnInfoList.size; i++) {
 				tmpColumnInfoList[i].name = strdup(columnInfoList.columnInfo[i].name);
 			}
 		}
@@ -258,8 +258,7 @@ namespace griddb {
 
 		GSTimeSeriesProperties* ts = (GSTimeSeriesProperties*) malloc(sizeof(GSTimeSeriesProperties));
 
-
-		if(&expirationInfo != NULL) {
+		if (&expirationInfo != NULL) {
 			ts = (GSTimeSeriesProperties*) malloc(sizeof(GSTimeSeriesProperties));
 			memcpy(ts, expirationInfo.gs_ts(), sizeof(GSTimeSeriesProperties));
 		}
