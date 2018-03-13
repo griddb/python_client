@@ -164,7 +164,7 @@ QueryAnalysisEntry* RowSet::get_next_query_analysis(){
 /**
  * Get column name from RowSet. Use in python only.
  */
-void RowSet::get_column_name(char*** listName, int* num){
+void RowSet::get_column_names(char*** listName, int* num){
 	if (mContainerInfo){
 		//Memory will be free from typemap
 		(*listName) = (char **) malloc(mContainerInfo->columnCount * sizeof(char*));

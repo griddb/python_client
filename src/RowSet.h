@@ -56,7 +56,7 @@ namespace griddb {
 		void remove();
 		GSRowSetType type();
 
-		void get_column_name(char*** listName, int* num);
+		void get_column_names(char*** listName, int* num);
 		QueryAnalysisEntry* get_next_query_analysis();
 		AggregationResult* get_next_aggregation();
 		void next_row(Row* rowdata, bool* hasNextRow);

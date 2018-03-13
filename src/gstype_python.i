@@ -2117,6 +2117,13 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
     griddb::RowSet* __iter__() {
         return $self;
     }
+
+%#if PY_MAJOR_VERSION >= 3
+    void __next__(GSRowSetType* type, Row* row, bool* hasNextRow,
+            QueryAnalysisEntry** queryAnalysis, AggregationResult** aggResult){
+        return $self->next(type, row, hasNextRow, queryAnalysis, aggResult);
+    }
+%#endif
 }
 
 /**
@@ -2409,6 +2416,7 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
     switch(*$1) {
         case (GS_ROW_SET_CONTAINER_ROWS):
             if (*$3 == false) {
+                PyErr_SetNone(PyExc_StopIteration);
                 $result= NULL;
             } else {
                 outList = PyList_New($2->get_count());
