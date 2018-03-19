@@ -92,14 +92,6 @@ Please refer to the following files for more detailed information.
 
 Note:
 1. The current API might be changed in the next version. e.g. ContainerInfo
-2. References to objects obtained using the get method described below must be referenced prior to executing the methods. When referencing after the execution of the get methods, please copy the basic data type such as string from the object and reference it to the copied data.
-    - get_container_info
-
-   Please refer to the following note from C Client API Reference document for detailed information of the reason behind the implementation:
-
-    "In order to store the variable-length data such as string or array, it uses a temporary memory area.
-    This area is valid until this function or similar functions which use a temporary memory area.
-    The behavior is undefined when the area which has been invalidated is accessed."
 
 ## Community
 
