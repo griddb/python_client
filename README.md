@@ -8,6 +8,8 @@ The new Python Client brings improved usability.
 
 Main differences to [the old Python Client](https://github.com/griddb/griddb_client) are as follows:
 - Put and get row data without C-based methods defined for each data-type
+- Array type for GridDB is available
+- Connectivity for Pandas library
 - Error handling, date and time handling
 
 ## Operating environment
