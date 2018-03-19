@@ -90,8 +90,7 @@ else
   <td rowspan=12 height=342 class=xl88 width=127 style='height:256.5pt;
   border-top:none;width:95pt'>Container</td>
   <td class=xl69 width=434 style='border-top:none;border-left:none;width:326pt'>void
-  create_index(string column_name, IndexType index_type=DEFAULT, string
-  name=None)</td>
+  create_index(string column_name, IndexType index_type=DEFAULT)</td>
   <td class=xl80 width=454 style='border-top:none;border-left:none;width:341pt'>Creates
   a specified type of index on the specified Column</td>
   <td class=xl69 width=334 style='border-top:none;border-left:none;width:251pt'>　</td>
@@ -100,7 +99,7 @@ else
  <tr height=36 style='height:27.0pt'>
   <td height=36 class=xl69 width=434 style='height:27.0pt;border-top:none;
   border-left:none;width:326pt'>void drop_index(string colum_name, IndexType
-  index_type=DEFAULT, string name=None)</td>
+  index_type=DEFAULT)</td>
   <td class=xl80 width=454 style='border-top:none;border-left:none;width:341pt'>Removes
   the specified type of index among indexes on the specified Column</td>
   <td class=xl69 width=334 style='border-top:none;border-left:none;width:251pt'>　</td>
@@ -360,7 +359,7 @@ else
   &quot;val2&quot;, &quot;val3&quot;]</td>
  </tr>
  <tr height=18 style='height:13.5pt'>
-  <td rowspan=6 height=180 class=xl83 width=127 style='height:135.0pt;
+  <td rowspan=7 height=198 class=xl83 width=127 style='height:148.5pt;
   width:95pt'>RowSet</td>
   <td class=xl69 width=434 style='border-top:none;border-left:none;width:326pt'>void
   remove()</td>
@@ -413,6 +412,15 @@ else
   <td class=xl69 width=334 style='border-top:none;border-left:none;width:251pt'>row
   = [1, &quot;val&quot;]</td>
   <td class=xl69 width=271 style='border-top:none;border-left:none;width:203pt'>　</td>
+ </tr>
+ <tr height=18 style='height:13.5pt'>
+  <td height=18 class=xl69 width=434 style='height:13.5pt;border-top:none;
+  border-left:none;width:326pt'>string get_column_names()</td>
+  <td class=xl80 width=454 style='border-top:none;border-left:none;width:341pt'>Get
+  a list of column names</td>
+  <td class=xl69 width=334 style='border-top:none;border-left:none;width:251pt'>　</td>
+  <td class=xl69 width=271 style='border-top:none;border-left:none;width:203pt'>[&quot;ts&quot;,
+  &quot;val&quot;]</td>
  </tr>
  <tr height=36 style='height:27.0pt'>
   <td rowspan=9 height=306 class=xl89 width=127 style='height:229.5pt;
@@ -629,8 +637,8 @@ else
   <td class=xl69 width=334 style='border-top:none;border-left:none;width:251pt'>　</td>
   <td class=xl69 width=271 style='border-top:none;border-left:none;width:203pt'>　</td>
  </tr>
- <tr height=18 style='height:13.5pt'>
-  <td height=18 class=xl85 width=127 style='height:13.5pt;width:95pt'></td>
+ <tr height=2047 style='height:409.6pt'>
+  <td height=2047 class=xl85 width=127 style='height:409.6pt;width:95pt'></td>
   <td class=xl81 width=434 style='width:326pt'></td>
   <td class=xl79 width=454 style='width:341pt'></td>
   <td class=xl81 width=334 style='width:251pt'></td>
