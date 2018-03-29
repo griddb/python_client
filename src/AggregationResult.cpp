@@ -1,43 +1,43 @@
 /*
-   Copyright (c) 2017 TOSHIBA Digital Solutions Corporation
+    Copyright (c) 2017 TOSHIBA Digital Solutions Corporation.
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+        http://www.apache.org/licenses/LICENSE-2.0
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 */
 
 #include "AggregationResult.h"
 
 namespace griddb {
 
-	AggregationResult::AggregationResult(GSAggregationResult* aggResult) : mAggResult(aggResult) {
-	}
+    AggregationResult::AggregationResult(GSAggregationResult* aggResult) : mAggResult(aggResult) {
+    }
 
-	AggregationResult::~AggregationResult() {
-		close();
-	}
+    AggregationResult::~AggregationResult() {
+        close();
+    }
 
-	/**
-	 * Release AggregationResult resource
-	 */
-	void AggregationResult::close() {
-		if (mAggResult != NULL) {
-			gsCloseAggregationResult(&mAggResult);
-		}
-		mAggResult = NULL;
-	}
+    /**
+     * Release AggregationResult resource
+     */
+    void AggregationResult::close() {
+        if (mAggResult != NULL) {
+            gsCloseAggregationResult(&mAggResult);
+        }
+        mAggResult = NULL;
+    }
 
-	/**
-	 *Obtains the result of aggregating numeric-type values.
-	 */
+    /**
+     *Obtains the result of aggregating numeric-type values.
+     */
     void AggregationResult::get(GSType valueType, griddb::Field *agValue) {
         void *value;
         agValue->type = valueType;
