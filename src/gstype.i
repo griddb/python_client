@@ -40,10 +40,12 @@
 %include <typemaps.i>
 %catches(griddb::GSException);
 
+#if !defined(SWIGGO)
 enum GSContainerTypeTag {
     GS_CONTAINER_COLLECTION,
     GS_CONTAINER_TIME_SERIES,
 };
+#endif
 
 enum GSRowSetTypeTag {
     GS_ROW_SET_CONTAINER_ROWS,
@@ -51,6 +53,7 @@ enum GSRowSetTypeTag {
     GS_ROW_SET_QUERY_ANALYSIS
 };
 
+#if !defined(SWIGGO)
 // Enum GSTypeTag
 enum GSTypeTag {
     GS_TYPE_STRING,
@@ -78,7 +81,9 @@ enum GSTypeTag {
     GS_TYPE_NULL = -1
 #endif
 };
+#endif
 
+#if !defined(SWIGGO)
 // Enum GSIndexTypeFlagTag
 enum GSIndexTypeFlagTag {
     GS_INDEX_FLAG_DEFAULT,
@@ -86,6 +91,7 @@ enum GSIndexTypeFlagTag {
     GS_INDEX_FLAG_HASH,
     GS_INDEX_FLAG_SPATIAL
 };
+#endif
 
 enum GSFetchOptionTag {
 
@@ -103,6 +109,7 @@ enum GSFetchOptionTag {
 #endif
 };
 
+#if !defined(SWIGGO)
 enum GSTimeUnitTag {
 
     GS_TIME_UNIT_YEAR,
@@ -119,11 +126,12 @@ enum GSTimeUnitTag {
 
     GS_TIME_UNIT_MILLISECOND
 };
+#endif
 
 enum GSTypeOptionTag {
 
     GS_TYPE_OPTION_KEY = 1 << 0,
-    
+
 #if GS_COMPATIBILITY_SUPPORT_3_5
     GS_TYPE_OPTION_NULLABLE = 1 << 1,
 

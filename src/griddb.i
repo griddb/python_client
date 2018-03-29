@@ -23,7 +23,7 @@
 
 #if defined(SWIGPYTHON)
 %include "gstype_python.i"
-%module griddb_python_client
+%module griddb_python
 #elif defined(SWIGRUBY)
 %include "gstype_ruby.i"
 %module griddb_ruby_client
@@ -35,7 +35,7 @@
 %module griddb_php_client
 #elif defined(SWIGGO)
 %include "gstype_go.i"
-%module griddb_go_client
+%module griddb_go
 #endif
 
 %{
