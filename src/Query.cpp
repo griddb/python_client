@@ -90,11 +90,22 @@ namespace griddb {
     /**
      * Set fetch limit option
      */
-    void Query::set_fetch_options(int limit){
-        GSFetchOption fetchOption = GS_FETCH_LIMIT;
-        GSResult ret = gsSetFetchOption(mQuery, fetchOption, &limit, GS_TYPE_INTEGER);
-        if (ret != GS_RESULT_OK) {
-            throw GSException(mQuery, ret);
+    void Query::set_fetch_options(int limit, bool partial){
+    	if (limit >= 0) {
+	        GSFetchOption fetchOption = GS_FETCH_LIMIT;
+	        GSResult ret = gsSetFetchOption(mQuery, fetchOption, &limit, GS_TYPE_INTEGER);
+	        if (ret != GS_RESULT_OK) {
+	            throw GSException(mQuery, ret);
+	        }
+    	}
+        if (partial == true) {
+#if GS_COMPATIBILITY_SUPPORT_4_0
+            GSFetchOption fetchOption = GS_FETCH_PARTIAL_EXECUTION;
+            GSResult ret = gsSetFetchOption(mQuery, fetchOption, &partial, GS_TYPE_BOOL);
+            if (ret != GS_RESULT_OK) {
+                throw GSException(mQuery, ret);
+            }
+#endif
         }
     }
 }
