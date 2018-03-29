@@ -29,6 +29,14 @@ namespace griddb {
      * Release all resources created by this gridstore object
      */
     void Store::close(GSBool allRelated) {
+        //
+        std::map<string, griddb::Container*>::iterator it = mContainerList.begin();
+        while(it != mContainerList.end()) {
+            if (it->second) {
+                delete(it->second);
+            }
+            it++;
+        }
         if (mStore != NULL) {
             gsCloseGridStore(&mStore, allRelated);
             mStore = NULL;
@@ -62,11 +70,11 @@ namespace griddb {
     /**
      * Put container. Convert from method gsPutContainerGeneral()
      */
-    Container* Store::put_container(ContainerInfo* containerInfo,
+    Container* Store::put_container(ContainerInfo* info,
             bool modifiable) {
 
         // Get Container information
-        GSContainerInfo* gsInfo = containerInfo->gs_info();
+        GSContainerInfo* gsInfo = info->gs_info();
         GSContainer* pContainer = NULL;
 
         // Create new gsContainer
@@ -146,7 +154,6 @@ namespace griddb {
         GSResult ret;
         GSContainerRowEntry * entryList = (GSContainerRowEntry*) malloc (containerCount * sizeof(GSContainerRowEntry));
         std::map<string,griddb::Container*>::iterator it;
-
         for (int i= 0; i < containerCount; i++) {
             containerName = listContainerName[i];
             entryList[i].containerName = containerName;
@@ -161,6 +168,8 @@ namespace griddb {
             } else {
                 //Not find in map
                 pContainer = this->get_container(containerName);
+                it = mContainerList.begin();
+                mContainerList.insert(it, std::pair<string, griddb::Container*>(containerName, pContainer));
             }
 
             for (int j = 0; j < listRowContainerCount[i]; j++) {
@@ -187,6 +196,8 @@ namespace griddb {
             } else {
                 //Not find in map
                 pContainer = this->get_container(containerName);
+                it = mContainerList.begin();
+                mContainerList.insert(it, std::pair<string, griddb::Container*>(containerName, pContainer));
             }
 
             for (int j = 0; j < listRowContainerCount[i]; j++) {
@@ -233,8 +244,7 @@ namespace griddb {
 
             GSContainerInfo containerInfo;
             GSChar bExists;
-            (*listContainerName)[i] = (char *) malloc(strlen(rowKeyEntry->containerName) * sizeof(char));
-            strcpy((char*)(*listContainerName)[i], rowKeyEntry->containerName);
+            (*listContainerName)[i] = strdup(rowKeyEntry->containerName);
             (*listRowContainerCount)[i] = rowKeyEntry->rowCount;
             (listGsRow)[i] = (GSRow**) malloc(rowKeyEntry->rowCount * sizeof(GSRow*));
 

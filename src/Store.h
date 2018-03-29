@@ -30,7 +30,7 @@ namespace griddb {
 
 class Store {
     GSGridStore *mStore;
-    map<string,griddb::Container*> mContainerList;
+    map<string, griddb::Container*> mContainerList;
 
     friend class StoreFactory;
 
@@ -39,7 +39,7 @@ class Store {
         ~Store();
         void close(GSBool allRelated);
 
-        Container* put_container(ContainerInfo* containerInfo, bool modifiable = false);
+        Container* put_container(ContainerInfo* info, bool modifiable = false);
         Container* get_container(const char* name);
         void drop_container(const char *name);
 
