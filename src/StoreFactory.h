@@ -28,18 +28,17 @@ using namespace std;
 
 namespace griddb {
 
-    /**
-     * Class GridStoreFactory to contain GSGridStoreFactory object.
-     * This class is implemented as singleton.
-     */
-    class StoreFactory {
+/**
+ * Class GridStoreFactory to contain GSGridStoreFactory object.
+ * This class is implemented as singleton.
+ */
+class StoreFactory {
 
-        GSGridStoreFactory* mFactory;
+    GSGridStoreFactory* mFactory;
 
     public:
         ~StoreFactory();
         void close(GSBool allRelated);
-
         static StoreFactory* get_instance();
         Store* get_store(const char* host=NULL, int32_t port=NULL, const char* cluster_name=NULL,
                 const char* database=NULL, const char* username=NULL, const char* password=NULL,
@@ -52,8 +51,8 @@ namespace griddb {
         void set_property_entry(GSPropertyEntry *prop, const char* name, const char* value);
         bool check_multicast(const char* address);
         void set_factory(GSGridStoreFactory* factory);
+};
 
-    };
 }
 
 #endif

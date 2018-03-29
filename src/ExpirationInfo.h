@@ -28,45 +28,40 @@ class ExpirationInfo {
      * Contains information about expiration configuration
      */
     GSTimeSeriesProperties mTimeSeriesProps;
-public:
-    ExpirationInfo(const GSTimeSeriesProperties* timeSeriesProps) {
-        mTimeSeriesProps.rowExpirationTime = timeSeriesProps->rowExpirationTime;
-        mTimeSeriesProps.rowExpirationTimeUnit = timeSeriesProps->rowExpirationTimeUnit;
-        mTimeSeriesProps.expirationDivisionCount = timeSeriesProps->expirationDivisionCount;
-        mTimeSeriesProps.compressionList = NULL;
-        mTimeSeriesProps.compressionListSize = 0;
-        mTimeSeriesProps.compressionMethod = GS_COMPRESSION_NO ;
-        mTimeSeriesProps.compressionWindowSize = 0;
-        mTimeSeriesProps.compressionWindowSizeUnit = GS_TIME_UNIT_YEAR;
-    };
-    ExpirationInfo(int time, GSTimeUnit unit, int division_count) {
-        mTimeSeriesProps.rowExpirationTime = time;
-        mTimeSeriesProps.rowExpirationTimeUnit = unit;
-        mTimeSeriesProps.expirationDivisionCount = division_count;
-        mTimeSeriesProps.compressionList = NULL;
-        mTimeSeriesProps.compressionListSize = 0;
-        mTimeSeriesProps.compressionMethod = GS_COMPRESSION_NO ;
-        mTimeSeriesProps.compressionWindowSize = 0;
-        mTimeSeriesProps.compressionWindowSizeUnit = GS_TIME_UNIT_YEAR;
-    };
 
-    ~ExpirationInfo() {};
-
-    int get_time() {return mTimeSeriesProps.rowExpirationTime;};
-
-    void set_time(int time) {mTimeSeriesProps.rowExpirationTime = time;};
-
-    GSTimeUnit get_time_unit() {return mTimeSeriesProps.rowExpirationTimeUnit;};
-
-    void set_time_unit(GSTimeUnit unit) {mTimeSeriesProps.rowExpirationTimeUnit = unit;};
-
-    int get_division_count() {return mTimeSeriesProps.expirationDivisionCount;};
-
-    void set_division_count(int division_count) {mTimeSeriesProps.expirationDivisionCount = division_count;};
-
-    GSTimeSeriesProperties* gs_ts() {
-        return &mTimeSeriesProps;
-    };
+    public:
+        ExpirationInfo(const GSTimeSeriesProperties* timeSeriesProps) {
+            mTimeSeriesProps.rowExpirationTime = timeSeriesProps->rowExpirationTime;
+            mTimeSeriesProps.rowExpirationTimeUnit = timeSeriesProps->rowExpirationTimeUnit;
+            mTimeSeriesProps.expirationDivisionCount = timeSeriesProps->expirationDivisionCount;
+            mTimeSeriesProps.compressionList = NULL;
+            mTimeSeriesProps.compressionListSize = 0;
+            mTimeSeriesProps.compressionMethod = GS_COMPRESSION_NO ;
+            mTimeSeriesProps.compressionWindowSize = 0;
+            mTimeSeriesProps.compressionWindowSizeUnit = GS_TIME_UNIT_YEAR;
+        };
+        ExpirationInfo(int time, GSTimeUnit unit, int division_count) {
+            mTimeSeriesProps.rowExpirationTime = time;
+            mTimeSeriesProps.rowExpirationTimeUnit = unit;
+            mTimeSeriesProps.expirationDivisionCount = division_count;
+            mTimeSeriesProps.compressionList = NULL;
+            mTimeSeriesProps.compressionListSize = 0;
+            mTimeSeriesProps.compressionMethod = GS_COMPRESSION_NO ;
+            mTimeSeriesProps.compressionWindowSize = 0;
+            mTimeSeriesProps.compressionWindowSizeUnit = GS_TIME_UNIT_YEAR;
+        };
+        ~ExpirationInfo() {};
+        int get_time() {return mTimeSeriesProps.rowExpirationTime;};
+        void set_time(int time) {mTimeSeriesProps.rowExpirationTime = time;};
+        GSTimeUnit get_time_unit() {return mTimeSeriesProps.rowExpirationTimeUnit;};
+        void set_time_unit(GSTimeUnit unit) {mTimeSeriesProps.rowExpirationTimeUnit = unit;};
+        int get_division_count() {return mTimeSeriesProps.expirationDivisionCount;};
+        void set_division_count(int division_count) {mTimeSeriesProps.expirationDivisionCount = division_count;};
+        GSTimeSeriesProperties* gs_ts() {
+            return &mTimeSeriesProps;
+        };
 };
-}
+
+} /* namespace griddb */
+
 #endif

@@ -26,12 +26,10 @@ namespace griddb {
         }
         else mCount = 0;
     }
-
     Row::~Row() {
         del_array_field();
         //gsCloseRow(&mRow);
     }
-
     /**
     * Set for field from GSRow.
     */
@@ -158,7 +156,6 @@ namespace griddb {
             mFields = NULL;
         }
     }
-
     /**
      * Set for field from GSRow.
      */
@@ -178,7 +175,6 @@ namespace griddb {
             set_for_field(row, i);
         }
     }
-
     /**
      * Set for GSRow from Field
      */
@@ -204,7 +200,6 @@ namespace griddb {
             }
         }
     }
-
     void Row::resize(int size) {
         if (mFields) {
             del_array_field();
@@ -213,7 +208,6 @@ namespace griddb {
         //memset(mFields, 0x0, sizeof(Field) * size);
         mCount = size;
     }
-
     Field* Row::get_field_ptr() {
         return mFields;
     }
@@ -238,15 +232,12 @@ namespace griddb {
             tmp = strdup(field->value.asString);
             field->value.asString = tmp;
             break;
-
         case GS_TYPE_BLOB:
-            tmp = (GSChar *) malloc(
-                        sizeof(GSChar*) * field->value.asBlob.size);
+            tmp = (GSChar *) malloc(sizeof(GSChar*) * field->value.asBlob.size);
             memset(tmp, 0x0, field->value.asBlob.size);
             memcpy(tmp, field->value.asBlob.data, field->value.asBlob.size);
             field->value.asBlob.data = tmp;
             break;
-
         case GS_TYPE_INTEGER_ARRAY:
             int32_t* tmpIntArr;
 #if GS_COMPATIBILITY_VALUE_1_1_106
@@ -256,14 +247,13 @@ namespace griddb {
             field->value.asIntegerArray.elements = tmpIntArr;
 #else
             tmpIntArr = (int32_t *) malloc(
-                        sizeof(int32_t) * field->value.asArray.length);
+                    sizeof(int32_t) * field->value.asArray.length);
             memset(tmpIntArr, 0x0, sizeof(int32_t) * field->value.asArray.length);
             memcpy(tmpIntArr, field->value.asArray.elements.asInteger,
-                        sizeof(int32_t) * field->value.asArray.length);
+                    sizeof(int32_t) * field->value.asArray.length);
             field->value.asArray.elements.asInteger = tmpIntArr;
 #endif
             break;
-
         case GS_TYPE_STRING_ARRAY:
             GSChar** tmpArr;
 #if GS_COMPATIBILITY_VALUE_1_1_106
@@ -272,11 +262,10 @@ namespace griddb {
             memcpy(tmpArr, field->value.asStringArray.elements, sizeof(GSChar*) * field.value.asStringArray.size);
             field->value.asStringArray.elements = tmpArr;
 #else
-            tmpArr = (GSChar**) malloc(
-                        sizeof(GSChar*) * field->value.asArray.length);
+            tmpArr = (GSChar**) malloc(sizeof(GSChar*) * field->value.asArray.length);
             memset(tmpArr, 0x0, sizeof(GSChar*) * field->value.asArray.length);
             memcpy(tmpArr, field->value.asArray.elements.asString,
-                        sizeof(GSChar*) * field->value.asArray.length);
+                    sizeof(GSChar*) * field->value.asArray.length);
             field->value.asArray.elements.asString = tmpArr;
 #endif
             break;
@@ -288,11 +277,10 @@ namespace griddb {
             memcpy(tmpBoolArr, field->value.asBoolArray.elements, sizeof(GSBool) * field.value.asBoolArray.size);
             field->value.asBoolArray.elements = tmpBoolArr;
 #else
-            tmpBoolArr = (GSBool*) malloc(
-                        sizeof(GSBool) * field->value.asArray.length);
+            tmpBoolArr = (GSBool*) malloc(sizeof(GSBool) * field->value.asArray.length);
             memset(tmpBoolArr, 0x0, sizeof(GSBool) * field->value.asArray.length);
             memcpy(tmpBoolArr, field->value.asArray.elements.asBool,
-                        sizeof(GSBool) * field->value.asArray.length);
+                    sizeof(GSBool) * field->value.asArray.length);
             field->value.asArray.elements.asBool = tmpBoolArr;
 #endif
             break;
@@ -304,11 +292,10 @@ namespace griddb {
             memcpy(tmpByteArr, field->value.asByteArray.elements, sizeof(int8_t) * field.value.asByteArray.size);
             field->value.asByteArray.elements = tmpByteArr;
 #else
-            tmpByteArr = (int8_t*) malloc(
-                        sizeof(int8_t) * field->value.asArray.length);
+            tmpByteArr = (int8_t*) malloc(sizeof(int8_t) * field->value.asArray.length);
             memset(tmpByteArr, 0x0, sizeof(int8_t) * field->value.asArray.length);
             memcpy(tmpByteArr, field->value.asArray.elements.asByte,
-                        sizeof(int8_t) * field->value.asArray.length);
+                    sizeof(int8_t) * field->value.asArray.length);
             field->value.asArray.elements.asByte = tmpByteArr;
 #endif
             break;
@@ -320,11 +307,10 @@ namespace griddb {
             memcpy(tmpShortArr, field->value.asShortArray.elements, sizeof(int16_t) * field.value.asShortArray.size);
             field->value.asShortArray.elements = tmpShortArr;
 #else
-            tmpShortArr = (int16_t*) malloc(
-                        sizeof(int16_t) * field->value.asArray.length);
+            tmpShortArr = (int16_t*) malloc(sizeof(int16_t) * field->value.asArray.length);
             memset(tmpShortArr, 0x0, sizeof(int16_t) * field->value.asArray.length);
             memcpy(tmpShortArr, field->value.asArray.elements.asShort,
-                        sizeof(int16_t) * field->value.asArray.length);
+                    sizeof(int16_t) * field->value.asArray.length);
             field->value.asArray.elements.asShort = tmpShortArr;
 #endif
             break;
@@ -336,11 +322,10 @@ namespace griddb {
             memcpy(tmpLongArr, field->value.asLongArray.elements, sizeof(int64_t) * field.value.asLongArray.size);
             field->value.asShortArray.elements = tmpLongArr;
 #else
-            tmpLongArr = (int64_t*) malloc(
-                        sizeof(int64_t) * field->value.asArray.length);
+            tmpLongArr = (int64_t*) malloc(sizeof(int64_t) * field->value.asArray.length);
             memset(tmpLongArr, 0x0, sizeof(int64_t) * field->value.asArray.length);
             memcpy(tmpLongArr, field->value.asArray.elements.asLong,
-                        sizeof(int64_t) * field->value.asArray.length);
+                    sizeof(int64_t) * field->value.asArray.length);
             field->value.asArray.elements.asLong = tmpLongArr;
 #endif
             break;
@@ -352,11 +337,10 @@ namespace griddb {
             memcpy(tmpFloatArr, field->value.asFloatArray.elements, sizeof(float) * field.value.asFloatArray.size);
             field->value.asFloatArray.elements = tmpFloatArr;
 #else
-            tmpFloatArr = (float*) malloc(
-                        sizeof(float) * field->value.asArray.length);
+            tmpFloatArr = (float*) malloc(sizeof(float) * field->value.asArray.length);
             memset(tmpFloatArr, 0x0, sizeof(float) * field->value.asArray.length);
             memcpy(tmpFloatArr, field->value.asArray.elements.asFloat,
-                        sizeof(float) * field->value.asArray.length);
+                    sizeof(float) * field->value.asArray.length);
             field->value.asArray.elements.asFloat = tmpFloatArr;
 #endif
             break;
@@ -368,11 +352,10 @@ namespace griddb {
             memcpy(tmpDoubleArr, field->value.asDoubleArray.elements, sizeof(double) * field.value.asDoubleArray.size);
             field->value.asDoubleArray.elements = tmpDoubleArr;
 #else
-            tmpDoubleArr = (double*) malloc(
-                        sizeof(double) * field->value.asArray.length);
+            tmpDoubleArr = (double*) malloc(sizeof(double) * field->value.asArray.length);
             memset(tmpDoubleArr, 0x0, sizeof(double) * field->value.asArray.length);
             memcpy(tmpDoubleArr, field->value.asArray.elements.asDouble,
-                        sizeof(double) * field->value.asArray.length);
+                    sizeof(double) * field->value.asArray.length);
             field->value.asArray.elements.asDouble = tmpDoubleArr;
 #endif
             break;
@@ -384,11 +367,10 @@ namespace griddb {
             memcpy(tmpTimestampArr, field->value.asTimestampArray.elements, sizeof(GSTimestamp) * field.value.asTimestampArray.size);
             field->value.asTimestampArray.elements = tmpTimestampArr;
 #else
-            tmpTimestampArr = (GSTimestamp*) malloc(
-                        sizeof(GSTimestamp) * field->value.asArray.length);
+            tmpTimestampArr = (GSTimestamp*) malloc(sizeof(GSTimestamp) * field->value.asArray.length);
             memset(tmpTimestampArr, 0x0, sizeof(GSTimestamp) * field->value.asArray.length);
             memcpy(tmpTimestampArr, field->value.asArray.elements.asTimestamp,
-                        sizeof(GSTimestamp) * field->value.asArray.length);
+                    sizeof(GSTimestamp) * field->value.asArray.length);
             field->value.asArray.elements.asTimestamp = tmpTimestampArr;
 #endif
             break;
@@ -513,11 +495,11 @@ namespace griddb {
                 ret = gsSetRowFieldNull(row, no);
             } else
 #endif
-            if (field->type == GS_TYPE_STRING) {
-                ret = gsSetRowFieldGeneral(row, no, &field->value, GS_TYPE_STRING);
-            } else {
-                throw GSException("incorrect column type to set for string");
-            }
+                if (field->type == GS_TYPE_STRING) {
+                    ret = gsSetRowFieldGeneral(row, no, &field->value, GS_TYPE_STRING);
+                } else {
+                    throw GSException("incorrect column type to set for string");
+                }
             break;
         case GS_TYPE_TIMESTAMP:
             if (field->type == GS_TYPE_TIMESTAMP) {
@@ -580,6 +562,7 @@ namespace griddb {
             throw GSException("No type to support for getting field");
             break;
         }
+
         if (ret != GS_RESULT_OK) {
             throw GSException(ret, "error set for row");
         }

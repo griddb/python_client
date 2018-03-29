@@ -21,8 +21,9 @@
 
 namespace griddb {
 
-    class TimeSeriesProperties {
-        GSTimeSeriesProperties mTsProps;
+class TimeSeriesProperties {
+    GSTimeSeriesProperties mTsProps;
+
     public:
         TimeSeriesProperties(const GSTimeSeriesProperties* timeSeriesProps);
         TimeSeriesProperties(int32_t elapsedTime, GSTimeUnit timeUnit, int32_t ExpirationDivisionCount);
@@ -35,7 +36,7 @@ namespace griddb {
         GSTimeUnit get_row_expiration_time_unit();
         int get_expiration_division_count();
         GSTimeSeriesProperties* gs_ptr();
-    };
+};
 
 } /* namespace griddb */
 

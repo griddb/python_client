@@ -23,34 +23,27 @@ namespace griddb {
 
     TimeSeriesProperties::TimeSeriesProperties(int32_t elapsedTime, GSTimeUnit timeUnit,
             int32_t ExpirationDivisionCount) : mTsProps{elapsedTime, timeUnit, -1,
-        timeUnit, GS_COMPRESSION_NO, 0, NULL, ExpirationDivisionCount} {
+            timeUnit, GS_COMPRESSION_NO, 0, NULL, ExpirationDivisionCount} {
     }
-
     TimeSeriesProperties::~TimeSeriesProperties() {
     }
-
     void TimeSeriesProperties::set_row_expiration_time(int elapsedTime,
             GSTimeUnit timeUnit) {
         mTsProps.rowExpirationTime = elapsedTime;
         mTsProps.rowExpirationTimeUnit = timeUnit;
     }
-
     void TimeSeriesProperties::set_expiration_division_count(int count) {
         mTsProps.expirationDivisionCount = count;
     }
-
     int TimeSeriesProperties::get_row_expiration_time() {
         return mTsProps.rowExpirationTime;
     }
-
     GSTimeUnit TimeSeriesProperties::get_row_expiration_time_unit() {
         return mTsProps.rowExpirationTimeUnit;
     }
-
     int TimeSeriesProperties::get_expiration_division_count() {
         return mTsProps.expirationDivisionCount;
     }
-
     GSTimeSeriesProperties* TimeSeriesProperties::gs_ptr() {
         return &mTsProps;
     }

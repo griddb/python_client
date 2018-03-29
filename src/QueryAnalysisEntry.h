@@ -26,15 +26,16 @@ using namespace std;
 
 namespace griddb {
 
-    class QueryAnalysisEntry {
-        GSQueryAnalysisEntry* mQueryAnalysis;
-        public:
-            QueryAnalysisEntry(GSQueryAnalysisEntry* queryAnalysis);
-            ~QueryAnalysisEntry();
-            void get(GSQueryAnalysisEntry* queryAnalysis);
-        private:
+class QueryAnalysisEntry {
+    GSQueryAnalysisEntry* mQueryAnalysis;
 
-    };
+    public:
+        QueryAnalysisEntry(GSQueryAnalysisEntry* queryAnalysis);
+        ~QueryAnalysisEntry();
+        void get(GSQueryAnalysisEntry* queryAnalysis);
+    private:
+
+};
 
 }
 #endif /* SRC_QUERYANALYSISENTRY_H_ */

@@ -17,48 +17,48 @@
 #include "QueryAnalysisEntry.h"
 
 namespace griddb {
-QueryAnalysisEntry::QueryAnalysisEntry(GSQueryAnalysisEntry* queryAnalysis) :
-    mQueryAnalysis(NULL) {
-    if (queryAnalysis) {
-        mQueryAnalysis = (GSQueryAnalysisEntry*) malloc(sizeof(GSQueryAnalysisEntry));
-        //Copy value which queryAnalysis point to
-        mQueryAnalysis->id = queryAnalysis->id;
-        mQueryAnalysis->depth = queryAnalysis->depth;
-        mQueryAnalysis->statement = strdup(queryAnalysis->statement);
-        mQueryAnalysis->type = strdup(queryAnalysis->type);
-        mQueryAnalysis->value = strdup(queryAnalysis->value);
-        mQueryAnalysis->valueType = strdup(queryAnalysis->valueType);
-    }
+
+    QueryAnalysisEntry::QueryAnalysisEntry(GSQueryAnalysisEntry* queryAnalysis) : mQueryAnalysis(NULL) {
+        if (queryAnalysis) {
+            mQueryAnalysis = (GSQueryAnalysisEntry*) malloc(sizeof(GSQueryAnalysisEntry));
+            //Copy value which queryAnalysis point to
+            mQueryAnalysis->id = queryAnalysis->id;
+            mQueryAnalysis->depth = queryAnalysis->depth;
+            mQueryAnalysis->statement = strdup(queryAnalysis->statement);
+            mQueryAnalysis->type = strdup(queryAnalysis->type);
+            mQueryAnalysis->value = strdup(queryAnalysis->value);
+            mQueryAnalysis->valueType = strdup(queryAnalysis->valueType);
+        }
 }
 
-QueryAnalysisEntry::~QueryAnalysisEntry() {
-    if (mQueryAnalysis) {
-        if (mQueryAnalysis->statement) {
-            free((void*) mQueryAnalysis->statement);
+    QueryAnalysisEntry::~QueryAnalysisEntry() {
+        if (mQueryAnalysis) {
+            if (mQueryAnalysis->statement) {
+                free((void*) mQueryAnalysis->statement);
+            }
+            if (mQueryAnalysis->type) {
+                free((void*) mQueryAnalysis->type);
+            }
+            if (mQueryAnalysis->value) {
+                free((void*) mQueryAnalysis->value);
+            }
+            if (mQueryAnalysis->valueType) {
+                free((void*) mQueryAnalysis->valueType);
+            }
+            free((void *) mQueryAnalysis);
+            mQueryAnalysis = NULL;
         }
-        if (mQueryAnalysis->type) {
-            free((void*) mQueryAnalysis->type);
-        }
-        if (mQueryAnalysis->value) {
-            free((void*) mQueryAnalysis->value);
-        }
-        if (mQueryAnalysis->valueType) {
-            free((void*) mQueryAnalysis->valueType);
-        }
-        free((void *) mQueryAnalysis);
-        mQueryAnalysis = NULL;
-    }
 }
 
-/**
- * get QueryAnalysisEntry data
- */
-void QueryAnalysisEntry::get(GSQueryAnalysisEntry* queryAnalysis) {
-    queryAnalysis->id = mQueryAnalysis->id;
-    queryAnalysis->depth = mQueryAnalysis->depth;
-    queryAnalysis->statement = strdup(mQueryAnalysis->statement);
-    queryAnalysis->type = strdup(mQueryAnalysis->type);
-    queryAnalysis->value = strdup(mQueryAnalysis->value);
-    queryAnalysis->valueType = strdup(mQueryAnalysis->valueType);
-}
+    /**
+     * get QueryAnalysisEntry data
+     */
+    void QueryAnalysisEntry::get(GSQueryAnalysisEntry* queryAnalysis) {
+        queryAnalysis->id = mQueryAnalysis->id;
+        queryAnalysis->depth = mQueryAnalysis->depth;
+        queryAnalysis->statement = strdup(mQueryAnalysis->statement);
+        queryAnalysis->type = strdup(mQueryAnalysis->type);
+        queryAnalysis->value = strdup(mQueryAnalysis->value);
+        queryAnalysis->valueType = strdup(mQueryAnalysis->valueType);
+    }
 }

@@ -23,19 +23,19 @@
 
 namespace griddb {
 
-    class PartitionController {
-        GSPartitionController *mController;
-        friend class Store;
+class PartitionController {
+    GSPartitionController *mController;
+
+    friend class Store;
+
     public:
         ~PartitionController();
         void close();
-
         int32_t get_partition_count();
         int64_t get_container_count(int32_t partition_index);
         void get_container_names(int32_t partition_index, int64_t start,
                 const GSChar * const ** stringList, size_t *size, int64_t limit=-1);
         int32_t get_partition_index_of_container(const GSChar *container_name);
-
         void get_partition_hosts(int32_t partitionIndex,
                 const GSChar * const **stringList, size_t *size);
         string get_partition_owner_host(int32_t partitionIndex);
@@ -43,6 +43,7 @@ namespace griddb {
                 const GSChar * const ** stringList, size_t *size);
         void assign_partition_preferable_host(int32_t partitionIndex,
                 const GSChar *host);
+
     private:
         PartitionController(GSPartitionController *controller);
 };

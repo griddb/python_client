@@ -18,14 +18,12 @@
 
 namespace griddb {
 
-    Query::Query(GSQuery *query, GSContainerInfo *containerInfo, GSRow *gsRow) : mQuery(query), mContainerInfo(containerInfo), mRow(gsRow) {
-
+    Query::Query(GSQuery *query, GSContainerInfo *containerInfo, GSRow *gsRow) : mQuery(query),
+            mContainerInfo(containerInfo), mRow(gsRow) {
     }
-
     Query::~Query() {
         close();
     }
-
     /**
      * Release all resources created by this Query object.
      */
@@ -35,7 +33,6 @@ namespace griddb {
             mQuery = NULL;
         }
     }
-
     /**
      * Fetch data from query result.
      */
@@ -52,7 +49,6 @@ namespace griddb {
 
         return new RowSet(rowSet, mContainerInfo, mRow);
     }
-
     /**
      * Get row set. Convert from C-Api: gsGetRowSet
      */
@@ -67,7 +63,6 @@ namespace griddb {
 
         return new RowSet(rowSet, mContainerInfo, mRow);
     }
-
     /**
      * Sets an fetch option of integer type for a result acquisition.
      */
@@ -77,7 +72,6 @@ namespace griddb {
             throw GSException(mQuery, ret);
         }
     }
-
     /**
      * Sets an fetch option of long type for a result acquisition.
      */
@@ -87,14 +81,12 @@ namespace griddb {
             throw GSException(mQuery, ret);
         }
     }
-
     /**
      * Get raw pointer of GSQuery
      */
     GSQuery* Query::gs_ptr() {
         return mQuery;
     }
-
     /**
      * Set fetch limit option
      */

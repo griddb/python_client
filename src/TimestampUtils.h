@@ -24,17 +24,17 @@ using namespace std;
 
 namespace griddb {
 
-    class TimestampUtils {
+class TimestampUtils {
 
     public:
         TimestampUtils();
         ~TimestampUtils();
-        static GSTimestamp current();
-        static GSTimestamp add_time(GSTimestamp timestamp, int32_t amount, GSTimeUnit timeUnit);
-        static string format_time(GSTimestamp timestamp, size_t bufSize);
-        static GSTimestamp parse(char* str);
+//        static GSTimestamp current();
+//        static GSTimestamp add_time(GSTimestamp timestamp, int32_t amount, GSTimeUnit timeUnit);
+//        static string format_time(GSTimestamp timestamp, size_t bufSize);
+//        static GSTimestamp parse(char* str);
         static long get_time_mills(double timestamp);
-    };
+};
 
 } /* namespace griddb */
 

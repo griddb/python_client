@@ -25,14 +25,15 @@ using namespace std;
 
 namespace griddb {
 
-    /**
-     * This class creates exception corresponding to error code
-     */
-    class GSException : public exception {
-        bool mIsTimeout;
-        int32_t mCode;
-        string mMessage;
-        void *mResource;
+/**
+ * This class creates exception corresponding to error code
+ */
+class GSException : public exception {
+    bool mIsTimeout;
+    int32_t mCode;
+    string mMessage;
+    void *mResource;
+
     public:
         GSException(int32_t code) : exception(), mCode(code), mResource(NULL) {
             mMessage = "Error with number " + to_string((long long int)mCode);
@@ -44,7 +45,6 @@ namespace griddb {
                 mIsTimeout = false;
             }
         }
-
         GSException(const char* message) : exception(),
             mCode(-1), mMessage(message), mResource(NULL) {
             if (mCode != -1) {
@@ -55,7 +55,6 @@ namespace griddb {
                 mIsTimeout = false;
             }
         }
-
         GSException(void *resource, const char* message) : exception(),
             mCode(-1), mMessage(message), mResource(resource) {
             if (mCode != -1) {
@@ -66,7 +65,6 @@ namespace griddb {
                 mIsTimeout = false;
             }
         }
-
         GSException(void *resource, int32_t code) : exception(),
             mCode(code), mResource(resource) {
             mMessage = "Error with number " + to_string((long long int)mCode);
@@ -78,7 +76,6 @@ namespace griddb {
                 mIsTimeout = false;
             }
         }
-
         GSException(int32_t code, const char* message) : exception(),
             mCode(code), mMessage(message), mResource(NULL) {
             if (mCode != -1) {
@@ -89,7 +86,6 @@ namespace griddb {
                 mIsTimeout = false;
             }
         }
-
         GSException(void *resource, int32_t code, const char* message) : exception(),
             mCode(code), mMessage(message), mResource(resource) {
             if (mCode != -1) {
@@ -100,24 +96,19 @@ namespace griddb {
                 mIsTimeout = false;
             }
         }
-
         GSException(const GSException* exception) {
             mCode = exception->mCode;
             mIsTimeout = exception->mIsTimeout;
             mMessage = exception->mMessage;
             mResource = exception->mResource;
         }
-
         ~GSException() throw() {}
-
         int32_t get_code() {
             return mCode;
         }
-
         virtual const char* what() const throw() {
             return mMessage.c_str();
         }
-
         /*
          * Check timeout. Convert from C-API: gsIsTimeoutError
          */
@@ -130,14 +121,12 @@ namespace griddb {
         size_t get_error_stack_size() {
             return gsGetErrorStackSize(mResource);
         }
-
         /**
          * Get error stack code. Convert from C-API:  gsGetErrorCode.
         */
         GSResult get_error_code(size_t stack_index) {
             return gsGetErrorCode(mResource, stack_index);
         }
-
         /**
          * Get error message. Convert from C-API: gsFormatErrorMessage.
         */
@@ -148,7 +137,6 @@ namespace griddb {
             delete [] strBuf;
             return ret;
         }
-
         /**
          * Get error location. Convert from C-API: gsFormatErrorLocation.
          */
@@ -159,8 +147,8 @@ namespace griddb {
             delete [] strBuf;
             return ret;
         }
-    };
+};
 
-}
+} /* namespace griddb */
 
 #endif

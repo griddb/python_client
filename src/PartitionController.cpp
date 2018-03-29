@@ -19,23 +19,20 @@
 namespace griddb {
 
     PartitionController::PartitionController(GSPartitionController *controller) :
-            mController(controller) {
+        mController(controller) {
     }
-
     /**
      * Destructor. Convert from C-API:gsClosePartitionController
      */
     PartitionController::~PartitionController() {
         close();
     }
-
     void PartitionController::close() {
         if (mController != NULL) {
             gsClosePartitionController(&mController);
             mController = NULL;
         }
     }
-
     /**
      * Get partition count. Convert from C-Api: gsGetPartitionCount
      */
@@ -49,15 +46,12 @@ namespace griddb {
         }
         return value;
     }
-    
     /**
      * Get container partition count. Convert from C-Api: gsGetPartitionContainerCount
      */
-    int64_t PartitionController::get_container_count(
-            int32_t partition_index) {
+    int64_t PartitionController::get_container_count(int32_t partition_index) {
         int64_t value;
-        GSResult ret = gsGetPartitionContainerCount(mController, partition_index,
-                &value);
+        GSResult ret = gsGetPartitionContainerCount(mController, partition_index,&value);
 
         // Check ret, if error, throw exception
         if (ret != GS_RESULT_OK) {
@@ -65,49 +59,40 @@ namespace griddb {
         }
         return value;
     }
-
     /**
      * Get list partition container names case there is limit. Convert from C-Api: gsGetPartitionContainerNames
      */
-    void PartitionController::get_container_names(int32_t partitionIndex,
-            int64_t start, const GSChar * const ** stringList, size_t *size,
-            int64_t limit) {
+    void PartitionController::get_container_names(int32_t partitionIndex, int64_t start,
+            const GSChar * const ** stringList, size_t *size, int64_t limit) {
         int64_t* limitPtr;
         if (limit >= 0) {
             limitPtr = &limit;
         } else {
             limitPtr = NULL;
         }
-        GSResult ret = gsGetPartitionContainerNames(mController, partitionIndex,
-                start, limitPtr, stringList, size);
+        GSResult ret = gsGetPartitionContainerNames(mController, partitionIndex, start, limitPtr, stringList, size);
 
         if (ret != GS_RESULT_OK) {
             throw GSException(mController, ret);
         }
     }
-
     /**
      * Get get_partition hosts. Convert from C-Api: gsGetPartitionHosts
      */
-    void PartitionController::get_partition_hosts(int32_t partitionIndex,
-            const GSChar * const **stringList, size_t *size) {
-        GSResult ret = gsGetPartitionHosts(mController, partitionIndex, stringList,
-                size);
+    void PartitionController::get_partition_hosts(int32_t partitionIndex, const GSChar * const **stringList, size_t *size) {
+        GSResult ret = gsGetPartitionHosts(mController, partitionIndex, stringList, size);
 
         // Check ret, if error, throw exception
         if (ret != GS_RESULT_OK) {
             throw GSException(mController, ret);
         }
     }
-
     /**
      * Get get_partition index of container. Convert from C-Api: gsGetPartitionIndexOfContainer
      */
-    int32_t PartitionController::get_partition_index_of_container(
-            const GSChar* container_name) {
+    int32_t PartitionController::get_partition_index_of_container(const GSChar* container_name) {
         int32_t value;
-        GSResult ret = gsGetPartitionIndexOfContainer(mController, container_name,
-                &value);
+        GSResult ret = gsGetPartitionIndexOfContainer(mController, container_name, &value);
 
         // Check ret, if error, throw exception
         if (ret != GS_RESULT_OK) {
@@ -115,12 +100,10 @@ namespace griddb {
         }
         return value;
     }
-
     /**
      * Get get_partition owner host. Convert from C-Api: gsGetPartitionOwnerHost
      */
-    string PartitionController::get_partition_owner_host(
-            int32_t partitionIndex) {
+    string PartitionController::get_partition_owner_host(int32_t partitionIndex) {
         const GSChar *address;
         GSResult ret = gsGetPartitionOwnerHost(mController, partitionIndex, &address);
 
@@ -134,10 +117,8 @@ namespace griddb {
     /**
      * Get get_partition backup hosts. Convert from C-Api: gsGetPartitionBackupHosts
      */
-    void PartitionController::get_partition_backup_hosts(
-            int32_t partitionIndex, const GSChar *const **stringList, size_t *size) {
-        GSResult ret = gsGetPartitionBackupHosts(mController, partitionIndex,
-                stringList, size);
+    void PartitionController::get_partition_backup_hosts(int32_t partitionIndex, const GSChar *const **stringList, size_t *size) {
+        GSResult ret = gsGetPartitionBackupHosts(mController, partitionIndex, stringList, size);
 
         // Check ret, if error, throw exception
         if (ret != GS_RESULT_OK) {
@@ -148,8 +129,7 @@ namespace griddb {
     /**
      * Assign host. Convert from C-Api: gsAssignPartitionPreferableHost
      */
-    void PartitionController::assign_partition_preferable_host(
-            int32_t partitionIndex, const GSChar* host) {
+    void PartitionController::assign_partition_preferable_host(int32_t partitionIndex, const GSChar* host) {
         GSResult ret = gsAssignPartitionPreferableHost(mController, partitionIndex, host);
         if (ret != GS_RESULT_OK) {
             throw new GSException(ret);

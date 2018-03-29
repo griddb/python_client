@@ -21,12 +21,10 @@ namespace griddb {
 
     StoreFactory::StoreFactory() : mFactory(NULL) {
     }
-
     StoreFactory::~StoreFactory() {
         //allRelated = FALSE, since Gridstore object is managed by Store class
         close(GS_FALSE);
     }
-
     /**
     * Release all GridStore created by this factory and related resources
     */
@@ -36,7 +34,6 @@ namespace griddb {
             mFactory = NULL;
         }
     }
-
     StoreFactory* StoreFactory::get_instance() {
         GSGridStoreFactory* pFactory = gsGetDefaultFactory();
         StoreFactory* factory(new StoreFactory());
@@ -44,7 +41,6 @@ namespace griddb {
 
         return factory;
     }
-
     /*
      * set GSPropertyEntry
      */
@@ -60,7 +56,6 @@ namespace griddb {
             prop->value = "";
         }
     }
-
     /*
      * Check whether in MULTICAST mode
      */
@@ -86,8 +81,8 @@ namespace griddb {
      * Returns a Store with the specified properties
      */
     Store* StoreFactory::get_store(const char* host, int32_t port, const char* cluster_name,
-                                const char* database, const char* user, const char* password,
-                                const char* notification_member, const char* notification_provider) {
+            const char* database, const char* user, const char* password,
+            const char* notification_member, const char* notification_provider) {
         size_t propsCount;
         GSPropertyEntry* props;
         int index = 0;
