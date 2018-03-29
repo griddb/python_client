@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#include "gridstore.h"
 #include "ContainerInfo.h"
 
 namespace griddb {
@@ -44,11 +43,13 @@ namespace griddb {
         mContainerInfo.dataAffinity = dataAffinity;
         mContainerInfo.columnOrderIgnorable = containerInfo->columnOrderIgnorable;
         mContainerInfo.triggerInfoCount = containerInfo->triggerInfoCount;
+        mColumnInfoList.columnInfo = NULL;
+        mColumnInfoList.size = 0;
     }
 
     ContainerInfo::ContainerInfo(const GSChar* name, const GSColumnInfo* props, int propsCount,
-            GSContainerType containerType, bool rowKeyAssigned, ExpirationInfo* expiration) {
-        init(name, containerType, props, propsCount, rowKeyAssigned, expiration);
+            GSContainerType type, bool row_key, ExpirationInfo* expiration) {
+        init(name, type, props, propsCount, row_key, expiration);
     }
 
     /**
@@ -82,7 +83,6 @@ namespace griddb {
 
         //Container name memory is copied via strdup function
         if (name != NULL) {
-            //containerName = (GSChar*) malloc(strlen(name) *sizeof(GSChar));
             containerName = strdup(name);
         }
 
@@ -90,6 +90,7 @@ namespace griddb {
         if (timeProps != NULL) {
             mContainerInfo.timeSeriesProperties = timeProps;
         }
+        mExpInfo = NULL;
     }
 
     ContainerInfo::~ContainerInfo() {
@@ -123,13 +124,20 @@ namespace griddb {
         if(mContainerInfo.triggerInfoList) {
             free((void *) mContainerInfo.triggerInfoList);
         }
+        if (mExpInfo != NULL) {
+            delete mExpInfo;
+        }
     }
 
     void ContainerInfo::set_name(GSChar* containerName) {
         if (mContainerInfo.name) {
             free((void*) mContainerInfo.name);
         }
-        mContainerInfo.name = strdup(containerName);
+        if (containerName == NULL) {
+            mContainerInfo.name = NULL;
+        } else {
+            mContainerInfo.name = strdup(containerName);
+        }
     }
 
     void ContainerInfo::set_type(GSContainerType containerType) {
@@ -241,10 +249,9 @@ namespace griddb {
      *  Get attribute :column_info_list
      */
     ColumnInfoList ContainerInfo::get_column_info_list() {
-        ColumnInfoList columnInfoList;
-        columnInfoList.columnInfo = mContainerInfo.columnInfoList;
-        columnInfoList.size = mContainerInfo.columnCount;
-        return columnInfoList;
+        mColumnInfoList.columnInfo = (GSColumnInfo*) mContainerInfo.columnInfoList;
+        mColumnInfoList.size = mContainerInfo.columnCount;
+        return mColumnInfoList;
     }
 
     /*
@@ -252,16 +259,12 @@ namespace griddb {
      */
     void ContainerInfo::set_expiration_info(ExpirationInfo expirationInfo) {
 #if GS_COMPATIBILITY_SUPPORT_1_5
-        if (mContainerInfo.timeSeriesProperties == NULL) {
-            mContainerInfo.timeSeriesProperties = (GSTimeSeriesProperties*) malloc(sizeof(GSTimeSeriesProperties));
+        if (mContainerInfo.timeSeriesProperties != NULL) {
+            free((void*) mContainerInfo.timeSeriesProperties);
         }
-
         GSTimeSeriesProperties* ts = (GSTimeSeriesProperties*) malloc(sizeof(GSTimeSeriesProperties));
 
-        if (&expirationInfo != NULL) {
-            ts = (GSTimeSeriesProperties*) malloc(sizeof(GSTimeSeriesProperties));
-            memcpy(ts, expirationInfo.gs_ts(), sizeof(GSTimeSeriesProperties));
-        }
+        memcpy(ts, expirationInfo.gs_ts(), sizeof(GSTimeSeriesProperties));
 
         mContainerInfo.timeSeriesProperties = ts;
 #endif
@@ -270,14 +273,19 @@ namespace griddb {
     /*
      * Get attribute: expiration
      */
-    ExpirationInfo ContainerInfo::get_expiration_info() {
-        ExpirationInfo *exp;
+    ExpirationInfo& ContainerInfo::get_expiration_info() {
         if (mContainerInfo.timeSeriesProperties != NULL){
-            exp = new ExpirationInfo(mContainerInfo.timeSeriesProperties->rowExpirationTime,
-            mContainerInfo.timeSeriesProperties->rowExpirationTimeUnit,
-            mContainerInfo.timeSeriesProperties->expirationDivisionCount);
+            if (mExpInfo != NULL) {
+                mExpInfo->set_time(mContainerInfo.timeSeriesProperties->rowExpirationTime);
+                mExpInfo->set_time_unit(mContainerInfo.timeSeriesProperties->rowExpirationTimeUnit);
+                mExpInfo->set_division_count(mContainerInfo.timeSeriesProperties->expirationDivisionCount);
+            } else {
+                mExpInfo = new ExpirationInfo(mContainerInfo.timeSeriesProperties->rowExpirationTime,
+                mContainerInfo.timeSeriesProperties->rowExpirationTimeUnit,
+                mContainerInfo.timeSeriesProperties->expirationDivisionCount);
+            }
         }
-        return *exp;
+        return *mExpInfo;
     }
 
 } /* namespace griddb */

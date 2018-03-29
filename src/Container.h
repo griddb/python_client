@@ -32,18 +32,16 @@ class Container {
     friend class Store;
 
     GSRow* mRow;
-    GSType* typeList;
-    int columnCount;
 
     public:
         bool timestamp_output_with_float;
         ~Container();
         void close(GSBool allRelated);
         GSContainerType get_type();
-        void create_index(const char* columnName, GSIndexTypeFlags indexType=GS_INDEX_FLAG_DEFAULT, const char* name=NULL);
-        void drop_index(const char* columnName, GSIndexTypeFlags indexType=GS_INDEX_FLAG_DEFAULT, const char* name=NULL);
+        void create_index(const char* column_name, GSIndexTypeFlags index_type = GS_INDEX_FLAG_DEFAULT, const char* name=NULL);
+        void drop_index(const char* column_name, GSIndexTypeFlags index_type = GS_INDEX_FLAG_DEFAULT, const char* name=NULL);
         bool put(Row *rowContainer);
-        Query* query(const char *queryString);
+        Query* query(const char *query);
         void abort();
         void flush();
         void set_auto_commit(bool enabled);
@@ -52,9 +50,8 @@ class Container {
         bool remove(Field* keyFields);
         void multi_put(Row** listRowdata, int rowCount);
         GSContainer* getGSContainerPtr();
-        GSType* getGSTypeList();
-        int getColumnCount();
-
+        GSContainerInfo* getGSContainerInfoPtr();
+	
     private:
         Container(GSContainer *container, GSContainerInfo* containerInfo);
         int get_column_index(const char* columnName);

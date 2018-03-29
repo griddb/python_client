@@ -22,10 +22,11 @@
 #include "TimeSeriesProperties.h"
 #include "ExpirationInfo.h"
 #include <utility>
+#include "GSException.h"
 
 //Support column_info_list attribute
 struct ColumnInfoList {
-    const GSColumnInfo* columnInfo;
+    GSColumnInfo* columnInfo;
     size_t size;
 };
 
@@ -39,11 +40,17 @@ class ContainerInfo {
      */
     GSContainerInfo mContainerInfo;
 
+    //tmp attribute to get column info list
+    ColumnInfoList mColumnInfoList;
+
+    //tmp attribute support get expiration attribute
+    ExpirationInfo* mExpInfo;
+
     public:
         ContainerInfo(GSContainerInfo *containerInfo);
-        ContainerInfo(const GSChar* containerName, const GSColumnInfo* props,
-                int propsCount, GSContainerType containerType = GS_CONTAINER_COLLECTION,
-                bool rowKeyAssigned = false, ExpirationInfo* expiration = NULL);
+        ContainerInfo(const GSChar* name, const GSColumnInfo* props,
+                int propsCount, GSContainerType type = GS_CONTAINER_COLLECTION,
+                bool row_key = false, ExpirationInfo* expiration = NULL);
         ~ContainerInfo();
 
         void set_name(GSChar* containerName);
@@ -59,7 +66,7 @@ class ContainerInfo {
         GSColumnInfo get_column_info(size_t column);
         ColumnInfoList get_column_info_list();
         void set_column_info_list(ColumnInfoList columnInfoList);
-        ExpirationInfo get_expiration_info();
+        ExpirationInfo& get_expiration_info();
         void set_expiration_info(ExpirationInfo expirationInfo);
         bool get_row_key_assigned();
         bool is_row_key_assigned();

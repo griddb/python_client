@@ -20,7 +20,7 @@
 namespace griddb {
 
     Container::Container(GSContainer *container, GSContainerInfo* containerInfo) : mContainer(container),
-            mContainerInfo(NULL), mRow(NULL), typeList(NULL), columnCount(0), timestamp_output_with_float(false) {
+            mContainerInfo(NULL), mRow(NULL), timestamp_output_with_float(false) {
         GSResult ret;
         if ((ret = gsCreateRowByContainer(mContainer, &mRow)) != GS_RESULT_OK) {
             throw GSException(ret, "can not create row from Container");
@@ -65,30 +65,29 @@ namespace griddb {
         if (mContainer != NULL) {
             gsCloseContainer(&mContainer, allRelated);
             mContainer = NULL;
-            free(typeList);
         }
     }
 
     /**
      * Removes the specified type of index among indexes on the specified Column.
      */
-    void Container::drop_index(const char* columnName, GSIndexTypeFlags indexType, const char *name) {
+    void Container::drop_index(const char* column_name, GSIndexTypeFlags index_type, const char *name) {
         GSResult ret = GS_RESULT_OK;
 #if GS_COMPATIBILITY_SUPPORT_3_5
         if (name) {
-            int colIndex = this->get_column_index(columnName);
+            int colIndex = this->get_column_index(column_name);
             //Case not found column name
             if (colIndex == -1) {
                 throw GSException(mContainer, "Can't find column");
             }
-            GSIndexInfo indexInfo = {name, indexType, colIndex, columnName};
+            GSIndexInfo indexInfo = {name, index_type, colIndex, column_name};
             ret = gsDropIndexDetail(mContainer, &indexInfo);
         }
         else {
-            ret = gsDropIndex(mContainer, columnName, indexType);
+            ret = gsDropIndex(mContainer, column_name, index_type);
         }
 #else
-        ret = gsDropIndex(mContainer, columnName, indexType);
+        ret = gsDropIndex(mContainer, column_name, index_type);
 #endif
         if (ret != GS_RESULT_OK) {
             throw GSException(mContainer, ret);
@@ -98,23 +97,23 @@ namespace griddb {
     /*
      * Creates a specified type of index on the specified Column.
      */
-    void Container::create_index(const char *columnName, GSIndexTypeFlags indexType, const char *name) {
+    void Container::create_index(const char *column_name, GSIndexTypeFlags index_type, const char *name) {
         GSResult ret = GS_RESULT_OK;
 #if GS_COMPATIBILITY_SUPPORT_3_5
         if (name){
-            int colIndex = this->get_column_index(columnName);
+            int colIndex = this->get_column_index(column_name);
             //Case not found column name
             if (colIndex == -1) {
                 throw GSException(mContainer, "Can't find column");
             }
-            GSIndexInfo indexInfo = {name, indexType, colIndex, columnName};
+            GSIndexInfo indexInfo = {name, index_type, colIndex, column_name};
             ret = gsCreateIndexDetail(mContainer, &indexInfo);
         }
         else {
-            ret = gsCreateIndex(mContainer, columnName, indexType);
+            ret = gsCreateIndex(mContainer, column_name, index_type);
         }
 #else
-            ret = gsCreateIndex(mContainer, columnName, indexType);
+            ret = gsCreateIndex(mContainer, column_name, index_type);
 #endif
         if (ret != GS_RESULT_OK) {
             throw GSException(mContainer, ret);
@@ -354,6 +353,13 @@ namespace griddb {
     }
 
     /**
+     * Support Container::put()
+     */
+    GSContainerInfo* Container::getGSContainerInfoPtr(){
+        return mContainerInfo;
+    }
+
+    /**
      * Find column index from column name.
      * Return -1 if not found
      */
@@ -366,28 +372,4 @@ namespace griddb {
         return -1;
     }
 
-    /**
-     * Support put row
-     */
-    GSType* Container::getGSTypeList(){
-        if (typeList == NULL){
-            GSResult ret = gsGetRowSchema(mRow, mContainerInfo);
-            typeList = (GSType*) malloc(sizeof(GSType) * mContainerInfo->columnCount);
-            for (int i = 0; i < mContainerInfo->columnCount; i++){
-                typeList[i] = mContainerInfo->columnInfoList[i].type;
-            }
-        }
-        return typeList;
-    }
-
-    /**
-     * Support put row
-     */
-    int Container::getColumnCount(){
-        if (columnCount == 0){
-            GSResult ret = gsGetRowSchema(mRow, mContainerInfo);
-            columnCount = mContainerInfo->columnCount;
-        }
-        return columnCount;
-    }
 }

@@ -36,7 +36,7 @@ class AggregationResult {
         ~AggregationResult();
         void close();
 
-        void get(GSType valueType, griddb::Field *agValue);
+        void get(GSType type, griddb::Field *agValue);
         AggregationResult(GSAggregationResult* aggResult);
 
     private:

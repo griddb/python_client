@@ -36,7 +36,7 @@ class ExpirationInfo {
             mTimeSeriesProps.expirationDivisionCount = timeSeriesProps->expirationDivisionCount;
             mTimeSeriesProps.compressionList = NULL;
             mTimeSeriesProps.compressionListSize = 0;
-            mTimeSeriesProps.compressionMethod = GS_COMPRESSION_NO ;
+            mTimeSeriesProps.compressionMethod = GS_COMPRESSION_NO;
             mTimeSeriesProps.compressionWindowSize = 0;
             mTimeSeriesProps.compressionWindowSizeUnit = GS_TIME_UNIT_YEAR;
         };
@@ -46,7 +46,7 @@ class ExpirationInfo {
             mTimeSeriesProps.expirationDivisionCount = division_count;
             mTimeSeriesProps.compressionList = NULL;
             mTimeSeriesProps.compressionListSize = 0;
-            mTimeSeriesProps.compressionMethod = GS_COMPRESSION_NO ;
+            mTimeSeriesProps.compressionMethod = GS_COMPRESSION_NO;
             mTimeSeriesProps.compressionWindowSize = 0;
             mTimeSeriesProps.compressionWindowSizeUnit = GS_TIME_UNIT_YEAR;
         };

@@ -39,10 +39,10 @@ namespace griddb {
     /**
      * Obtains the result of aggregating numeric-type values.
      */
-    void AggregationResult::get(GSType valueType, griddb::Field *agValue) {
+    void AggregationResult::get(GSType type, griddb::Field *agValue) {
         void *value;
-        agValue->type = valueType;
-        switch (valueType) {
+        agValue->type = type;
+        switch (type) {
         case GS_TYPE_DOUBLE:
             value = &agValue->value.asDouble;
             break;
@@ -62,7 +62,7 @@ namespace griddb {
             throw GSException(mAggResult, "Not support type from Aggregation result");
             break;
         }
-        GSBool ret = gsGetAggregationValue(mAggResult, value, valueType);
+        GSBool ret = gsGetAggregationValue(mAggResult, value, type);
         if (ret == GS_FALSE) {
             throw GSException(mAggResult,
                     "Value cannot be retrieved from Aggregation result");
