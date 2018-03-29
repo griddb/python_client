@@ -82,7 +82,7 @@ namespace griddb {
 
         //Container name memory is copied via strdup function
         if (name != NULL) {
-//            containerName = (GSChar*) malloc(strlen(name) *sizeof(GSChar));
+            //containerName = (GSChar*) malloc(strlen(name) *sizeof(GSChar));
             containerName = strdup(name);
         }
 

@@ -28,16 +28,18 @@ using namespace std;
 
 namespace griddb {
 
-    class Store {
-        GSGridStore *mStore;
-        map<string,griddb::Container*> mContainerList;
-        friend class StoreFactory;
+class Store {
+    GSGridStore *mStore;
+    map<string,griddb::Container*> mContainerList;
+
+    friend class StoreFactory;
+
     public:
+        bool timestamp_output_with_float;
         ~Store();
         void close(GSBool allRelated);
 
-        Container* put_container(ContainerInfo* containerInfo,
-                        bool modifiable = false);
+        Container* put_container(ContainerInfo* containerInfo, bool modifiable = false);
         Container* get_container(const char* name);
         void drop_container(const char *name);
 
@@ -54,7 +56,7 @@ namespace griddb {
 
     private:
         Store(GSGridStore* store);
-    };
+};
 
 }
 

@@ -1,17 +1,17 @@
 /*
-    Copyright (c) 2017 TOSHIBA Digital Solutions Corporation.
+   Copyright (c) 2017 TOSHIBA Digital Solutions Corporation.
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
 
-        http://www.apache.org/licenses/LICENSE-2.0
+       http://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
 */
 
 %{
@@ -20,7 +20,8 @@
 #include <limits>
 %}
 %ignore griddb::Row;
-%ignore griddb::Container::getGSContainerInfo;
+%ignore griddb::Container::getGSTypeList;
+%ignore griddb::Container::getColumnCount;
 %ignore griddb::RowSet::next_row;
 %ignore griddb::RowSet::get_next_query_analysis;
 %ignore griddb::RowSet::get_next_aggregation;
@@ -149,9 +150,12 @@ bool checkPyObjIsStr(PyObject* obj) {
 }
 
 %fragment("convertTimestampToObject", "header") {
-static PyObject* convertTimestampToObject(GSTimestamp* timestamp) {
+static PyObject* convertTimestampToObject(GSTimestamp* timestamp, bool timestamp_to_float = false) {
     // In C-API there is function PyDateTime_FromTimestamp convert from datetime to local datetime (not UTC).
     // But GridDB use UTC datetime => use the string output from gsFormatTime to convert to UTC datetime
+    if (timestamp_to_float) {
+        return PyFloat_FromDouble((double)(*timestamp) / 1000);
+    }
 
     if (!PyDateTimeAPI) {
         PyDateTime_IMPORT;
@@ -197,7 +201,7 @@ static PyObject* convertTimestampToObject(GSTimestamp* timestamp) {
 */
 %fragment("convertFieldToObject", "header", fragment = "substring",
         fragment = "convertStrToObj", fragment = "convertTimestampToObject") {
-static PyObject* convertFieldToObject(griddb::Field &field) {
+static PyObject* convertFieldToObject(griddb::Field &field, bool timestamp_to_float = false) {
     PyObject* list;
     int listSize, i;
     void* arrayPtr;
@@ -221,7 +225,7 @@ static PyObject* convertFieldToObject(griddb::Field &field) {
             return convertStrToObj(field.value.asString);
 
         case GS_TYPE_TIMESTAMP: {
-            return convertTimestampToObject(&field.value.asTimestamp);
+            return convertTimestampToObject(&field.value.asTimestamp, timestamp_to_float);
         }
 %#if GS_COMPATIBILITY_SUPPORT_3_5
         case GS_TYPE_NULL:
@@ -731,14 +735,23 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
                 if (!SWIG_IsOK(checkConvert)) {
                     return false;
                 }
+                //Because swig function above not check overflow of long type.
+                vbool = convertObjectToDouble(value, &tmpDouble);
+                tmpDouble = PyFloat_AsDouble(value);
+                if (!vbool || tmpDouble < double(std::numeric_limits<long>::min()) ||
+                    tmpDouble > double(std::numeric_limits<long>::max())) {
+                    return false;
+                }
                 break;
 
             case (GS_TYPE_FLOAT):
                 vbool = convertObjectToDouble(value, &tmpDouble);
+/*
                 if (tmpDouble < std::numeric_limits<float>::min() ||
                         tmpDouble > std::numeric_limits<float>::max()) {
                     return false;
                 }
+*/
                 field.value.asFloat = tmpDouble;
                 if (!vbool) {
                     return false;
@@ -750,10 +763,12 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
                 pyobjToStr = convertObjToStr(objectsRepresentation);
                 tmpLongDouble = strtold(pyobjToStr, NULL);
                 field.value.asDouble = tmpLongDouble;
+/*
                 if (tmpLongDouble < std::numeric_limits<double>::min() ||
                      tmpLongDouble > std::numeric_limits<double>::max()) {
                     return false;
                 }
+*/
                 break;
 
             case (GS_TYPE_TIMESTAMP):
@@ -996,6 +1011,18 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
 %#endif
                         return false;
                     }
+                    vbool = convertObjectToDouble(PyList_GetItem(value, i), &tmpDouble);
+                    if (!vbool || tmpDouble < double(std::numeric_limits<long>::min()) ||
+                        tmpDouble > double(std::numeric_limits<long>::max())) {
+%#if GS_COMPATIBILITY_VALUE_1_1_106
+                        free((void*)field.value.asLongArray.elements);
+                        field.value.asLongArray.elements = NULL;
+%#else
+                        free((void*)field.value.asArray.elements.asLong);
+                        field.value.asArray.elements.asLong = NULL;
+%#endif
+                        return false;
+                    }
                 }
                 break;
             case GS_TYPE_FLOAT_ARRAY:
@@ -1022,10 +1049,12 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
 %#endif
                 for (i = 0; i < arraySize; i++) {
                     vbool = convertObjectToDouble(PyList_GetItem(value, i), &tmpDouble);
+/*
                     if (tmpDouble < std::numeric_limits<float>::min() ||
                             tmpDouble > std::numeric_limits<float>::max()) {
                         return false;
                     }
+*/
                     floatPtr[i] = tmpDouble;
                     if (!vbool) {
 %#if GS_COMPATIBILITY_VALUE_1_1_106
@@ -1065,6 +1094,7 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
                     pyobjToStr = convertObjToStr(objectsRepresentation);
                     tmpLongDouble = strtold(pyobjToStr, NULL);
                     *((double *)arrayPtr + i) = tmpLongDouble;
+/*
                     if (tmpLongDouble < std::numeric_limits<double>::min() ||
                          tmpLongDouble > std::numeric_limits<double>::max()) {
 %#if GS_COMPATIBILITY_VALUE_1_1_106
@@ -1076,6 +1106,7 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
 %#endif
                         return false;
                     }
+*/
                 }
                 break;
             case GS_TYPE_TIMESTAMP_ARRAY:
@@ -1514,7 +1545,7 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
     $1 = &tmpAgValue;
 }
 %typemap(argout, fragment = "convertFieldToObject") (griddb::Field *agValue) {
-    $result = convertFieldToObject(*$1);
+    $result = convertFieldToObject(*$1, arg1->timestamp_output_with_float);
 }
 
 /**
@@ -1730,7 +1761,7 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
     }
 
     for (int i = 0; i < $1->get_count(); i++) {
-        PyList_SetItem(outList, i, convertFieldToObject($1->get_field_ptr()[i]));
+        PyList_SetItem(outList, i, convertFieldToObject($1->get_field_ptr()[i], arg1->timestamp_output_with_float));
     }
     $result = outList;
 }
@@ -1801,8 +1832,8 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
         PyErr_SetString(PyExc_ValueError, "Memory allocation for row is error");
         SWIG_fail;
     }
-    PyList_SetItem($result,0,convertFieldToObject(*$1));
-    PyList_SetItem($result,1,convertFieldToObject(*$2));
+    PyList_SetItem($result, 0, convertFieldToObject(*$1, arg1->timestamp_output_with_float));
+    PyList_SetItem($result, 1, convertFieldToObject(*$2, arg1->timestamp_output_with_float));
 }
 
 /**
@@ -1865,7 +1896,7 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
     griddb::Field* keyList = *($1);
     int num;
     for (num = 0; num < size; num++) {
-        PyObject *o = convertFieldToObject(keyList[num]);
+        PyObject *o = convertFieldToObject(keyList[num], arg1->timestamp_output_with_float);
         PyList_SetItem($result, num, o);
     }
 }
@@ -2038,7 +2069,7 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
                 SWIG_fail;
             }
             for (int k = 0; k < rowPtr->get_count(); k++) {
-                PyList_SetItem(outList, k, convertFieldToObject(rowPtr->get_field_ptr()[k]));
+                PyList_SetItem(outList, k, convertFieldToObject(rowPtr->get_field_ptr()[k], arg1->timestamp_output_with_float));
             }
             PyList_SetItem(list, j, outList);
             separateCount += 1;
@@ -2201,44 +2232,32 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
     $2 = (size_t)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size($input)));
     if ($2 > 0) {
         GSContainerInfo* containerInfo = arg1->getGSContainerInfoPtr();
-
+        int columnCount = containerInfo->columnCount;
         GSType type;
-        GSType* typeList = (GSType*) malloc(sizeof(GSType) * containerInfo->columnCount);
-        if (typeList == NULL) {
-            PyErr_SetString(PyExc_ValueError, "Memory allocation error");
-            SWIG_fail;
-        }
-        for (int i = 0; i < containerInfo->columnCount ; i++) {
-           typeList[i] = containerInfo->columnInfoList[i].type;
-        }
 
         $1 = (griddb::Row**) malloc($2 * sizeof(griddb::Row*));
         if ($1 == NULL) {
             PyErr_SetString(PyExc_ValueError, "Memory allocation error");
-            free((void*) typeList);
             SWIG_fail;
         }
         int length;
         for (int i = 0; i < $2; i++) {
             PyObject* rowTmp = PyList_GetItem($input, i);
             length = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(rowTmp)));
-            if (length != containerInfo->columnCount) {
-                free((void*) typeList);
+            if (length != columnCount) {
                 $2 = i;
                 %variable_fail(1, "Row", "num row is different with container info");
             }
             $1[i] = new griddb::Row(length);
             if ($1[i] == NULL) {
                 PyErr_SetString(PyExc_ValueError, "Memory allocation error");
-                free((void*) typeList);
                 SWIG_fail;
             }
             griddb::Field *tmpField = $1[i]->get_field_ptr();
             for (int k = 0; k < length; k++) {
-                type = typeList[k];
+                type = containerInfo->columnInfoList[k].type;
                 PyObject* fieldObj = PyList_GetItem(rowTmp, k);
                 if (!(convertObjectToFieldWithType(tmpField[k], fieldObj, type))) {
-                    free((void*) typeList);
                     $2 = i+1;
                     char gsType[200];
                     sprintf(gsType, "Invalid value for column %d, type should be : %d", k, type);
@@ -2247,7 +2266,6 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
                 }
             }
         }
-        free((void*) typeList);
     }
 }
 
@@ -2425,7 +2443,7 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
                     SWIG_fail;
                 }
                 for (int i = 0; i < $2->get_count(); i++) {
-                    PyList_SetItem(outList, i, convertFieldToObject($2->get_field_ptr()[i]));
+                    PyList_SetItem(outList, i, convertFieldToObject($2->get_field_ptr()[i], arg1->timestamp_output_with_float));
                 }
                 $result = outList;
             }

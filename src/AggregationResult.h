@@ -25,18 +25,23 @@ using namespace std;
 
 namespace griddb {
 
-    class AggregationResult {
-        GSAggregationResult* mAggResult;
-        friend class RowSet;
+class AggregationResult {
+
+    GSAggregationResult* mAggResult;
+
+    friend class RowSet;
+
     public:
+        bool timestamp_output_with_float;
         ~AggregationResult();
         void close();
 
         void get(GSType valueType, griddb::Field *agValue);
         AggregationResult(GSAggregationResult* aggResult);
+
     private:
 
-    };
+};
 
 } /* namespace griddb */
 

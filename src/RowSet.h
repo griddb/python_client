@@ -24,45 +24,46 @@
 
 #include <memory>
 #include <string>
-#include <stdio.h>
-#include <time.h>
+#include "stdio.h"
+#include "time.h"
 
 using namespace std;
 
 namespace griddb {
 
-    /**
-     * Convert from GSRowSet
-     */
-    class RowSet {
-        GSRowSet *mRowSet;
-        GSContainerInfo *mContainerInfo;
-        GSRow *mRow;
-        friend class Query;
-        GSRowSetType mType;
+/**
+ * Convert from GSRowSet
+ */
+class RowSet {
+    GSRowSet *mRowSet;
+    GSContainerInfo *mContainerInfo;
+    GSRow *mRow;
+
+    friend class Query;
+
+    GSRowSetType mType;
+
     public:
+        bool timestamp_output_with_float;
         ~RowSet();
         void close();
-
         int32_t size();
-
         // Iterator
         bool has_next();
-
         void next(GSRowSetType* type, Row* row, bool* hasNextRow,
                 QueryAnalysisEntry** queryAnalysis, AggregationResult** aggResult);
-
         void update(Row* row);
         void remove();
         GSRowSetType type();
-
         void get_column_names(char*** listName, int* num);
         QueryAnalysisEntry* get_next_query_analysis();
         AggregationResult* get_next_aggregation();
         void next_row(Row* rowdata, bool* hasNextRow);
+
     private:
         RowSet(GSRowSet *rowSet, GSContainerInfo *containerInfo, GSRow *mRow);
-    };
+};
+
 }
 
 #endif /* _ROWSET_H_ */

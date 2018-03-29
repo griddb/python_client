@@ -18,14 +18,13 @@
 #include "GSException.h"
 
 namespace griddb {
-    Store::Store(GSGridStore *store) : mStore(store) {
-    }
 
+    Store::Store(GSGridStore *store) : mStore(store), timestamp_output_with_float(false) {
+    }
     Store::~Store() {
-    // allRelated = FALSE, since all container object is managed by Container class
+        // allRelated = FALSE, since all container object is managed by Container class
         close(GS_FALSE);
     }
-
     /**
      * Release all resources created by this gridstore object
      */
@@ -35,7 +34,6 @@ namespace griddb {
             mStore = NULL;
         }
     }
-
     /**
      * Delete container with specified name
      */
@@ -46,7 +44,6 @@ namespace griddb {
             throw GSException(mStore, ret);
         }
     }
-
     /**
      * Return information object of a specific container
      */
@@ -62,7 +59,6 @@ namespace griddb {
 
         return new ContainerInfo(&containerInfo);
     }
-
     /**
      * Put container. Convert from method gsPutContainerGeneral()
      */
@@ -82,7 +78,6 @@ namespace griddb {
 
         return new Container(pContainer, gsInfo);
     }
-
     /**
      * Get container object with corresponding name
      */
@@ -105,7 +100,6 @@ namespace griddb {
         }
         return new Container(pContainer, &containerInfo);
     }
-
     /**
      * Query execution and fetch is carried out on a specified arbitrary number of Query, with the request unit enlarged as much as possible.
      */
@@ -115,7 +109,6 @@ namespace griddb {
             throw GSException(mStore, ret);
         }
     }
-
     /**
      * Get Partition controller. Convert from C-API: gsGetPartitionController
      */
@@ -130,7 +123,6 @@ namespace griddb {
 
         return new PartitionController(partitionController);
     }
-
     /**
      * Create row key predicate. Convert from C-API: gsCreateRowKeyPredicate
      */
@@ -145,7 +137,6 @@ namespace griddb {
 
         return new RowKeyPredicate(predicate);
     }
-
     /**
      * New creation or update operation is carried out on an arbitrary number of rows of multiple Containers, with the request unit enlarged as much as possible.
      */
@@ -210,7 +201,6 @@ namespace griddb {
             throw GSException(mStore, ret);
         }
     }
-
     /**
      * muti_get method. Using gsGetMultipleContainerRows C-API
      */
@@ -227,7 +217,7 @@ namespace griddb {
         }
 
         //Store list of GsRow.
-         GSRow*** listGsRow = (GSRow***) malloc(*containerCount * sizeof(GSRow**));
+        GSRow*** listGsRow = (GSRow***) malloc(*containerCount * sizeof(GSRow**));
 
         //Memory will be free in typemap out
         *listContainerName = (char **) malloc(*containerCount * sizeof(char*));
@@ -254,6 +244,9 @@ namespace griddb {
             }
         }
 
+        //Use this loop to work around the error when call gsGetContainerInfo when process output of gsGetMultipleContainerRows
+        //Need to be refactored when C-API fix error above.
+
         for (int i = 0; i< *containerCount; i++) {
             for (int j = 0; j < (*listRowContainerCount)[i]; j++){
                 //Dummy row
@@ -265,4 +258,5 @@ namespace griddb {
         }
         free((void *) listGsRow);
     }
+
 }

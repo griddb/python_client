@@ -18,7 +18,8 @@
 
 namespace griddb {
 
-    AggregationResult::AggregationResult(GSAggregationResult* aggResult) : mAggResult(aggResult) {
+    AggregationResult::AggregationResult(GSAggregationResult* aggResult) :
+            mAggResult(aggResult), timestamp_output_with_float(false) {
     }
 
     AggregationResult::~AggregationResult() {
@@ -36,7 +37,7 @@ namespace griddb {
     }
 
     /**
-     *Obtains the result of aggregating numeric-type values.
+     * Obtains the result of aggregating numeric-type values.
      */
     void AggregationResult::get(GSType valueType, griddb::Field *agValue) {
         void *value;

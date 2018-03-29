@@ -20,7 +20,7 @@
 namespace griddb {
 
     Container::Container(GSContainer *container, GSContainerInfo* containerInfo) : mContainer(container),
-            mContainerInfo(NULL), mRow(NULL) {
+            mContainerInfo(NULL), mRow(NULL), typeList(NULL), columnCount(0), timestamp_output_with_float(false) {
         GSResult ret;
         if ((ret = gsCreateRowByContainer(mContainer, &mRow)) != GS_RESULT_OK) {
             throw GSException(ret, "can not create row from Container");
@@ -65,6 +65,7 @@ namespace griddb {
         if (mContainer != NULL) {
             gsCloseContainer(&mContainer, allRelated);
             mContainer = NULL;
+            free(typeList);
         }
     }
 
@@ -268,9 +269,8 @@ namespace griddb {
 #if GS_COMPATIBILITY_SUPPORT_3_5
         if (keyFields->type == GS_TYPE_NULL) {
             ret = gsDeleteRow(mContainer, NULL, &exists);
-        } else 
+        } else {
 #endif
-        {
             switch (keyFields->type) {
             case GS_TYPE_STRING:
                 if (mContainerInfo->columnInfoList[0].type != GS_TYPE_STRING) {
@@ -304,7 +304,9 @@ namespace griddb {
             default:
                 throw GSException("wrong type of rowKey timestamp");
             }
+#if GS_COMPATIBILITY_SUPPORT_3_5
         }
+#endif
 
         if (ret != GS_RESULT_OK) {
             throw GSException(mContainer, ret);
@@ -352,13 +354,6 @@ namespace griddb {
     }
 
     /**
-     * Support Container::put()
-     */
-    GSContainerInfo* Container::getGSContainerInfoPtr(){
-        return mContainerInfo;
-    }
-
-    /**
      * Find column index from column name.
      * Return -1 if not found
      */
@@ -369,5 +364,30 @@ namespace griddb {
             }
         }
         return -1;
+    }
+
+    /**
+     * Support put row
+     */
+    GSType* Container::getGSTypeList(){
+        if (typeList == NULL){
+            GSResult ret = gsGetRowSchema(mRow, mContainerInfo);
+            typeList = (GSType*) malloc(sizeof(GSType) * mContainerInfo->columnCount);
+            for (int i = 0; i < mContainerInfo->columnCount; i++){
+                typeList[i] = mContainerInfo->columnInfoList[i].type;
+            }
+        }
+        return typeList;
+    }
+
+    /**
+     * Support put row
+     */
+    int Container::getColumnCount(){
+        if (columnCount == 0){
+            GSResult ret = gsGetRowSchema(mRow, mContainerInfo);
+            columnCount = mContainerInfo->columnCount;
+        }
+        return columnCount;
     }
 }

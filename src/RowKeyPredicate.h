@@ -22,60 +22,56 @@
 #include "gridstore.h"
 #include "Row.h"
 
+
 using namespace std;
 
 namespace griddb {
 
-    class RowKeyPredicate {
-        GSRowKeyPredicate *mPredicate;
-        friend class Store;
+class RowKeyPredicate {
+    GSRowKeyPredicate *mPredicate;
+
+    friend class Store;
+
     public:
+        bool timestamp_output_with_float;
         ~RowKeyPredicate();
         void close();
-
-        GSType get_key_type();
 
         void get_range(Field* startField, Field* finishField);
         void set_range(Field* startKey, Field* finishKey);
         void set_distinct_keys(const Field *keys, size_t keyCount);
         void get_distinct_keys(Field **keys, size_t* keyCount);
-
-        const GSChar* get_start_key_as_string();
-        const GSChar* get_finish_key_as_string();
-        int32_t get_start_key_as_integer();
-        int32_t get_finish_key_as_integer();
-        int64_t get_start_key_as_long();
-        int64_t get_finish_key_as_long();
-        GSTimestamp get_start_key_as_timestamp();
-        GSTimestamp get_finish_key_as_timestamp();
-
-        void get_predicate_distinct_keys_as_string(
-                const GSChar * const ** stringList, size_t *size);
-        void get_predicate_distinct_keys_as_integer(const int **intList,
-                size_t *size);
-        void get_predicate_distinct_keys_as_long(const long **longList,
-                size_t *size);
-        void get_predicate_distinct_keys_as_timestamp(const long **longList,
-                size_t *size);
-
-        void set_start_key_by_string(const GSChar *startKey);
-        void set_finish_key_by_string(const GSChar *finishKey);
-        void set_start_key_by_integer(const int32_t startKey);
-        void set_finish_key_by_integer(const int32_t finishKey);
-        void set_start_key_by_long(const int64_t startKey);
-        void set_finish_key_by_long(const int64_t finishKey);
-        void set_start_key_by_timestamp(const GSTimestamp startKey);
-        void set_finish_key_by_timestamp(const GSTimestamp finishKey);
-
-        void add_key_by_string(const GSChar *key);
-        void add_key_by_integer(int32_t key);
-        void add_key_by_long(int64_t key);
-        void add_key_by_timestamp(GSTimestamp key);
-
+//        const GSChar* get_start_key_as_string();
+//        const GSChar* get_finish_key_as_string();
+//        int32_t get_start_key_as_integer();
+//        int32_t get_finish_key_as_integer();
+//        int64_t get_start_key_as_long();
+//        int64_t get_finish_key_as_long();
+//        GSTimestamp get_start_key_as_timestamp();
+//        GSTimestamp get_finish_key_as_timestamp();
+//        void get_predicate_distinct_keys_as_string(const GSChar * const ** stringList, size_t *size);
+//        void get_predicate_distinct_keys_as_integer(const int **intList, size_t *size);
+//        void get_predicate_distinct_keys_as_long(const long **longList, size_t *size);
+//        void get_predicate_distinct_keys_as_timestamp(const long **longList, size_t *size);
+//        void set_start_key_by_string(const GSChar *startKey);
+//        void set_finish_key_by_string(const GSChar *finishKey);
+//        void set_start_key_by_integer(const int32_t startKey);
+//        void set_finish_key_by_integer(const int32_t finishKey);
+//        void set_start_key_by_long(const int64_t startKey);
+//        void set_finish_key_by_long(const int64_t finishKey);
+//        void set_start_key_by_timestamp(const GSTimestamp startKey);
+//        void set_finish_key_by_timestamp(const GSTimestamp finishKey);
+//        void add_key_by_string(const GSChar *key);
+//        void add_key_by_integer(int32_t key);
+//        void add_key_by_long(int64_t key);
+//        void add_key_by_timestamp(GSTimestamp key);
         GSRowKeyPredicate* gs_ptr();
+        GSType get_key_type();
+
     private:
         RowKeyPredicate(GSRowKeyPredicate *predicate);
-    };
+
+};
 
 } /* namespace griddb */
 

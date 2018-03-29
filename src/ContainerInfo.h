@@ -24,7 +24,7 @@
 #include <utility>
 
 //Support column_info_list attribute
-struct ColumnInfoList{
+struct ColumnInfoList {
     const GSColumnInfo* columnInfo;
     size_t size;
 };
@@ -34,15 +34,16 @@ using namespace std;
 namespace griddb {
 
 class ContainerInfo {
-        /**
-         * Contains information about a specific container
-         */
-        GSContainerInfo mContainerInfo;
+    /**
+     * Contains information about a specific container
+     */
+    GSContainerInfo mContainerInfo;
+
     public:
         ContainerInfo(GSContainerInfo *containerInfo);
         ContainerInfo(const GSChar* containerName, const GSColumnInfo* props,
-            int propsCount, GSContainerType containerType = GS_CONTAINER_COLLECTION,
-            bool rowKeyAssigned = false, ExpirationInfo* expiration = NULL);
+                int propsCount, GSContainerType containerType = GS_CONTAINER_COLLECTION,
+                bool rowKeyAssigned = false, ExpirationInfo* expiration = NULL);
         ~ContainerInfo();
 
         void set_name(GSChar* containerName);
@@ -68,7 +69,8 @@ class ContainerInfo {
         const GSChar* get_data_affinity();
 
     private:
-        void init(const GSChar* name, GSContainerType type, const GSColumnInfo* props, int propsCount, bool rowKeyAssigned, ExpirationInfo* expiration);
+        void init(const GSChar* name, GSContainerType type, const GSColumnInfo* props,
+                int propsCount, bool rowKeyAssigned, ExpirationInfo* expiration);
 };
 
 } /* namespace griddb */

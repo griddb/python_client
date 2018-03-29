@@ -20,24 +20,22 @@
 
 namespace griddb {
 
-RowSet::RowSet(GSRowSet *rowSet, GSContainerInfo *containerInfo, GSRow *gsRow) :
-        mRowSet(rowSet), mContainerInfo(containerInfo), mRow(gsRow) {
-    if (mRowSet != NULL) {
-        mType = gsGetRowSetType(mRowSet);
-    } else {
-        throw new GSException(mRowSet, "mRowSet is NULL");
+    RowSet::RowSet(GSRowSet *rowSet, GSContainerInfo *containerInfo, GSRow *gsRow) :
+        mRowSet(rowSet), mContainerInfo(containerInfo), mRow(gsRow), timestamp_output_with_float(false) {
+        if (mRowSet != NULL) {
+            mType = gsGetRowSetType(mRowSet);
+        } else {
+            throw new GSException(mRowSet, "mRowSet is NULL");
+        }
     }
-}
-
-/**
- * Check if RowSet has next row data. Convert from gsHasNextRow.
- */
-bool RowSet::has_next() {
-
-    GSRowSetType type;
-    bool hasNextRow = false;
-    type = this->type();
-    switch(type) {
+    /**
+     * Check if RowSet has next row data. Convert from gsHasNextRow.
+     */
+    bool RowSet::has_next() {
+        GSRowSetType type;
+        bool hasNextRow = false;
+        type = this->type();
+        switch(type) {
         case (GS_ROW_SET_CONTAINER_ROWS):
         case (GS_ROW_SET_AGGREGATION_RESULT):
             return (bool) gsHasNextRow(mRowSet);
@@ -45,57 +43,52 @@ bool RowSet::has_next() {
         default:
             return true;
             break;
+        }
     }
-}
-
-RowSet::~RowSet() {
-    close();
-}
-
-/**
- * Close rowset.
- */
-void RowSet::close() {
-    if (mRowSet != NULL) {
-        gsCloseRowSet(&mRowSet);
-        mRowSet = NULL;
+    RowSet::~RowSet() {
+        close();
     }
+    /**
+     * Close rowset.
+     */
+    void RowSet::close() {
+        if (mRowSet != NULL) {
+            gsCloseRowSet(&mRowSet);
+            mRowSet = NULL;
+        }
 
-}
-
-/**
- * Update current row from RowSet
- */
-void RowSet::update(Row* row) {
-    row->set_for_row(mRow);
-    GSResult ret = gsUpdateCurrentRow(mRowSet, mRow);
-
-    if (ret != GS_RESULT_OK) {
-        throw new GSException(mRowSet, ret);
     }
-}
+    /**
+     * Update current row from RowSet
+     */
+    void RowSet::update(Row* row) {
+        row->set_for_row(mRow);
+        GSResult ret = gsUpdateCurrentRow(mRowSet, mRow);
 
-/**
- * Get next row data. Convert from gsGetNextRow.
- */
-void RowSet::next_row(Row* rowdata, bool* hasNextRow) {
-    *hasNextRow = this->has_next();
-    if (*hasNextRow) {
-        GSResult ret = gsGetNextRow(mRowSet, mRow);
         if (ret != GS_RESULT_OK) {
             throw new GSException(mRowSet, ret);
         }
-        rowdata->set_from_row(mRow);
     }
-}
-
-/**
- * Get next row
- */
-void RowSet::next(GSRowSetType* type, Row* row, bool* hasNextRow,
-        QueryAnalysisEntry** queryAnalysis, AggregationResult** aggResult){
-    *type = this->type();
-    switch(*type) {
+    /**
+     * Get next row data. Convert from gsGetNextRow.
+     */
+    void RowSet::next_row(Row* rowdata, bool* hasNextRow) {
+        *hasNextRow = this->has_next();
+        if (*hasNextRow) {
+            GSResult ret = gsGetNextRow(mRowSet, mRow);
+            if (ret != GS_RESULT_OK) {
+                throw new GSException(mRowSet, ret);
+            }
+            rowdata->set_from_row(mRow);
+        }
+    }
+    /**
+     * Get next row
+     */
+    void RowSet::next(GSRowSetType* type, Row* row, bool* hasNextRow,
+            QueryAnalysisEntry** queryAnalysis, AggregationResult** aggResult){
+        *type = this->type();
+        switch(*type) {
         case (GS_ROW_SET_CONTAINER_ROWS):
             this->next_row(row, hasNextRow);
             break;
@@ -107,71 +100,71 @@ void RowSet::next(GSRowSetType* type, Row* row, bool* hasNextRow,
             *queryAnalysis = this->get_next_query_analysis();
             *hasNextRow = true;
             break;
-    }
-}
-
-/**
- * Return size of this rowset
- */
-int32_t RowSet::size() {
-    return gsGetRowSetSize(mRowSet);
-}
-
-/**
- * Delete current row data. Convert from C-API: gsDeleteCurrentRow.
- */
-void RowSet::remove() {
-    GSResult ret = gsDeleteCurrentRow(mRowSet);
-    if (ret != GS_RESULT_OK) {
-        throw new GSException(mRowSet, ret);
-    }
-}
-
-/**
- * Moves to the next Row in a Row set and returns the aggregation result at the moved position.
- */
-AggregationResult* RowSet::get_next_aggregation() {
-    GSAggregationResult* pAggResult;
-
-    GSResult ret = gsGetNextAggregation(mRowSet, &pAggResult);
-    if (ret != GS_RESULT_OK) {
-        throw GSException(mRowSet, ret);
-    }
-
-    return new AggregationResult(pAggResult);
-}
-
-/*
- * Get current row type. Convert from C-API: gsGetRowSetType.
- */
-GSRowSetType RowSet::type(){
-    return mType;
-}
-
-/**
- * Get next query analysis
- */
-QueryAnalysisEntry* RowSet::get_next_query_analysis(){
-    GSQueryAnalysisEntry queryAnalysis;
-    GSResult ret;
-    ret = gsGetNextQueryAnalysis(mRowSet, &queryAnalysis);
-    if (ret != GS_RESULT_OK) {
-        throw GSException(mRowSet, ret);
-    }
-    return new QueryAnalysisEntry(&queryAnalysis);
-}
-
-/**
- * Get column name from RowSet. Use in python only.
- */
-void RowSet::get_column_names(char*** listName, int* num){
-    if (mContainerInfo){
-        //Memory will be free from typemap
-        (*listName) = (char **) malloc(mContainerInfo->columnCount * sizeof(char*));
-        *num = mContainerInfo->columnCount;
-        for(int i = 0; i < mContainerInfo->columnCount; i++){
-            (*listName)[i] = (char*) mContainerInfo->columnInfoList[i].name;
         }
     }
-}
+    /**
+     * Return size of this rowset
+     */
+    int32_t RowSet::size() {
+        return gsGetRowSetSize(mRowSet);
+    }
+
+    /**
+     * Delete current row data. Convert from C-API: gsDeleteCurrentRow.
+     */
+    void RowSet::remove() {
+        GSResult ret = gsDeleteCurrentRow(mRowSet);
+        if (ret != GS_RESULT_OK) {
+            throw new GSException(mRowSet, ret);
+        }
+    }
+
+    /**
+     * Moves to the next Row in a Row set and returns the aggregation result at the moved position.
+     */
+    AggregationResult* RowSet::get_next_aggregation() {
+        GSAggregationResult* pAggResult;
+
+        GSResult ret = gsGetNextAggregation(mRowSet, &pAggResult);
+        if (ret != GS_RESULT_OK) {
+            throw GSException(mRowSet, ret);
+        }
+
+        return new AggregationResult(pAggResult);
+    }
+
+    /**
+     * Get current row type. Convert from C-API: gsGetRowSetType.
+     */
+    GSRowSetType RowSet::type(){
+        return mType;
+    }
+
+    /**
+     * Get next query analysis
+     */
+    QueryAnalysisEntry* RowSet::get_next_query_analysis(){
+        GSQueryAnalysisEntry queryAnalysis;
+        GSResult ret;
+        ret = gsGetNextQueryAnalysis(mRowSet, &queryAnalysis);
+        if (ret != GS_RESULT_OK) {
+            throw GSException(mRowSet, ret);
+        }
+        return new QueryAnalysisEntry(&queryAnalysis);
+    }
+
+    /**
+     * Get column name from RowSet. Use in python only.
+     */
+    void RowSet::get_column_names(char*** listName, int* num){
+        if (mContainerInfo){
+            //Memory will be free from typemap
+            (*listName) = (char **) malloc(mContainerInfo->columnCount * sizeof(char*));
+            *num = mContainerInfo->columnCount;
+            for(int i = 0; i < mContainerInfo->columnCount; i++){
+                (*listName)[i] = (char*) mContainerInfo->columnInfoList[i].name;
+            }
+        }
+    }
+
 }
