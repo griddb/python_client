@@ -63,10 +63,20 @@ namespace griddb {
                 case GS_TYPE_STRING_ARRAY:
 #if GS_COMPATIBILITY_VALUE_1_1_106
                     if (mFields[i].value.asStringArray.elements) {
+                        for (int j = 0; j < mFields[i].value.asStringArray.size; j++) {
+                            if (mFields[i].value.asStringArray.elements[j]) {
+                                free(const_cast<GSChar*> (mFields[i].value.asStringArray.elements[j]));
+                            }
+                        }
                         free(const_cast<GSChar**> (mFields[i].value.asStringArray.elements));
                     }
 #else
                     if (mFields[i].value.asArray.elements.asString) {
+                        for (int j = 0; j < mFields[i].value.asArray.length; j++) {
+                            if (mFields[i].value.asArray.elements.asString[j]) {
+                                free(const_cast<GSChar*> (mFields[i].value.asArray.elements.asString[j]));
+                            }
+                        }
                         free(const_cast<GSChar**> (mFields[i].value.asArray.elements.asString));
                     }
 #endif
@@ -258,14 +268,15 @@ namespace griddb {
             GSChar** tmpArr;
 #if GS_COMPATIBILITY_VALUE_1_1_106
             tmpArr = (GSChar**) malloc(sizeof(GSChar*) * field->value.asStringArray.size);
-            memset(tmpArr, 0x0, sizeof(GSChar*) * field->value.asStringArray.size);
-            memcpy(tmpArr, field->value.asStringArray.elements, sizeof(GSChar*) * field.value.asStringArray.size);
+            for(int j = 0; j < field->value.asStringArray.size; j++) {
+                tmpArr[j] = strdup(field->value.asStringArray.elements[j]);
+            }
             field->value.asStringArray.elements = tmpArr;
 #else
             tmpArr = (GSChar**) malloc(sizeof(GSChar*) * field->value.asArray.length);
-            memset(tmpArr, 0x0, sizeof(GSChar*) * field->value.asArray.length);
-            memcpy(tmpArr, field->value.asArray.elements.asString,
-                    sizeof(GSChar*) * field->value.asArray.length);
+            for(int j = 0; j < field->value.asArray.length; j++) {
+                tmpArr[j] = strdup(field->value.asArray.elements.asString[j]);
+            }
             field->value.asArray.elements.asString = tmpArr;
 #endif
             break;
@@ -564,7 +575,7 @@ namespace griddb {
         }
 
         if (ret != GS_RESULT_OK) {
-            throw GSException(ret, "error set for row");
+            throw GSException("Can not set value for row field");
         }
     }
 
