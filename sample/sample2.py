@@ -13,9 +13,9 @@ gridstore = factory.get_store(host=argv[1], port=int(argv[2]), cluster_name=argv
 
 #Create TimeSeries
 conInfo = griddb.ContainerInfo("point01",
-				[["timestamp", griddb.GS_TYPE_TIMESTAMP, 0],
-	            ["active", griddb.GS_TYPE_BOOL, 0],
-	            ["voltage", griddb.GS_TYPE_DOUBLE, 0]],
+				[["timestamp", griddb.GS_TYPE_TIMESTAMP],
+	            ["active", griddb.GS_TYPE_BOOL],
+	            ["voltage", griddb.GS_TYPE_DOUBLE]],
 			griddb.GS_CONTAINER_TIME_SERIES, True)
 ts = gridstore.put_container(conInfo)
 
