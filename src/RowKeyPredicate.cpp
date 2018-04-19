@@ -20,7 +20,7 @@
 
 namespace griddb {
 
-    RowKeyPredicate::RowKeyPredicate(GSRowKeyPredicate *predicate): mPredicate(predicate),
+    RowKeyPredicate::RowKeyPredicate(GSRowKeyPredicate *predicate, GSType type): mPredicate(predicate), mType(type),
             timestamp_output_with_float(false){
     }
     /**
@@ -149,12 +149,13 @@ namespace griddb {
      * Get key type. Convert from C-API: gsGetPredicateKeyType
      */
     GSType RowKeyPredicate::get_key_type() {
-        GSType key;
-        GSResult ret = gsGetPredicateKeyType(mPredicate, &key);
-        if (ret != GS_RESULT_OK) {
-            throw new GSException(mPredicate, ret);
-        }
-        return key;
+        return mType;
+//        GSType key;
+//        GSResult ret = gsGetPredicateKeyType(mPredicate, &key);
+//        if (ret != GS_RESULT_OK) {
+//            throw new GSException(mPredicate, ret);
+//        }
+//        return key;
     }
     /*
      * Returns the value of Row key at the start and end position of the range condition

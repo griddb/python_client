@@ -21,11 +21,12 @@
 namespace griddb {
 
     RowSet::RowSet(GSRowSet *rowSet, GSContainerInfo *containerInfo, GSRow *gsRow) :
-        mRowSet(rowSet), mContainerInfo(containerInfo), mRow(gsRow), timestamp_output_with_float(false) {
+        mRowSet(rowSet), mContainerInfo(containerInfo), mRow(gsRow),
+        timestamp_output_with_float(false), typeList(NULL) {
         if (mRowSet != NULL) {
             mType = gsGetRowSetType(mRowSet);
         } else {
-            throw new GSException(mRowSet, "mRowSet is NULL");
+            throw GSException(mRowSet, "mRowSet is NULL");
         }
     }
     /**
@@ -47,6 +48,9 @@ namespace griddb {
     }
     RowSet::~RowSet() {
         close();
+        if (typeList) {
+            free(typeList);
+        }
     }
     /**
      * Close rowset.
@@ -66,7 +70,7 @@ namespace griddb {
         GSResult ret = gsUpdateCurrentRow(mRowSet, mRow);
 
         if (ret != GS_RESULT_OK) {
-            throw new GSException(mRowSet, ret);
+            throw GSException(mRowSet, ret);
         }
     }
     /**
@@ -77,7 +81,7 @@ namespace griddb {
         if (*hasNextRow) {
             GSResult ret = gsGetNextRow(mRowSet, mRow);
             if (ret != GS_RESULT_OK) {
-                throw new GSException(mRowSet, ret);
+                throw GSException(mRowSet, ret);
             }
             rowdata->set_from_row(mRow);
         }
@@ -115,7 +119,7 @@ namespace griddb {
     void RowSet::remove() {
         GSResult ret = gsDeleteCurrentRow(mRowSet);
         if (ret != GS_RESULT_OK) {
-            throw new GSException(mRowSet, ret);
+            throw GSException(mRowSet, ret);
         }
     }
 
@@ -165,6 +169,26 @@ namespace griddb {
                 (*listName)[i] = (char*) mContainerInfo->columnInfoList[i].name;
             }
         }
+    }
+
+    /**
+     * Support put row
+     */
+    GSType* RowSet::getGSTypeList(){
+        if (typeList == NULL){
+            typeList = (GSType*) malloc(sizeof(GSType) * mContainerInfo->columnCount);
+            for (int i = 0; i < mContainerInfo->columnCount; i++){
+                typeList[i] = mContainerInfo->columnInfoList[i].type;
+            }
+        }
+        return typeList;
+    }
+
+    /**
+     * Support put row
+     */
+    int RowSet::getColumnCount(){
+        return mContainerInfo->columnCount;
     }
 
 }

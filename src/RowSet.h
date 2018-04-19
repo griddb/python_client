@@ -38,6 +38,7 @@ class RowSet {
     GSRowSet *mRowSet;
     GSContainerInfo *mContainerInfo;
     GSRow *mRow;
+    GSType* typeList;
 
     friend class Query;
 
@@ -59,6 +60,8 @@ class RowSet {
         QueryAnalysisEntry* get_next_query_analysis();
         AggregationResult* get_next_aggregation();
         void next_row(Row* rowdata, bool* hasNextRow);
+        GSType* getGSTypeList();
+        int getColumnCount();
 
     private:
         RowSet(GSRowSet *rowSet, GSContainerInfo *containerInfo, GSRow *mRow);

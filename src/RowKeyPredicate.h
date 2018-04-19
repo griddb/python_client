@@ -29,6 +29,7 @@ namespace griddb {
 
 class RowKeyPredicate {
     GSRowKeyPredicate *mPredicate;
+    GSType mType;
 
     friend class Store;
 
@@ -69,7 +70,7 @@ class RowKeyPredicate {
         GSType get_key_type();
 
     private:
-        RowKeyPredicate(GSRowKeyPredicate *predicate);
+        RowKeyPredicate(GSRowKeyPredicate *predicate, GSType type);
 
 };
 

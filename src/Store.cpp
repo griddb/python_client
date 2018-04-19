@@ -143,7 +143,7 @@ namespace griddb {
             throw GSException(mStore, ret);
         }
 
-        return new RowKeyPredicate(predicate);
+        return new RowKeyPredicate(predicate, type);
     }
     /**
      * New creation or update operation is carried out on an arbitrary number of rows of multiple Containers, with the request unit enlarged as much as possible.
