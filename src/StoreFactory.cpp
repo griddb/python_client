@@ -17,6 +17,8 @@
 #include "StoreFactory.h"
 #include "GSException.h"
 
+#define MAX_PROPS 10
+
 namespace griddb {
 
     StoreFactory::StoreFactory() : mFactory(NULL) {
@@ -45,16 +47,8 @@ namespace griddb {
      * set GSPropertyEntry
      */
     void StoreFactory::set_property_entry(GSPropertyEntry *prop, const char* name, const char* value) {
-        if (name) {
-            prop->name = strdup(name);
-        } else {
-            prop->name = "";
-        }
-        if (value) {
-            prop->value = strdup(value);
-        } else {
-            prop->value = "";
-        }
+        prop->name = name;
+        prop->value = value;
     }
     /*
      * Check whether in MULTICAST mode
@@ -83,39 +77,51 @@ namespace griddb {
     Store* StoreFactory::get_store(const char* host, int32_t port, const char* cluster_name,
             const char* database, const char* user, const char* password,
             const char* notification_member, const char* notification_provider) {
-        size_t propsCount;
-        GSPropertyEntry* props;
         int index = 0;
+        GSPropertyEntry local_props[MAX_PROPS] = {0};
+        std::string lport = std::to_string((long long int)port);
+
         if (check_multicast(host)) {
-            propsCount = 6;
-            props = (GSPropertyEntry*) malloc(propsCount * sizeof(GSPropertyEntry));
-            set_property_entry(&props[0], "notificationAddress", host);
-            set_property_entry(&props[1], "notificationPort", to_string((long long int) port).c_str());
+            set_property_entry(&local_props[0], "notificationAddress", host);
+            set_property_entry(&local_props[1], "notificationPort", lport.c_str());
             index = 2;
         } else {
-            if (host && strlen(host)) {
-                propsCount = 7;
-                props = (GSPropertyEntry*) malloc(propsCount * sizeof(GSPropertyEntry));
-                set_property_entry(&props[0], "host", host);
-                set_property_entry(&props[1], "port", to_string((long long int) port).c_str());
-                index = 2;
-            } else {
-                propsCount = 5;
-                props = (GSPropertyEntry*) malloc(propsCount * sizeof(GSPropertyEntry));
+            if (host) {
+                set_property_entry(&local_props[0], "host", host);
+                index++;
+                set_property_entry(&local_props[1], "port", lport.c_str());
+                index++;
             }
-            if (notification_member && strlen(notification_member) != 0) {
-                set_property_entry(&props[propsCount - 1], "notificationMember", notification_member);
-            } else {
-                set_property_entry(&props[propsCount - 1], "notificationProvider", notification_provider);
+            if (notification_member) {
+                set_property_entry(&local_props[index], "notificationMember", notification_member);
+                index++;
             }
+            if (notification_provider) {
+                set_property_entry(&local_props[index], "notificationProvider", notification_provider);
+                index++;
+            }
+
         }
-        set_property_entry(&props[index], "clusterName", cluster_name);
-        set_property_entry(&props[index + 1], "database", database);
-        set_property_entry(&props[index + 2], "user", user);
-        set_property_entry(&props[index + 3], "password", password);
+        if (cluster_name) {
+            set_property_entry(&local_props[index], "clusterName", cluster_name);
+            index++;
+        }
+        if (database) {
+            set_property_entry(&local_props[index], "database", database);
+            index++;
+        }
+        if (user) {
+            set_property_entry(&local_props[index], "user", user);
+            index++;
+
+        }
+        if (password) {
+            set_property_entry(&local_props[index], "password", password);
+            index++;
+        }
 
         GSGridStore *store;
-        GSResult ret = gsGetGridStore(mFactory, props, propsCount, &store);
+        GSResult ret = gsGetGridStore(mFactory, local_props, index, &store);
 
         // Check ret, if error, throw exception
         if (ret != GS_RESULT_OK) {
