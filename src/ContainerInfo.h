@@ -50,7 +50,7 @@ class ContainerInfo {
         ContainerInfo(GSContainerInfo *containerInfo);
         ContainerInfo(const GSChar* name, const GSColumnInfo* props,
                 int propsCount, GSContainerType type = GS_CONTAINER_COLLECTION,
-                bool row_key = false, ExpirationInfo* expiration = NULL);
+                bool row_key = true, ExpirationInfo* expiration = NULL);
         ~ContainerInfo();
 
         void set_name(GSChar* containerName);
