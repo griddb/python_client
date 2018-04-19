@@ -32,10 +32,10 @@ from enum import IntEnum
 
 %pythoncode {
 class ContainerType(IntEnum):
-    COLLECTION = 0
-    TIME_SERIES = 1
     def __int__(self):
         return self._value
+    COLLECTION = 0
+    TIME_SERIES = 1
 class IndexType(IntEnum):
     def __int__(self):
         return int(self.value)
@@ -64,6 +64,8 @@ class TimeUnit(IntEnum):
     SECOND = 5
     MILLISECOND = 6
 class Type(IntEnum):
+    def __int__(self):
+        return self._value
     STRING = 0
     BOOL = 1
     BYTE = 2
@@ -88,8 +90,6 @@ class Type(IntEnum):
     NULL = -1
 %#endif
 
-    def __int__(self):
-        return self._value
 class TypeOption(IntEnum):
     def __int__(self):
         return int(self.value)
