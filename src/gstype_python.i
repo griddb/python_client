@@ -158,7 +158,7 @@ static PyObject* convertTimestampToObject(GSTimestamp* timestamp, bool timestamp
     // In C-API there is function PyDateTime_FromTimestamp convert from datetime to local datetime (not UTC).
     // But GridDB use UTC datetime => use the string output from gsFormatTime to convert to UTC datetime
     if (timestamp_to_float) {
-        return PyFloat_FromDouble((double)(*timestamp) / 1000);
+        return PyFloat_FromDouble(((double)(*timestamp)) / 1000);
     }
 
     if (!PyDateTimeAPI) {
@@ -176,9 +176,11 @@ static PyObject* convertTimestampToObject(GSTimestamp* timestamp, bool timestamp
     int hour;
     int minute;
     int second;
-    int usecond;
-    sscanf(strBuf, "%d-%d-%dT%d:%d:%d.%dZ", &year, &month, &day, &hour, &minute, &second, &usecond);
-    dateTime = PyDateTime_FromDateAndTime(year, month, day, hour, minute, second, usecond);
+    int miliSecond;
+    int microSecond;
+    sscanf(strBuf, "%d-%d-%dT%d:%d:%d.%dZ", &year, &month, &day, &hour, &minute, &second, &miliSecond);
+    microSecond = miliSecond * 1000;
+    dateTime = PyDateTime_FromDateAndTime(year, month, day, hour, minute, second, microSecond);
     return dateTime;
 }
 }
