@@ -60,7 +60,9 @@ namespace griddb {
         GSChar bExists;
 
         GSResult ret = gsGetContainerInfo(mStore, name, &containerInfo, &bExists);
-
+        if (bExists == false) {
+            return NULL;
+        }
         if (ret != GS_RESULT_OK) {
             throw GSException(mStore, ret);
         }
@@ -98,6 +100,10 @@ namespace griddb {
             throw GSException(mStore, ret);
         }
 
+        if (pContainer == NULL) {
+            //If not found container, return NULL in target language
+            return NULL;
+        }
         GSContainerInfo containerInfo;
         GSChar bExists;
 
@@ -106,6 +112,7 @@ namespace griddb {
         if (ret != GS_RESULT_OK) {
             throw GSException(mStore, ret);
         }
+
         return new Container(pContainer, &containerInfo);
     }
     /**
