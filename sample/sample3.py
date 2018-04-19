@@ -22,7 +22,7 @@ rs = query.fetch()
 while rs.has_next():
 	data = rs.next()
 	timestamp = calendar.timegm(data[0].timetuple())
-	gsTS = (griddb.TimestampUtils.get_time_mills(timestamp));
+	gsTS = (griddb.TimestampUtils.get_time_millis(timestamp));
 
 	#Perform aggregation query to get average value 
 	#during 10 minutes later and 10 minutes earlier from this point

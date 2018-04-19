@@ -33,7 +33,7 @@ class TimestampUtils {
 //        static GSTimestamp add_time(GSTimestamp timestamp, int32_t amount, GSTimeUnit timeUnit);
 //        static string format_time(GSTimestamp timestamp, size_t bufSize);
 //        static GSTimestamp parse(char* str);
-        static long get_time_mills(double timestamp);
+        static long get_time_millis(double timestamp);
 };
 
 } /* namespace griddb */
