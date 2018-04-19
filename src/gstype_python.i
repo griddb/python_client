@@ -2312,6 +2312,7 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
 //Read only attribute RowSet::type
 %attribute(griddb::RowSet, GSRowSetType, type, type);
 //Read only attribute Store::partition_info
+%newobject griddb::Store::partition_info;
 %attribute(griddb::Store, griddb::PartitionController*, partition_info, partition_info);
 //Read and write attribute ContainerInfo::name
 %attribute(griddb::ContainerInfo, GSChar*, name, get_name, set_name);
@@ -2540,32 +2541,20 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
     }
     hasNextRowTmp = true;
     $3 = &hasNextRowTmp;
-    queryAnalysisTmp= new griddb::QueryAnalysisEntry(NULL);
-    if (queryAnalysisTmp == NULL) {
-        PyErr_SetString(PyExc_ValueError, "Memory allocation error");
-        SWIG_fail;
-    }
     $4 = &queryAnalysisTmp;
-    aggResultTmp = new griddb::AggregationResult(NULL);
-    if (aggResultTmp == NULL) {
-        PyErr_SetString(PyExc_ValueError, "Memory allocation error");
-        SWIG_fail;
-    }
     $5 = &aggResultTmp;
 }
 
 %typemap(argout, fragment = "convertFieldToObject") (GSRowSetType* type, griddb::Row* row, bool* hasNextRow,
     griddb::QueryAnalysisEntry** queryAnalysis, griddb::AggregationResult** aggResult) {
 
-    std::shared_ptr<griddb::AggregationResult>* agg;
-    std::shared_ptr<griddb::QueryAnalysisEntry>* queryAnaly;
-
     PyObject *resultobj;
     PyObject *outList;
-    std::shared_ptr< griddb::AggregationResult > *smartresult;
-    std::shared_ptr< griddb::QueryAnalysisEntry > *smartresult2;
+    std::shared_ptr< griddb::AggregationResult > *aggResult = NULL;
+    std::shared_ptr< griddb::QueryAnalysisEntry > *queryAnalyResult = NULL;
     switch(*$1) {
         case (GS_ROW_SET_CONTAINER_ROWS):
+
             if (*$3 == false) {
                 PyErr_SetNone(PyExc_StopIteration);
                 $result= NULL;
@@ -2590,22 +2579,20 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
                 $result= NULL;
 
             } else {
-                smartresult = *$5 ? new std::shared_ptr<  griddb::AggregationResult >(*$5 SWIG_NO_NULL_DELETER_0) : 0;
-                resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(smartresult), SWIGTYPE_p_std__shared_ptrT_griddb__AggregationResult_t, 0 | SWIG_POINTER_OWN);
+                aggResult = *$5 ? new std::shared_ptr<  griddb::AggregationResult >(*$5 SWIG_NO_NULL_DELETER_SWIG_POINTER_OWN) : 0;
+                resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(aggResult), SWIGTYPE_p_std__shared_ptrT_griddb__AggregationResult_t, SWIG_POINTER_OWN | SWIG_POINTER_OWN);
                 $result = resultobj;
             }
             break;
         default:
-            smartresult2 = *$4 ? new std::shared_ptr<  griddb::QueryAnalysisEntry >(*$4 SWIG_NO_NULL_DELETER_0) : 0;
-            resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(smartresult2), SWIGTYPE_p_std__shared_ptrT_griddb__QueryAnalysisEntry_t, 0 | SWIG_POINTER_OWN);
+            queryAnalyResult = *$4 ? new std::shared_ptr<  griddb::QueryAnalysisEntry >(*$4 SWIG_NO_NULL_DELETER_SWIG_POINTER_OWN) : 0;
+            resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(queryAnalyResult), SWIGTYPE_p_std__shared_ptrT_griddb__QueryAnalysisEntry_t, SWIG_POINTER_OWN | SWIG_POINTER_OWN);
             $result = resultobj;
-
             break;
     }
     if ($2) {
         delete $2;
     }
-
     return $result;
 }
 
@@ -2613,13 +2600,5 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
         griddb::QueryAnalysisEntry** queryAnalysis, griddb::AggregationResult** aggResult) {
     if ($2) {
         delete $2;
-    }
-
-    if (*$4) {
-        delete *$4;
-    }
-
-    if ($5) {
-        delete *$5;
     }
 }

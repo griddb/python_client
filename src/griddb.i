@@ -16,10 +16,30 @@
 
 %ignore griddb::Container::getGSContainerPtr;
 %ignore griddb::Row;
+%ignore griddb::AggregationResult::AggregationResult;
+%ignore griddb::QueryAnalysisEntry::QueryAnalysisEntry;
+%ignore griddb::TimeSeriesProperties;
+%ignore griddb::GSException::GSException;
+%ignore griddb::TimestampUtils::TimestampUtils;
 
 %include "gstype.i"
 
 %include <std_except.i>
+
+//Mark these methods below return new object, need to be free by target language
+%feature("new") griddb::Container::query;
+//%feature("new") griddb::ContainerInfo::get_time_series_properties;
+%feature("new") griddb::Query::fetch;
+%feature("new") griddb::Query::get_row_set;
+%feature("new") griddb::RowSet::get_next_query_analysis;
+%feature("new") griddb::RowSet::get_next_aggregation;
+%feature("new") griddb::Store::put_container;
+%feature("new") griddb::Store::get_container;
+%feature("new") griddb::Store::get_container_info;
+%feature("new") griddb::Store::create_row_key_predicate;
+%feature("new") griddb::Store::partition_info;
+%feature("new") griddb::StoreFactory::get_store;
+%feature("new") griddb::StoreFactory::get_instance;
 
 #if defined(SWIGPYTHON)
 %include "gstype_python.i"
