@@ -33,4 +33,4 @@ while rs.has_next():
 		#Get aggregation result
 		aggResult = aggRs.next()
 		#Convert result to double and print out
-		print("[Timestamp={0}] Average voltage = {1}".format(timestamp, aggResult.get(griddb.GS_TYPE_DOUBLE )))
+		print("[Timestamp={0}] Average voltage = {1}".format(timestamp, aggResult.get(griddb.Type.DOUBLE )))

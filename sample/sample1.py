@@ -16,21 +16,21 @@ try:
 
 	#Create Collection
 	conInfo = griddb.ContainerInfo("col01",
-					[["name", griddb.GS_TYPE_STRING],
-		            ["status", griddb.GS_TYPE_BOOL],
-		            ["count", griddb.GS_TYPE_LONG],	
-		            ["lob", griddb.GS_TYPE_BLOB]],
-		            griddb.GS_CONTAINER_COLLECTION, True)
+					[["name", griddb.Type.STRING],
+		            ["status", griddb.Type.BOOL],
+		            ["count", griddb.Type.LONG],
+		            ["lob", griddb.Type.BLOB]],
+		            griddb.ContainerType.COLLECTION, True)
 	col = gridstore.put_container(conInfo)
 
 	#Change auto commit mode to false
 	col.set_auto_commit(False)
 
 	#Set an index on the Row-key Column
-	col.create_index("name", griddb.GS_INDEX_FLAG_DEFAULT)
+	col.create_index("name", griddb.IndexType.DEFAULT)
 
 	#Set an index on the Column
-	col.create_index("count", griddb.GS_INDEX_FLAG_DEFAULT)
+	col.create_index("count", griddb.IndexType.DEFAULT)
 
 	#Put row: RowKey is "name01"
 	ret = col.put(["name01", False, 1, blob])
