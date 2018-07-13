@@ -270,6 +270,7 @@ namespace griddb {
                 Row* tmpRow = new Row(1, NULL);
                 tmpRow->set_from_row((listGsRow)[i][j]);
                 (*listRow).push_back(tmpRow);
+            	gsCloseRow(&(listGsRow)[i][j]);
             }
             free((void *) (listGsRow)[i]);
         }

@@ -2024,6 +2024,8 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
 
         //Add entry to map
         PyDict_SetItem(dict, key, list);
+        Py_DECREF(key);
+        Py_DECREF(list);
     }
 
     $result = dict;
