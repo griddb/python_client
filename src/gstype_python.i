@@ -39,10 +39,10 @@ class ContainerType(IntEnum):
 class IndexType(IntEnum):
     def __int__(self):
         return int(self.value)
-    DEFAULT = 0
-    TREE = 1
-    HASH = 2
-    SPATIAL = 3
+    DEFAULT = -1
+    TREE = 1 << 0
+    HASH = 1 << 1
+    SPATIAL = 1 << 2
 class RowSetType(IntEnum):
     def __int__(self):
         return int(self.value)
@@ -216,7 +216,8 @@ static PyObject* convertFieldToObject(griddb::Field &field, bool timestamp_to_fl
             return PyInt_FromLong(field.value.asByte);
         case GS_TYPE_SHORT:
             return PyInt_FromLong(field.value.asShort);
-
+        case GS_TYPE_GEOMETRY:
+            return convertStrToObj(field.value.asGeometry);
         case GS_TYPE_INTEGER_ARRAY:
 %#if GS_COMPATIBILITY_VALUE_1_1_106
             listSize = field.value.asIntegerArray.size;
@@ -772,7 +773,21 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
                 }
                 break;
             case (GS_TYPE_GEOMETRY):
-                return false;
+                if (!checkPyObjIsStr(value)) {
+                    return false;
+                }
+                res = SWIG_AsCharPtrAndSize(value, &v, &size, &alloc);
+
+                if (!SWIG_IsOK(res)) {
+                    return false;
+                }
+                if (alloc == SWIG_OLDOBJ) {
+                    //swig reuse old memory, this memory is used by swig
+                    //we will create new and duplicate this memory
+                    v = strdup(v);
+                }
+                
+                field.value.asGeometry = v;
                 break;
 
             case (GS_TYPE_INTEGER_ARRAY):

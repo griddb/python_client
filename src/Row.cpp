@@ -49,6 +49,12 @@ namespace griddb {
                         mFields[i].value.asBlob.data = NULL;
                     }
                     break;
+                case GS_TYPE_GEOMETRY:
+                    if (mFields[i].value.asGeometry) {
+                        free(const_cast<GSChar*>(mFields[i].value.asGeometry));
+                        mFields[i].value.asGeometry = NULL;
+                    }
+                    break;
                 case GS_TYPE_INTEGER_ARRAY:
 #if GS_COMPATIBILITY_VALUE_1_1_106
                     if (mFields[i].value.asIntegerArray.elements) {
@@ -247,6 +253,10 @@ namespace griddb {
             memset(tmp, 0x0, field->value.asBlob.size);
             memcpy(tmp, field->value.asBlob.data, field->value.asBlob.size);
             field->value.asBlob.data = tmp;
+            break;
+        case GS_TYPE_GEOMETRY:
+            tmp = strdup(field->value.asGeometry);
+            field->value.asGeometry = tmp;
             break;
         case GS_TYPE_INTEGER_ARRAY:
             int32_t* tmpIntArr;
@@ -548,6 +558,17 @@ namespace griddb {
 #endif
             } else {
                 throw GSException("incorrect column type to set for byte");
+            }
+            break;
+        case GS_TYPE_GEOMETRY:
+            if (field->type == GS_TYPE_GEOMETRY) {
+                ret = gsSetRowFieldGeneral(row, no, &field->value, GS_TYPE_GEOMETRY);
+#if GS_COMPATIBILITY_SUPPORT_3_5
+            } else if (field->type == GS_TYPE_NULL) {
+                ret = gsSetRowFieldNull(row, no);
+#endif
+            } else {
+                throw GSException("incorrect column type to set for geometry");
             }
             break;
         case GS_TYPE_INTEGER_ARRAY:

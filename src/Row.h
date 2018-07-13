@@ -31,6 +31,7 @@ struct Field {
     Field() : name(NULL), type(GS_TYPE_STRING) {
         value.asString = NULL;
         value.asBlob.data = NULL;
+    	value.asGeometry = NULL;
 #if GS_COMPATIBILITY_VALUE_1_1_106
         value.asBoolArray.elements = NULL;
         value.asStringArray.elements = NULL;
