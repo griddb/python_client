@@ -16,7 +16,7 @@
 
 #ifndef _STORE_FACTORY_H_
 #define _STORE_FACTORY_H_
-#define CLIENT_VERSION "GridDB Python Client 0.7.4"
+#define CLIENT_VERSION "GridDB Python Client 0.7.5"
 
 #include "gridstore.h"
 #include "Store.h"
