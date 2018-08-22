@@ -60,13 +60,12 @@ namespace griddb {
         GSChar bExists;
 
         GSResult ret = gsGetContainerInfo(mStore, name, &containerInfo, &bExists);
-        if (bExists == false) {
-            return NULL;
-        }
         if (ret != GS_RESULT_OK) {
             throw GSException(mStore, ret);
         }
-
+        if (bExists == false) {
+            return NULL;
+        }
         return new ContainerInfo(&containerInfo);
     }
     /**
@@ -81,11 +80,12 @@ namespace griddb {
 
         // Create new gsContainer
         GSResult ret = gsPutContainerGeneral(mStore, gsInfo->name, gsInfo, modifiable, &pContainer);
-
         if (ret != GS_RESULT_OK) {
             throw GSException(mStore, ret);
         }
-
+        if (pContainer == NULL) {
+            return NULL;
+        }
         return new Container(pContainer, gsInfo);
     }
     /**
@@ -128,7 +128,7 @@ namespace griddb {
      * Get Partition controller. Convert from C-API: gsGetPartitionController
      */
     PartitionController* Store::partition_info() {
-         GSPartitionController* partitionController;
+        GSPartitionController* partitionController;
 
         GSResult ret = gsGetPartitionController(mStore, &partitionController);
 
