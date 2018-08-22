@@ -88,10 +88,10 @@ namespace griddb {
         } else {
             if (host) {
                 set_property_entry(&local_props[0], "host", host);
-                index++;
                 set_property_entry(&local_props[1], "port", lport.c_str());
-                index++;
+                index += 2;
             }
+
             if (notification_member) {
                 set_property_entry(&local_props[index], "notificationMember", notification_member);
                 index++;
