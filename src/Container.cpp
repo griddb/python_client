@@ -20,7 +20,7 @@
 namespace griddb {
 
     Container::Container(GSContainer *container, GSContainerInfo* containerInfo) : mContainer(container),
-            mContainerInfo(NULL), mRow(NULL), timestamp_output_with_float(false) {
+            mContainerInfo(NULL), mRow(NULL), typeList(NULL), timestamp_output_with_float(false) {
         GSResult ret;
         if ((ret = gsCreateRowByContainer(mContainer, &mRow)) != GS_RESULT_OK) {
             throw GSException(ret, "can not create row from Container");
@@ -65,6 +65,7 @@ namespace griddb {
         if (mContainer != NULL) {
             gsCloseContainer(&mContainer, allRelated);
             mContainer = NULL;
+        	free(typeList);
         }
     }
 
@@ -353,13 +354,6 @@ namespace griddb {
     }
 
     /**
-     * Support Container::put()
-     */
-    GSContainerInfo* Container::getGSContainerInfoPtr(){
-        return mContainerInfo;
-    }
-
-    /**
      * Find column index from column name.
      * Return -1 if not found
      */
@@ -372,4 +366,23 @@ namespace griddb {
         return -1;
     }
 
+    /**
+     * Support put row
+     */
+    GSType* Container::getGSTypeList(){
+        if (typeList == NULL){
+             typeList = (GSType*) malloc(sizeof(GSType) * mContainerInfo->columnCount);
+            for (int i = 0; i < mContainerInfo->columnCount; i++){
+                typeList[i] = mContainerInfo->columnInfoList[i].type;
+            }
+        }
+        return typeList;
+    }
+
+    /**
+     * Support put row
+     */
+    int Container::getColumnCount(){
+        return mContainerInfo->columnCount;
+    }
 }

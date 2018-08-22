@@ -20,7 +20,8 @@
 #include <limits>
 %}
 %ignore griddb::Row;
-%ignore griddb::Container::getGSContainerInfo;
+%ignore griddb::Container::getGSTypeList;
+%ignore griddb::Container::getColumnCount;
 %ignore griddb::RowSet::next_row;
 %ignore griddb::RowSet::get_next_query_analysis;
 %ignore griddb::RowSet::get_next_aggregation;
@@ -1535,13 +1536,12 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
     }
     griddb::Field *tmpField = $1->get_field_ptr();
 
-    GSContainerInfo* containerInfo = arg1->getGSContainerInfoPtr();
-    if (leng != containerInfo->columnCount) {
+    if (leng != arg1->getColumnCount()) {
         %variable_fail(1, "Row", "num row is different with container info");
     }
-    GSType type;
+    GSType* typeList = arg1->getGSTypeList();
     for (int i = 0; i < leng; i++) {
-        type = containerInfo->columnInfoList[i].type;
+        GSType type = typeList[i];
         if (!(convertObjectToFieldWithType(tmpField[i], PyList_GetItem($input, i), type))) {
             char gsType[200];
             sprintf(gsType, "Invalid value for column %d, type should be : %d", i, type);
@@ -1572,9 +1572,8 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
         %variable_fail(1, "String", "Not support for NULL");
 %#endif
     } else {
-        GSContainerInfo* containerInfo = arg1->getGSContainerInfoPtr();
-
-        GSType type = containerInfo->columnInfoList[0].type;
+        GSType* typeList = arg1->getGSTypeList();
+        GSType type = typeList[0];
         if (!convertObjectToFieldWithType(*$1, $input, type)) {
             %variable_fail(1, "String", "can not convert to row field");
         }
@@ -2198,8 +2197,7 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
 
     $2 = (size_t)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size($input)));
     if ($2 > 0) {
-        GSContainerInfo* containerInfo = arg1->getGSContainerInfoPtr();
-        int columnCount = containerInfo->columnCount;
+        int columnCount = arg1->getColumnCount();
         GSType type;
 
         $1 = (griddb::Row**) malloc($2 * sizeof(griddb::Row*));
@@ -2220,9 +2218,10 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
                 PyErr_SetString(PyExc_ValueError, "Memory allocation error");
                 SWIG_fail;
             }
+            GSType* typeList = arg1->getGSTypeList();
             griddb::Field *tmpField = $1[i]->get_field_ptr();
             for (int k = 0; k < length; k++) {
-                type = containerInfo->columnInfoList[k].type;
+                type = typeList[k];
                 PyObject* fieldObj = PyList_GetItem(rowTmp, k);
                 if (!(convertObjectToFieldWithType(tmpField[k], fieldObj, type))) {
                     $2 = i+1;

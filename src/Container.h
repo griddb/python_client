@@ -32,6 +32,7 @@ class Container {
     friend class Store;
 
     GSRow* mRow;
+    GSType* typeList;
 
     public:
         bool timestamp_output_with_float;
@@ -50,8 +51,9 @@ class Container {
         bool remove(Field* keyFields);
         void multi_put(Row** listRowdata, int rowCount);
         GSContainer* getGSContainerPtr();
-        GSContainerInfo* getGSContainerInfoPtr();
-	
+        GSType* getGSTypeList();
+        int getColumnCount();
+
     private:
         Container(GSContainer *container, GSContainerInfo* containerInfo);
         int get_column_index(const char* columnName);
