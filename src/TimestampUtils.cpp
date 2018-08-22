@@ -24,44 +24,6 @@ namespace griddb {
     TimestampUtils::~TimestampUtils() {
     }
 
-//    /**
-//     * Get current timestamp. Convert from C-API: gsCurrentTime.
-//     */
-//    GSTimestamp TimestampUtils::current() {
-//        return gsCurrentTime();
-//    }
-//
-//    /**
-//     * Add timestamp. Convert from C-API: gsAddTime.
-//     */
-//    GSTimestamp TimestampUtils::add_time(GSTimestamp timestamp, int32_t amount,
-//            GSTimeUnit timeUnit) {
-//        return gsAddTime(timestamp, amount, timeUnit);
-//    }
-//
-//    /**
-//     * Format timestamp. Convert from C-API: gsFormatTime.
-//     */
-//    string TimestampUtils::format_time(GSTimestamp timestamp, size_t bufSize) {
-//        char* strBuf = new char[bufSize];
-//        size_t stringSize = gsFormatTime(timestamp, strBuf, bufSize);
-//        string ret(strBuf, stringSize);
-//        delete [] strBuf;
-//        return ret;
-//    }
-//
-//    /**
-//     * Parse timestamp. Convert from C-API: gsParseTime.
-//     */
-//    GSTimestamp TimestampUtils::parse(char* str) {
-//        GSTimestamp value;
-//        GSBool ret = gsParseTime(str, &value);
-//        if (ret == GS_FALSE) {
-//            throw GSException("Can't convert timestamp from string");
-//        }
-//        return value;
-//    }
-
     /**
      * Convert from Python timestamp to GridDB timestamp
      */
