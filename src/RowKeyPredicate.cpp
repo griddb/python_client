@@ -38,6 +38,7 @@ namespace griddb {
             mPredicate = NULL;
         }
     }
+
     /**
      * Get key type. Convert from C-API: gsGetPredicateKeyType
      */
@@ -56,13 +57,18 @@ namespace griddb {
         if (ret != GS_RESULT_OK) {
             throw GSException(mPredicate, ret);
         }
-        startField->value = *startKey;
         const GSValue *endKey;
         ret = gsGetPredicateFinishKeyGeneral(mPredicate, &endKey);
         if (ret != GS_RESULT_OK) {
             throw GSException(mPredicate, ret);
         }
-        finishField->value = *endKey;
+        if (startField->type == GS_TYPE_STRING) {
+            startField->value.asString  = strdup(startKey->asString);
+            finishField->value.asString = strdup(endKey->asString);
+        } else {
+            startField->value = *startKey;
+            finishField->value = *endKey;
+        }
     }
     /*
      * Sets the value of Row key as the start and end position of the range conditions
@@ -257,11 +263,17 @@ namespace griddb {
         GSResult ret = gsGetPredicateDistinctKeysGeneral(mPredicate, (const GSValue **)&keyList, &size);
         *keyCount = size;
 
-        Field* keyFields = (Field *) malloc(size * sizeof (Field));
-        memset(keyFields, 0, size * sizeof (Field));
+        Field* keyFields = new Field[size];
         for(int i =0;i< size; i++) {
             keyFields[i].type = key_type;
-            keyFields[i].value = keyList[i];
+            switch(key_type) {
+            case GS_TYPE_STRING:
+                keyFields[i].value.asString = strdup(keyList[i].asString);
+                break;
+            default:
+                keyFields[i].value = keyList[i];
+                break;
+            }
         }
 
         *keys = keyFields;
