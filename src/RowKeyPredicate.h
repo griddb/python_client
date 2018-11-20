@@ -20,7 +20,8 @@
 #include <string>
 #include <vector>
 #include "gridstore.h"
-#include "Row.h"
+#include "Field.h"
+#include <string.h>
 
 
 using namespace std;

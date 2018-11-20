@@ -19,7 +19,6 @@
 %ignore griddb::Container::getColumnCount;
 %ignore griddb::Query::gs_ptr;
 %ignore griddb::RowKeyPredicate::gs_ptr;
-%ignore griddb::Row;
 %ignore griddb::RowSet::getGSTypeList;
 %ignore griddb::RowSet::getColumnCount;
 %ignore griddb::AggregationResult::AggregationResult;
@@ -70,7 +69,7 @@
 #include "TimeSeriesProperties.h"
 #include "ExpirationInfo.h"
 #include "ContainerInfo.h"
-#include "Row.h"
+#include "Field.h"
 #include "QueryAnalysisEntry.h"
 #include "RowSet.h"
 #include "Query.h"
@@ -88,7 +87,6 @@
 %shared_ptr(griddb::TimeSeriesProperties)
 %shared_ptr(griddb::ExpirationInfo)
 %shared_ptr(griddb::ContainerInfo)
-%shared_ptr(griddb::Row)
 %shared_ptr(griddb::QueryAnalysisEntry)
 %shared_ptr(griddb::RowSet)
 %shared_ptr(griddb::Query)
@@ -104,7 +102,7 @@
 %include "TimeSeriesProperties.h"
 %include "ExpirationInfo.h"
 %include "ContainerInfo.h"
-%include "Row.h"
+%include "Field.h"
 %include "QueryAnalysisEntry.h"
 %include "RowSet.h"
 %include "Query.h"
