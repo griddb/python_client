@@ -1,17 +1,17 @@
 /*
-   Copyright (c) 2017 TOSHIBA Digital Solutions Corporation.
+    Copyright (c) 2017 TOSHIBA Digital Solutions Corporation.
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+        http://www.apache.org/licenses/LICENSE-2.0
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 */
 
 %{
@@ -695,7 +695,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
         bool inBorderVal = false;
         bool inRange = false;
         GSBool* tmpPtr;
-        switch(type) {
+        switch (type) {
             case (GS_TYPE_STRING):
                 if (!checkPyObjIsStr(value)) {
                     return false;
@@ -789,7 +789,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
 
         if (value == Py_None) {
 %#if GS_COMPATIBILITY_SUPPORT_3_5
-            ret = gsSetRowFieldNull(row, column); 
+            ret = gsSetRowFieldNull(row, column);
             return (ret == GS_RESULT_OK);
 %#else
         //Not support NULL
@@ -798,16 +798,15 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
         }
 
         int checkConvert = 0;
-        switch(type) {
+        switch (type) {
             case (GS_TYPE_STRING):
                 if (!checkPyObjIsStr(value)) {
                     return false;
                 }
-                res = SWIG_AsCharPtrAndSize(value, &v, &size, &alloc);
+                res = SWIG_AsCharPtrAndSize(value, &stringVal, &size, &alloc);
                 if (!SWIG_IsOK(res)) {
                     return false;
                 }
-                stringVal = v;
                 ret = gsSetRowFieldByString(row, column, stringVal);
                 cleanString(stringVal, alloc);
                 break;
@@ -1116,7 +1115,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
         (const GSColumnInfo* props, int propsCount)
 (PyObject* list, int i, size_t size = 0, int* alloc = 0, int res, char* v = 0, int val) {
 //Convert Python list of tuple into GSColumnInfo properties
-    if (!PyList_Check($input)) {
+    if (!PyList_Check($input)) {        
         $2 = 0;
         $1 = NULL;
         PyErr_SetString(PyExc_ValueError, "Expected a List");
@@ -1243,7 +1242,8 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     }
 }
 
-%typemap(freearg, fragment = "cleanString") (const GSPropertyEntry* props, int propsCount) (int i = 0, int j = 0) {
+%typemap(freearg, fragment = "cleanString") (const GSPropertyEntry* props, int propsCount) 
+        (int i = 0, int j = 0) {
     if ($1) {
         for (int i = 0; i < $2; i++) {
             cleanString($1[i].name, alloc$argnum[j]);
@@ -1410,7 +1410,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     $2 = &size1;
 }
 
-%typemap(argout, numinputs = 0, fragment="convertStrToObj") (const GSChar *const ** stringList, size_t *size) (  int i, size_t size) {
+%typemap(argout, numinputs = 0, fragment = "convertStrToObj") (const GSChar *const ** stringList, size_t *size) (  int i, size_t size) {
     GSChar** nameList1 = *$1;
     size_t size = *$2;
     $result = PyList_New(size);
@@ -1482,7 +1482,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     $result = PyByteArray_FromStringAndSize((char*) output.data, output.size);
 }
 
-%typemap(out, fragment="convertStrToObj") GSColumnInfo {
+%typemap(out, fragment = "convertStrToObj") GSColumnInfo {
     $result = PyTuple_New(2);
     PyTuple_SetItem($result, 0, convertStrToObj($1.name));
     PyTuple_SetItem($result, 1, PyInt_FromLong($1.type));
@@ -1499,9 +1499,9 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
 }
 
 /**
-* Typemaps for update() function
+* Typemaps for RowSet.update() function
 */
-%typemap(in, fragment="convertToFieldWithType") (GSRow* row) {
+%typemap(in, fragment = "convertToFieldWithType") (GSRow* row) {
     if (!PyList_Check($input)) {
         PyErr_SetString(PyExc_ValueError, "Expected a List");
         SWIG_fail;
@@ -1513,9 +1513,9 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     GSRow *tmpRow = arg1->getGSRowPtr();
     int colNum = arg1->getColumnCount();
     GSType* typeList = arg1->getGSTypeList();
-    for(int i = 0; i < leng; i++) {
+    for (int i = 0; i < leng; i++) {
         GSType type = typeList[i];
-        if(!(convertToFieldWithType(tmpRow, i, PyList_GetItem($input, i), type))) {
+        if (!(convertToFieldWithType(tmpRow, i, PyList_GetItem($input, i), type))) {
             char gsType[200];
             sprintf(gsType, "Invalid value for column %d, type should be : %d", i, type);
             PyErr_SetString(PyExc_ValueError, gsType);
@@ -1530,9 +1530,9 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
 /**
 * Typemaps for put_row() function
 */
-%typemap(in, fragment="convertToFieldWithType") (GSRow *rowContainer) {
+%typemap(in, fragment = "convertToFieldWithType") (GSRow *rowContainer) {
     $1 = NULL;
-    if(!PyList_Check($input)) {
+    if (!PyList_Check($input)) {
         PyErr_SetString(PyExc_ValueError, "Expected a List");
         SWIG_fail;
     }
@@ -1544,9 +1544,9 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
 
     GSRow* row = arg1->getGSRowPtr();
     GSType* typeList = arg1->getGSTypeList();
-    for(int i = 0; i < leng; i++) {
+    for (int i = 0; i < leng; i++) {
         GSType type = typeList[i];
-        if(!(convertToFieldWithType(row, i, PyList_GetItem($input, i), type))) {
+        if (!(convertToFieldWithType(row, i, PyList_GetItem($input, i), type))) {
             char gsType[60];
             sprintf(gsType, "Invalid value for column %d, type should be : %d", i, type);
             PyErr_SetString(PyExc_ValueError, gsType);
@@ -1652,7 +1652,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     $2 = &finishKeyTmp;
 }
 
-%typemap(argout, fragment="convertFieldToObject") (GSValue* startField, griddb::Field* finishField) {
+%typemap(argout, fragment = "convertFieldToObject") (griddb::Field* startField, griddb::Field* finishField) {
     int length = 2;
     $result = PyList_New(2);
     if ($result == NULL) {
@@ -1666,7 +1666,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
 /**
  * Typemap for RowKeyPredicate.set_distinct_keys
  */
-%typemap(in, fragment="convertToRowKeyFieldWithType") (const griddb::Field *keys, size_t keyCount) {
+%typemap(in, fragment = "convertToRowKeyFieldWithType") (const griddb::Field *keys, size_t keyCount) {
     if (!PyList_Check($input)) {
         PyErr_SetString(PyExc_ValueError, "Expected a List");
         SWIG_fail;
@@ -1704,7 +1704,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     $2 = &keyCount1;
 }
 
-%typemap(argout, numinputs = 0, fragment="convertFieldToObject") (griddb::Field **keys, size_t* keyCount) (  int i, size_t size) {
+%typemap(argout, numinputs = 0, fragment = "convertFieldToObject") (griddb::Field **keys, size_t* keyCount) (int i, size_t size) {
     size_t size = *$2;
     $result = PyList_New(size);
     if ($result == NULL) {
@@ -1728,7 +1728,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
 /**
  * Typemaps for Store.multi_put
  */
-%typemap(in, fragment="convertToFieldWithType", fragment="convertObjToStr") (GSRow*** listRow, const int *listRowContainerCount, const char ** listContainerName, size_t containerCount) () {
+%typemap(in, fragment = "convertToFieldWithType", fragment = "convertObjToStr") (GSRow*** listRow, const int *listRowContainerCount, const char ** listContainerName, size_t containerCount) () {
     if (!PyDict_Check($input)) {
         PyErr_SetString(PyExc_ValueError, "Expected a Dict");
         SWIG_fail;
@@ -1834,17 +1834,17 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
 %typemap(doc, name = "container_entry") (GSRow*** listRow, const int *listRowContainerCount, const char ** listContainerName, size_t containerCount) "dict{string name : list[list[object]] row_list} container_entry";
 
 %typemap(freearg) (GSRow*** listRow, const int *listRowContainerCount, const char ** listContainerName, size_t containerCount) {
-    for(int i = 0; i < $4; i++) {
-        if($1[i]) {
-            for(int j = 0; j < $2[i]; j++) {
+    for (int i = 0; i < $4; i++) {
+        if ($1[i]) {
+            for (int j = 0; j < $2[i]; j++) {
                 gsCloseRow(&$1[i][j]);
             }
             delete $1[i];
         }
     }
-    if($1) delete $1;
-    if($2) delete $2;
-    if($3) delete $3;
+    if ($1) delete $1;
+    if ($2) delete $2;
+    if ($3) delete $3;
 }
 
 /**
@@ -1857,7 +1857,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     $3 = &tmpcolNumList;
 }
 
-%typemap(argout, numinputs = 0, fragment="convertStrToObj", fragment="convertFieldToObject") (GSContainerRowEntry **entryList, size_t* containerCount, int **colNumList) () {
+%typemap(argout, numinputs = 0, fragment = "convertStrToObj", fragment = "convertFieldToObject") (GSContainerRowEntry **entryList, size_t* containerCount, int **colNumList) () {
     PyObject* dict = PyDict_New();
     griddb::Container *tmpContainer;
     GSRow* row;
@@ -1907,7 +1907,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     }
 }
 
-%typemap(argout, fragment="convertStrToObj") (GSQueryAnalysisEntry* queryAnalysis) () {
+%typemap(argout, fragment = "convertStrToObj") (GSQueryAnalysisEntry* queryAnalysis) () {
     const int size = 6;
     $result = PyList_New(size);
     PyList_SetItem($result, 0, PyInt_FromLong($1->id));
@@ -1962,7 +1962,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     $2 = &numTmp;
 }
 
-%typemap(argout, numinputs = 0, fragment="convertStrToObj") (char*** listName, int* num) {
+%typemap(argout, numinputs = 0, fragment = "convertStrToObj") (char*** listName, int* num) {
     $result = PyList_New(*$2);
     if (*$2){
         for (int i = 0; i < *$2; i++) {
@@ -2060,7 +2060,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
                 type = typeList[k];
                 PyObject* fieldObj = PyList_GetItem(rowTmp, k);
                 if (!(convertToFieldWithType($1[i], k, fieldObj, type))) {
-                    $2 = i+1;
+                    $2 = i + 1;
                     char gsType[200];
                     sprintf(gsType, "Invalid value for column %d, type should be : %d", k, type);
                     PyErr_SetString(PyExc_ValueError, gsType);
@@ -2072,7 +2072,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
 }
 
 %typemap(freearg) (GSRow** listRowdata, int rowCount) {
-    if($1) {
+    if ($1) {
         for (int rowNum = 0; rowNum < $2; rowNum++) {
             gsCloseRow(&$1[rowNum]);
         }
@@ -2173,7 +2173,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
 
 }
 
-%typemap(out, fragment="convertStrToObj") (ColumnInfoList) {
+%typemap(out, fragment = "convertStrToObj") (ColumnInfoList) {
     ColumnInfoList data = $1;
     size_t size = data.size;
     $result = PyList_New(size);
@@ -2184,7 +2184,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     for (int i = 0; i < size; i++) {
 %#if GS_COMPATIBILITY_SUPPORT_3_5
         PyObject* info = 0;
-        if ((data.columnInfo)[i].options !=0 ) {
+        if ((data.columnInfo)[i].options != 0 ) {
             info = PyList_New(3);
             PyList_SetItem(info, 0, convertStrToObj((data.columnInfo)[i].name));
             PyList_SetItem(info, 1, PyInt_FromLong((data.columnInfo)[i].type));
@@ -2227,7 +2227,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     GSValue mValue;
     GSType mType;
     GSResult ret;
-    switch(*$1) {
+    switch (*$1) {
         case (GS_ROW_SET_CONTAINER_ROWS):
             if (*$2 == false) {
                 PyErr_SetNone(PyExc_StopIteration);
