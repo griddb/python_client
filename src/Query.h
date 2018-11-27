@@ -40,8 +40,6 @@ class Query {
         ~Query();
         void close();
         RowSet* fetch(bool for_update = false);
-        void set_fetch_option_integer(GSFetchOption fetchOption, int32_t value);
-        void set_fetch_option_long(GSFetchOption fetchOption, int64_t value);
         void set_fetch_options(int limit = -1, bool partial = false);
         RowSet* get_row_set();
         GSQuery* gs_ptr();

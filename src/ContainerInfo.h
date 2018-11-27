@@ -56,24 +56,15 @@ class ContainerInfo {
         void set_name(GSChar* containerName);
         void set_type(GSContainerType containerType);
         void set_row_key_assigned(bool rowKeyAssigned);
-        void set_column_order_ignorable(bool columnOrderIgnorable);
-        void set_time_series_properties(TimeSeriesProperties& tsProps);
-        void set_data_affinity(GSChar* dataAffinity);
-
         const GSChar* get_name();
         GSContainerType get_type();
-        size_t get_column_count();
         GSColumnInfo get_column_info(size_t column);
         ColumnInfoList get_column_info_list();
         void set_column_info_list(ColumnInfoList columnInfoList);
         ExpirationInfo& get_expiration_info();
         void set_expiration_info(ExpirationInfo expirationInfo);
         bool get_row_key_assigned();
-        bool is_row_key_assigned();
-        bool is_column_order_ignorable();
-        TimeSeriesProperties* get_time_series_properties();
         GSContainerInfo* gs_info();
-        const GSChar* get_data_affinity();
 
     private:
         void init(const GSChar* name, GSContainerType type, const GSColumnInfo* props,

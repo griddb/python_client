@@ -63,24 +63,7 @@ namespace griddb {
 
         return new RowSet(rowSet, mContainerInfo, mRow);
     }
-    /**
-     * Sets an fetch option of integer type for a result acquisition.
-     */
-    void Query::set_fetch_option_integer(GSFetchOption fetchOption, int32_t value) {
-        GSResult ret = gsSetFetchOption(mQuery, fetchOption, &value, GS_TYPE_INTEGER);
-        if (ret != GS_RESULT_OK) {
-            throw GSException(mQuery, ret);
-        }
-    }
-    /**
-     * Sets an fetch option of long type for a result acquisition.
-     */
-    void Query::set_fetch_option_long(GSFetchOption fetchOption, int64_t value) {
-        GSResult ret = gsSetFetchOption(mQuery, fetchOption, &value, GS_TYPE_LONG);
-        if (ret != GS_RESULT_OK) {
-            throw GSException(mQuery, ret);
-        }
-    }
+
     /**
      * Get raw pointer of GSQuery
      */

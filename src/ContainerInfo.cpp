@@ -148,28 +148,6 @@ namespace griddb {
         mContainerInfo.rowKeyAssigned = rowKeyAssigned;
     }
 
-    void ContainerInfo::set_column_order_ignorable(bool columnOrderIgnorable) {
-        mContainerInfo.columnOrderIgnorable = columnOrderIgnorable;
-    }
-
-    void ContainerInfo::set_time_series_properties(TimeSeriesProperties& tsProps) {
-        GSTimeSeriesProperties* gsProps = NULL;
-        if (tsProps.gs_ptr() != NULL) {
-            gsProps = (GSTimeSeriesProperties*) malloc(sizeof(GSTimeSeriesProperties));
-            memcpy(gsProps, tsProps.gs_ptr(), sizeof(GSTimeSeriesProperties));
-        }
-        mContainerInfo.timeSeriesProperties = gsProps;
-    }
-
-    void ContainerInfo::set_data_affinity(GSChar* dataAffinity) {
-        if (mContainerInfo.dataAffinity) {
-            free((void *) mContainerInfo.dataAffinity);
-        }
-        if (dataAffinity != NULL) {
-            mContainerInfo.dataAffinity = strdup(dataAffinity);
-        }
-    }
-
     const GSChar* ContainerInfo::get_name() {
         return mContainerInfo.name;
     }
@@ -178,36 +156,12 @@ namespace griddb {
         return mContainerInfo.type;
     }
 
-    size_t ContainerInfo::get_column_count() {
-        return mContainerInfo.columnCount;
-    }
-
     GSColumnInfo ContainerInfo::get_column_info(size_t column) {
         return mContainerInfo.columnInfoList[column];
     }
 
     bool ContainerInfo::get_row_key_assigned() {
         return mContainerInfo.rowKeyAssigned;
-    }
-
-    bool ContainerInfo::is_row_key_assigned() {
-        return mContainerInfo.rowKeyAssigned;
-    }
-
-    bool ContainerInfo::is_column_order_ignorable() {
-        return mContainerInfo.columnOrderIgnorable;
-    }
-
-    TimeSeriesProperties* ContainerInfo::get_time_series_properties() {
-        if (mContainerInfo.timeSeriesProperties) {
-            return new TimeSeriesProperties(mContainerInfo.timeSeriesProperties);
-        } else {
-            return NULL;
-        }
-    }
-
-    const GSChar* ContainerInfo::get_data_affinity() {
-        return mContainerInfo.dataAffinity;
     }
 
     /**
