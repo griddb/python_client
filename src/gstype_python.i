@@ -541,7 +541,9 @@ static bool convertObjectToFloat(PyObject* value, float* floatValPtr) {
             return false;
         }
         *floatValPtr = PyFloat_AsDouble(value);
-        return true;
+
+         return (*floatValPtr < std::numeric_limits<float>::max() &&
+                 *floatValPtr > -1 *std::numeric_limits<float>::max());
     }
 }
 }
