@@ -2157,14 +2157,12 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     }
 }
 
-%typemap(freearg) (ColumnInfoList columnInfoList) {
+%typemap(freearg, fragment = "cleanString") (ColumnInfoList columnInfoList) {
     size_t size = $1.size;
 
     if (alloc$argnum) {
         for (int i = 0; i < size; i++) {
-            if (alloc$argnum[i]) {
-                %delete_array($1.columnInfo[i].name);
-            }
+            cleanString($1.columnInfo[i].name, alloc$argnum[i]);
         }
         free(alloc$argnum);
     }
