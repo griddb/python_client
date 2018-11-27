@@ -35,12 +35,11 @@ namespace griddb {
             memcpy(triggerInfoList, containerInfo->triggerInfoList, sizeof(GSTriggerInfo));
         }
         mContainerInfo.triggerInfoList = triggerInfoList;
-        GSChar* dataAffinity = NULL;
+#if GS_COMPATIBILITY_SUPPORT_2_1
         if (containerInfo->dataAffinity) {
-            dataAffinity = (GSChar*) malloc(sizeof(GSChar));
-            memcpy(dataAffinity, containerInfo->dataAffinity, sizeof(GSChar));
+            mContainerInfo.dataAffinity = strdup(containerInfo->dataAffinity);
         }
-        mContainerInfo.dataAffinity = dataAffinity;
+#endif
         mContainerInfo.columnOrderIgnorable = containerInfo->columnOrderIgnorable;
         mContainerInfo.triggerInfoCount = containerInfo->triggerInfoCount;
         mColumnInfoList.columnInfo = NULL;
@@ -86,7 +85,7 @@ namespace griddb {
             containerName = strdup(name);
         }
 
-        mContainerInfo = {containerName, type, propsCount, columnInfoList, rowKeyAssigned};
+        mContainerInfo = {containerName, type, (size_t)propsCount, columnInfoList, rowKeyAssigned};
         if (timeProps != NULL) {
             mContainerInfo.timeSeriesProperties = timeProps;
         }
@@ -116,10 +115,11 @@ namespace griddb {
         }
 
         //Free memory of dataAffinity if existed
+#if GS_COMPATIBILITY_SUPPORT_2_1
         if (mContainerInfo.dataAffinity) {
             free((void *) mContainerInfo.dataAffinity);
         }
-
+#endif
         //Free memory of triggerInfoList if existed
         if(mContainerInfo.triggerInfoList) {
             free((void *) mContainerInfo.triggerInfoList);
