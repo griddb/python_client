@@ -1117,10 +1117,10 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
 (PyObject* list, int i, size_t size = 0, int* alloc = 0, int res, char* v = 0, int val) {
 //Convert Python list of tuple into GSColumnInfo properties
     if (!PyList_Check($input)) {
-        PyErr_SetString(PyExc_ValueError, "Expected a List");
         $2 = 0;
         $1 = NULL;
-        return NULL;
+        PyErr_SetString(PyExc_ValueError, "Expected a List");
+        SWIG_fail;
     }
     $2 = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size($input)));
     $1 = NULL;
@@ -1209,7 +1209,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
 (int i, int j, Py_ssize_t si, PyObject* key, PyObject* val, size_t size = 0, int* alloc = 0, int res, char* v = 0) {
     if (!PyDict_Check($input)) {
         PyErr_SetString(PyExc_ValueError, "Expected a Dict");
-        return NULL;
+        SWIG_fail;
     }
     $2 = (int)PyInt_AsLong(PyLong_FromSsize_t(PyDict_Size($input)));
     $1 = NULL;
@@ -1264,7 +1264,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
 %typemap(in) (GSQuery* const* queryList, size_t queryCount) (PyObject* pyQuery, std::shared_ptr<griddb::Query> query, void *vquery, int i, int res = 0) {
     if (!PyList_Check($input)) {
         PyErr_SetString(PyExc_ValueError, "Expected a List");
-        return NULL;
+        SWIG_fail;
     }
     $2 = (size_t)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size($input)));
     $1 = NULL;
@@ -1604,6 +1604,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
             char errorMsg[60];
             sprintf(errorMsg, "Can't get data for field %d", i);
             PyErr_SetString(PyExc_ValueError, errorMsg);
+            SWIG_fail;
         }
         PyList_SetItem(outList, i, convertFieldToObject(&mValue, mType, arg1->timestamp_output_with_float));
     }
@@ -1668,7 +1669,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
 %typemap(in, fragment="convertToRowKeyFieldWithType") (const griddb::Field *keys, size_t keyCount) {
     if (!PyList_Check($input)) {
         PyErr_SetString(PyExc_ValueError, "Expected a List");
-        return NULL;
+        SWIG_fail;
     }
     $2 = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size($input)));
     $1 = NULL;
@@ -1879,6 +1880,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
                     char errorMsg[60];
                     sprintf(errorMsg, "Can't get data for field %d", i);
                     PyErr_SetString(PyExc_ValueError, errorMsg);
+                    SWIG_fail;
                 }
                 PyList_SetItem(outList, k, convertFieldToObject(&mValue, mType, arg1->timestamp_output_with_float));
             }
@@ -1892,9 +1894,6 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     }
     delete (*$3);
     $result = dict;
-}
-
-%typemap(freearg) (GSContainerRowEntry **entryList, size_t* containerCount, int **colNumList) {
 }
 
 /**
@@ -2248,6 +2247,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
                         char errorMsg[60];
                         sprintf(errorMsg, "Can't get data for field %d", i);
                         PyErr_SetString(PyExc_ValueError, errorMsg);
+                        SWIG_fail;
                     }
                     PyList_SetItem(outList, i, convertFieldToObject(&mValue, mType, arg1->timestamp_output_with_float));
                 }
