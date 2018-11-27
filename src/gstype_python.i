@@ -178,6 +178,21 @@ static PyObject* convertTimestampToObject(GSTimestamp* timestamp, bool timestamp
 }
 }
 
+/**
+ * Support clean output of SWIG_AsCharPtrAndSize after used
+ */
+%fragment("cleanString", "header") {
+static void cleanString(const GSChar* string, int alloc){
+    if (!string) {
+        return;
+    }
+
+    if (string && alloc == SWIG_NEWOBJ) {
+        delete [] string;
+    }
+}
+}
+
 /*
 * fragment to support converting Field to PyObject support RowKeyPredicate, AggregationResult
 */
@@ -383,7 +398,8 @@ static PyObject* convertFieldToObject(GSRow *row, int column, bool timestamp_to_
  * Support convert type from object to GSTimestamp: input in target language can be :
  * datetime object, string or float
  */
-%fragment("convertObjectToGSTimestamp", "header", fragment = "convertObjectToFloat") {
+%fragment("convertObjectToGSTimestamp", "header", fragment = "convertObjectToFloat"
+        , fragment = "cleanString") {
 static bool convertObjectToGSTimestamp(PyObject* value, GSTimestamp* timestamp) {
     int year, month, day, hour, minute, second, milliSecond, microSecond;
     size_t size = 0;
@@ -427,9 +443,7 @@ static bool convertObjectToGSTimestamp(PyObject* value, GSTimestamp* timestamp) 
         }
         // error when string len is too short
         if (strlen(v) < 19) {
-            if (alloc != SWIG_OLDOBJ) {
-                free(v);
-            }
+            cleanString(v, alloc);
             return false;
         }
         // this is for convert python's string datetime (YYYY-MM-DDTHH:mm:ss:sssZ)
@@ -438,9 +452,7 @@ static bool convertObjectToGSTimestamp(PyObject* value, GSTimestamp* timestamp) 
         //Date format is YYYY-MM-DDTHH:mm:ss.sssZ
 
         retConvertTimestamp = gsParseTime(v, timestamp);
-        if (alloc != SWIG_OLDOBJ) {
-            free(v);
-        }
+        cleanString(v, alloc);
 
         return (retConvertTimestamp == GS_TRUE);
     } else if (PyFloat_Check(value)) {
@@ -566,7 +578,7 @@ static bool convertObjectToFloat(PyObject* value, float* floatValPtr) {
  * byte array or string
  * Need to free data.
  */
-%fragment("convertObjectToBlob", "header", fragment = "checkPyObjIsStr") {
+%fragment("convertObjectToBlob", "header", fragment = "checkPyObjIsStr", fragment = "cleanString") {
 static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
     GSChar* blobData;
     GSChar* tmpBlobData;
@@ -589,14 +601,12 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
         if (!SWIG_IsOK(res)) {
            return false;
         }
-        if (alloc == SWIG_OLDOBJ) {
-            //swig reuse old memory, this memory is used by swig
-            //we will create new and duplicate this memory
-            blobData = strdup(blobData);
-        }
         //Ignore null character
         *size = *size - 1;
-        *data = (void*) blobData;
+        if (blobData) {
+            *data = (void*) strdup(blobData);
+            cleanString(blobData, alloc);
+        }
         return true;
     }
     return false;
@@ -620,7 +630,7 @@ static void cleanStringArray(GSChar** arrString, size_t size) {
 }
 
 %fragment("convertObjectToStringArray", "header", 
-        fragment = "checkPyObjIsStr", 
+        fragment = "checkPyObjIsStr", fragment = "cleanString",
         fragment = "cleanStringArray") {
 static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     GSChar** arrString;
@@ -651,11 +661,16 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
             return NULL;
         }
 
-        arrString[i] = strdup(v);
-
-        if (alloc != SWIG_OLDOBJ) {
-            %delete_array(v);
-        }
+        if (v) {
+             arrString[i] = strdup(v); 
+             cleanString(v, alloc);
+             if (!arrString[i]) {
+                 cleanStringArray(arrString, arraySize);
+                 return NULL;
+             }
+         } else {
+             arrString[i] = NULL;
+         }
     }
 
     return arrString;
@@ -668,7 +683,8 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
         fragment = "checkPyObjIsStr", fragment = "convertObjToStr", fragment = "convertObjectToDouble",
         fragment = "convertObjectToGSTimestamp", fragment = "SWIG_AsVal_bool",
         fragment = "convertObjectToBlob", fragment = "convertObjectToBool",
-        fragment = "convertObjectToFloat", fragment = "convertObjectToStringArray") {
+        fragment = "convertObjectToFloat", fragment = "convertObjectToStringArray",
+        fragment = "cleanString") {
     static bool convertToRowKeyFieldWithType(griddb::Field &field, PyObject* value, GSType type) {
         size_t size = 0;
         int res;
@@ -717,11 +733,14 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
                     return false;
                 }
 
-                if (v && size) {
-                    field.value.asString = (alloc == SWIG_NEWOBJ) ? v : %new_copy_array(v, size, GSChar);
+                if (v) {
+                    field.value.asString = strdup(v);
+                    if (!field.value.asString) {
+                        return false;
+                    }
                 }
-                
-                field.type = GS_TYPE_STRING;
+
+                cleanString(v, alloc);
                 break;
             case (GS_TYPE_INTEGER):
                 if (PyBool_Check(value)) {
@@ -758,7 +777,8 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
         fragment = "checkPyObjIsStr", fragment = "convertObjToStr", fragment = "convertObjectToDouble",
         fragment = "convertObjectToGSTimestamp", fragment = "SWIG_AsVal_bool",
         fragment = "convertObjectToBlob", fragment = "convertObjectToBool",
-        fragment = "convertObjectToFloat", fragment = "convertObjectToStringArray") {
+        fragment = "convertObjectToFloat", fragment = "convertObjectToStringArray",
+        fragment = "cleanString") {
     static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSType type) {
         int8_t byteVal;
         int16_t shortVal;
@@ -816,9 +836,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
                 }
                 stringVal = v;
                 ret = gsSetRowFieldByString(row, column, stringVal);
-                if (alloc == SWIG_NEWOBJ) {
-                    %delete_array(v);
-                }
+                cleanString(stringVal, alloc);
                 break;
             case (GS_TYPE_LONG):
                 if (PyBool_Check(value)) {
@@ -932,15 +950,9 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
                     return false;
                 }
 
-                if (v && size) {
-                    geometryVal = (alloc == SWIG_NEWOBJ) ? geometryVal : %new_copy_array(geometryVal, size, GSChar);
-                }
                 ret = gsSetRowFieldByGeometry(row, column, geometryVal);
-                if (geometryVal) {
-                    delete [] geometryVal;
-                }
+                cleanString(geometryVal, alloc);
                 break;
-                    
             case (GS_TYPE_INTEGER_ARRAY):
                 if (!PyList_Check(value)) {
                     return false;
@@ -1127,7 +1139,8 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
 /**
 * Typemaps for put_container() function
 */
-%typemap(in, fragment = "SWIG_AsCharPtrAndSize") (const GSColumnInfo* props, int propsCount)
+%typemap(in, fragment = "SWIG_AsCharPtrAndSize", fragment = "cleanString") 
+        (const GSColumnInfo* props, int propsCount)
 (PyObject* list, int i, size_t size = 0, int* alloc = 0, int res, char* v = 0, int val) {
 //Convert Python list of tuple into GSColumnInfo properties
     if (!PyList_Check($input)) {
@@ -1160,14 +1173,21 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
             if (!SWIG_IsOK(res)) {
                 %variable_fail(res, "String", "name");
             }
-
+            if (v) {
+                $1[i].name = strdup(v);
+                cleanString(v, alloc[i]);
+                if (!$1[i].name) {
+                    PyErr_SetString(PyExc_ValueError, "Memory allocation error");
+                    SWIG_fail;
+                }
+            } else {
+                $1[i].name = NULL;
+            }
             if (!PyInt_Check(PyList_GetItem(list, 1))) {
                 PyErr_SetString(PyExc_ValueError, "Expected an Integer as column type");
                 SWIG_fail;
             }
 
-            $1[i].name = strdup(v);
-            free((void*) v);
             $1[i].type = (int) PyInt_AsLong(PyList_GetItem(list, 1));
 %#if GS_COMPATIBILITY_SUPPORT_3_5
             int tupleLength = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(list)));
@@ -1195,12 +1215,10 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     $1 = PyList_Check($input) ? 1 : 0;
 }
 
-%typemap(freearg) (const GSColumnInfo* props, int propsCount) (int i) {
+%typemap(freearg, fragment = "cleanString") (const GSColumnInfo* props, int propsCount) (int i) {
     if ($1) {
         for (int i = 0; i < $2; i++) {
-            if (alloc$argnum[i] == SWIG_NEWOBJ) {
-                %delete_array($1[i].name);
-            }
+            cleanString($1[i].name, alloc$argnum[i]);
         }
         free((void *) $1);
     }
@@ -1252,15 +1270,11 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     }
 }
 
-%typemap(freearg) (const GSPropertyEntry* props, int propsCount) (int i = 0, int j = 0) {
+%typemap(freearg, fragment = "cleanString") (const GSPropertyEntry* props, int propsCount) (int i = 0, int j = 0) {
     if ($1) {
         for (int i = 0; i < $2; i++) {
-            if (alloc$argnum[j] == SWIG_NEWOBJ) {
-                %delete_array($1[i].name);
-            }
-            if (alloc$argnum[j + 1] == SWIG_NEWOBJ) {
-                %delete_array($1[i].value);
-            }
+            cleanString($1[i].name, alloc$argnum[j]);
+            cleanString($1[i].value, alloc$argnum[j + 1]);
             j += 2;
         }
         free((void *) $1);
@@ -1400,12 +1414,10 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     }
 }
 
-%typemap(freearg) (const GSRowKeyPredicateEntry *const * predicateList, size_t predicateCount) (int i) {
+%typemap(freearg, fragment = "cleanString") (const GSRowKeyPredicateEntry *const * predicateList, size_t predicateCount) (int i) {
     if ($1 && *$1) {
         for (int i = 0; i < $2; i++) {
-            if (alloc$argnum[i] == SWIG_NEWOBJ) {
-                %delete_array((*$1)[i].containerName);
-            }
+            cleanString((*$1)[i].containerName, alloc$argnum[i]);
         }
     }
 
@@ -2081,7 +2093,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
 %typemap(doc, name = "row_list") (GSRow** listRowdata, int rowCount) "list[list[object]]";
 
 //attribute ContainerInfo::column_info_list
-%typemap(in, fragment = "SWIG_AsCharPtrAndSize") (ColumnInfoList columnInfoList) (int* alloc){
+%typemap(in, fragment = "SWIG_AsCharPtrAndSize", fragment = "cleanString") (ColumnInfoList columnInfoList) (int* alloc){
 
     if (!PyList_Check($input)) {
         PyErr_SetString(PyExc_ValueError, "Expected a List");
@@ -2134,7 +2146,10 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
                 PyErr_SetString(PyExc_ValueError, "Can't convert field to string");
                 SWIG_fail;
             }
-            $1.columnInfo[i].name = v;
+            if (v) {
+                $1.columnInfo[i].name = strdup(v);
+                cleanString(v, alloc[i]);
+            }
             $1.columnInfo[i].type = PyLong_AsLong(PyList_GetItem(columInfoList, 1));
 %#if GS_COMPATIBILITY_SUPPORT_3_5
             if (sizeColumn == 3) {
