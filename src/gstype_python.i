@@ -196,35 +196,11 @@ static void cleanString(const GSChar* string, int alloc){
 /*
 * fragment to support converting Field to PyObject support RowKeyPredicate, AggregationResult
 */
-%fragment("convertValueToObject", "header",
-        fragment = "convertStrToObj", fragment = "convertTimestampToObject") {
-static PyObject* convertValueToObject(griddb::Field &field, bool timestamp_to_float = true) {
-    PyObject* list;
-    int listSize, i;
-    void* arrayPtr;
 
-    switch (field.type) {
-        case GS_TYPE_INTEGER:
-            return PyInt_FromLong(field.value.asInteger);
-        case GS_TYPE_LONG:
-            return PyLong_FromLong(field.value.asLong);
-        case GS_TYPE_DOUBLE:
-            return PyFloat_FromDouble(field.value.asDouble);
-        case GS_TYPE_STRING:
-            return convertStrToObj(field.value.asString);
-        case GS_TYPE_TIMESTAMP: {
-            return convertTimestampToObject(&field.value.asTimestamp, timestamp_to_float);
-        }
-        default:
-            return NULL;
-    }
-    return NULL;
-}
-}
 
 %fragment("convertFieldToObject", "header",
         fragment = "convertStrToObj", fragment = "convertTimestampToObject") {
-static PyObject* convertFieldToObject(GSRow *row, int column, bool timestamp_to_float = true) {
+static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestamp_to_float = true) {
 
     size_t size;
     const int8_t *byteArrVal;
@@ -239,44 +215,41 @@ static PyObject* convertFieldToObject(GSRow *row, int column, bool timestamp_to_
     PyObject* list;
     int i;
 
-    GSValue mValue;
-    GSType mType;
-    GSResult ret = gsGetRowFieldGeneral(row, column, &mValue, &mType);
-    switch (mType) {
+    switch (type) {
         case GS_TYPE_LONG:
-            return PyLong_FromLong(mValue.asLong);
+            return PyLong_FromLong(value->asLong);
         case GS_TYPE_STRING:
-            return convertStrToObj(mValue.asString);
+            return convertStrToObj(value->asString);
 %#if GS_COMPATIBILITY_SUPPORT_3_5
         case GS_TYPE_NULL:
             Py_RETURN_NONE;
 %#endif
         case GS_TYPE_BLOB:
-            return PyByteArray_FromStringAndSize((GSChar *)mValue.asBlob.data, mValue.asBlob.size);
+            return PyByteArray_FromStringAndSize((GSChar *)value->asBlob.data, value->asBlob.size);
 
         case GS_TYPE_BOOL:
-            return PyBool_FromLong(mValue.asBool);
+            return PyBool_FromLong(value->asBool);
         case GS_TYPE_INTEGER:
-            return PyInt_FromLong(mValue.asInteger);
+            return PyInt_FromLong(value->asInteger);
         case GS_TYPE_FLOAT:
-            return PyFloat_FromDouble(mValue.asFloat);
+            return PyFloat_FromDouble(value->asFloat);
         case GS_TYPE_DOUBLE:
-            return PyFloat_FromDouble(mValue.asDouble);
+            return PyFloat_FromDouble(value->asDouble);
         case GS_TYPE_TIMESTAMP:
-            return convertTimestampToObject(&mValue.asTimestamp, timestamp_to_float);
+            return convertTimestampToObject(&value->asTimestamp, timestamp_to_float);
         case GS_TYPE_BYTE:
-            return PyInt_FromLong(mValue.asByte);
+            return PyInt_FromLong(value->asByte);
         case GS_TYPE_SHORT:
-            return PyInt_FromLong(mValue.asShort);
+            return PyInt_FromLong(value->asShort);
         case GS_TYPE_GEOMETRY:
-            return convertStrToObj(mValue.asGeometry);
+            return convertStrToObj(value->asGeometry);
         case GS_TYPE_INTEGER_ARRAY:
 %#if GS_COMPATIBILITY_VALUE_1_1_106
-            size = mValue.asIntegerArray.size;
-            intArrVal = mValue.asIntegerArray.elements;
+            size = value->asIntegerArray.size;
+            intArrVal = value->asIntegerArray.elements;
 %#else
-            size = mValue.asArray.length;
-            intArrVal = mValue.asArray.elements.asInteger;
+            size = value->asArray.length;
+            intArrVal = value->asArray.elements.asInteger;
 %#endif
             list = PyList_New(size);
             for (i = 0; i < size; i++) {
@@ -285,11 +258,11 @@ static PyObject* convertFieldToObject(GSRow *row, int column, bool timestamp_to_
             return list;
         case GS_TYPE_STRING_ARRAY:
 %#if GS_COMPATIBILITY_VALUE_1_1_106
-            size = mValue.asStringArray.size;
-            stringArrVal = mValue.asStringArray.elements;
+            size = value->asStringArray.size;
+            stringArrVal = value->asStringArray.elements;
 %#else
-            size = mValue.asArray.length;
-            stringArrVal = mValue.asArray.elements.asString;
+            size = value->asArray.length;
+            stringArrVal = value->asArray.elements.asString;
 %#endif
             list = PyList_New(size);
             for (i = 0; i < size; i++) {
@@ -298,11 +271,11 @@ static PyObject* convertFieldToObject(GSRow *row, int column, bool timestamp_to_
             return list;
         case GS_TYPE_BOOL_ARRAY:
 %#if GS_COMPATIBILITY_VALUE_1_1_106
-            size = mValue.asBoolArray.size;
-            boolArrVal = field.value.asBoolArray.elements;
+            size = value->asBoolArray.size;
+            boolArrVal = value->value.asBoolArray.elements;
 %#else
-            size = mValue.asArray.length;
-            boolArrVal = mValue.asArray.elements.asBool;
+            size = value->asArray.length;
+            boolArrVal = value->asArray.elements.asBool;
 %#endif
             list = PyList_New(size);
             for (i = 0; i < size; i++) {
@@ -311,11 +284,11 @@ static PyObject* convertFieldToObject(GSRow *row, int column, bool timestamp_to_
             return list;
         case GS_TYPE_BYTE_ARRAY:
 %#if GS_COMPATIBILITY_VALUE_1_1_106
-            size = mValue.asByteArray.size;
-            byteArrVal = mValue.asByteArray.elements;
+            size = value->asByteArray.size;
+            byteArrVal = value->asByteArray.elements;
 %#else
-            size = mValue.asArray.length;
-            byteArrVal = mValue.asArray.elements.asByte;
+            size = value->asArray.length;
+            byteArrVal = value->asArray.elements.asByte;
 %#endif
             list = PyList_New(size);
             for (i = 0; i < size; i++) {
@@ -324,11 +297,11 @@ static PyObject* convertFieldToObject(GSRow *row, int column, bool timestamp_to_
             return list;
         case GS_TYPE_SHORT_ARRAY:
 %#if GS_COMPATIBILITY_VALUE_1_1_106
-            size = mValue.asShortArray.size;
-            shortArrVal = mValue.asShortArray.elements;
+            size = value->asShortArray.size;
+            shortArrVal = value->asShortArray.elements;
 %#else
-            size = mValue.asArray.length;
-            shortArrVal = mValue.asArray.elements.asShort;
+            size = value->asArray.length;
+            shortArrVal = value->asArray.elements.asShort;
 %#endif
             list = PyList_New(size);
             for (i = 0; i < size; i++) {
@@ -337,11 +310,11 @@ static PyObject* convertFieldToObject(GSRow *row, int column, bool timestamp_to_
             return list;
         case GS_TYPE_LONG_ARRAY:
 %#if GS_COMPATIBILITY_VALUE_1_1_106
-            size = mValue.asLongArray.size;
-            longArrVal = mValue.asLongArray.elements;
+            size = value->asLongArray.size;
+            longArrVal = value->asLongArray.elements;
 %#else
-            size = mValue.asArray.length;
-            longArrVal = mValue.asArray.elements.asLong;
+            size = value->asArray.length;
+            longArrVal = value->asArray.elements.asLong;
 %#endif
             list = PyList_New(size);
             for (i = 0; i < size; i++) {
@@ -350,11 +323,11 @@ static PyObject* convertFieldToObject(GSRow *row, int column, bool timestamp_to_
             return list;
         case GS_TYPE_FLOAT_ARRAY:
 %#if GS_COMPATIBILITY_VALUE_1_1_106
-            size = mValue.asFloatArray.size;
-            floatArrVal = mValue.asFloatArray.elements;
+            size = value->asFloatArray.size;
+            floatArrVal = value->asFloatArray.elements;
 %#else
-            size = mValue.asArray.length;
-            floatArrVal = mValue.asArray.elements.asFloat;
+            size = value->asArray.length;
+            floatArrVal = value->asArray.elements.asFloat;
 %#endif
             list = PyList_New(size);
             for (i = 0; i < size; i++) {
@@ -363,11 +336,11 @@ static PyObject* convertFieldToObject(GSRow *row, int column, bool timestamp_to_
             return list;
         case GS_TYPE_DOUBLE_ARRAY:
 %#if GS_COMPATIBILITY_VALUE_1_1_106
-            size = mValue.asDoubleArray.size;
-            doubleArrVal = mValue.asDoubleArray.elements;
+            size = value->asDoubleArray.size;
+            doubleArrVal = value->asDoubleArray.elements;
 %#else
-            size = mValue.asArray.length;
-            doubleArrVal = mValue.asArray.elements.asDouble;
+            size = value->asArray.length;
+            doubleArrVal = value->asArray.elements.asDouble;
 %#endif
             list = PyList_New(size);
             for (i = 0; i < size; i++) {
@@ -376,11 +349,11 @@ static PyObject* convertFieldToObject(GSRow *row, int column, bool timestamp_to_
             return list;
         case GS_TYPE_TIMESTAMP_ARRAY:
 %#if GS_COMPATIBILITY_VALUE_1_1_106
-            size = mValue.asTimestampArray.size;
-            timestampArrVal = mValue.asTimestampArray.elements;
+            size = value->asTimestampArray.size;
+            timestampArrVal = value->asTimestampArray.elements;
 %#else
-            size = mValue.asArray.length;
-            timestampArrVal = mValue.asArray.elements.asTimestamp;
+            size = value->asArray.length;
+            timestampArrVal = value->asArray.elements.asTimestamp;
 %#endif
             list = PyList_New(size);
             for (i = 0; i < size; i++) {
@@ -1521,8 +1494,8 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
 %typemap(in, numinputs = 0) (griddb::Field *agValue) (griddb::Field tmpAgValue){
     $1 = &tmpAgValue;
 }
-%typemap(argout, fragment = "convertValueToObject") (griddb::Field *agValue) {
-    $result = convertValueToObject(*$1, arg1->timestamp_output_with_float);
+%typemap(argout, fragment = "convertFieldToObject") (griddb::Field *agValue) {
+    $result = convertFieldToObject(&($1->value), $1->type, arg1->timestamp_output_with_float);
 }
 
 /**
@@ -1622,8 +1595,17 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
         SWIG_fail;
     }
 
+    GSValue mValue;
+    GSType mType;
+    GSResult ret;
     for (int i = 0; i < arg1->getColumnCount(); i++) {
-        PyList_SetItem(outList, i, convertFieldToObject(row, i, arg1->timestamp_output_with_float));
+        ret = gsGetRowFieldGeneral(row, i, &mValue, &mType);
+        if (ret != GS_RESULT_OK) {
+            char errorMsg[60];
+            sprintf(errorMsg, "Can't get data for field %d", i);
+            PyErr_SetString(PyExc_ValueError, errorMsg);
+        }
+        PyList_SetItem(outList, i, convertFieldToObject(&mValue, mType, arg1->timestamp_output_with_float));
     }
     $result = outList;
 }
@@ -1669,15 +1651,15 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     $2 = &finishKeyTmp;
 }
 
-%typemap(argout, fragment="convertValueToObject") (GSValue* startField, griddb::Field* finishField) {
+%typemap(argout, fragment="convertFieldToObject") (GSValue* startField, griddb::Field* finishField) {
     int length = 2;
     $result = PyList_New(2);
     if ($result == NULL) {
         PyErr_SetString(PyExc_ValueError, "Memory allocation for row is error");
         SWIG_fail;
     }
-    PyList_SetItem($result, 0, convertValueToObject(*$1, arg1->timestamp_output_with_float));
-    PyList_SetItem($result, 1, convertValueToObject(*$2, arg1->timestamp_output_with_float));
+    PyList_SetItem($result, 0, convertFieldToObject(&($1->value), $1->type, arg1->timestamp_output_with_float));
+    PyList_SetItem($result, 1, convertFieldToObject(&($2->value), $1->type, arg1->timestamp_output_with_float));
 }
 
 /**
@@ -1721,7 +1703,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     $2 = &keyCount1;
 }
 
-%typemap(argout, numinputs = 0, fragment="convertValueToObject") (griddb::Field **keys, size_t* keyCount) (  int i, size_t size) {
+%typemap(argout, numinputs = 0, fragment="convertFieldToObject") (griddb::Field **keys, size_t* keyCount) (  int i, size_t size) {
     size_t size = *$2;
     $result = PyList_New(size);
     if ($result == NULL) {
@@ -1731,7 +1713,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     griddb::Field* keyList = *($1);
     int num;
     for (num = 0; num < size; num++) {
-        PyObject *o = convertValueToObject(keyList[num], arg1->timestamp_output_with_float);
+        PyObject *o = convertFieldToObject(&keyList[num].value, keyList[num].type, arg1->timestamp_output_with_float);
         PyList_SetItem($result, num, o);
     }
 }
@@ -1878,6 +1860,9 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     PyObject* dict = PyDict_New();
     griddb::Container *tmpContainer;
     GSRow* row;
+    GSValue mValue;
+    GSType mType;
+    GSResult ret;
     for (int i = 0; i < *$2; i++) {
         PyObject* key = convertStrToObj((*$1)[i].containerName);
         PyObject* list = PyList_New((*$1)[i].rowCount);
@@ -1889,7 +1874,13 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
                 SWIG_fail;
             }
             for (int k = 0; k < (*$3)[i]; k++) {
-                PyList_SetItem(outList, k, convertFieldToObject(row, k, arg1->timestamp_output_with_float));
+                ret = gsGetRowFieldGeneral(row, k, &mValue, &mType);
+                if (ret != GS_RESULT_OK) {
+                    char errorMsg[60];
+                    sprintf(errorMsg, "Can't get data for field %d", i);
+                    PyErr_SetString(PyExc_ValueError, errorMsg);
+                }
+                PyList_SetItem(outList, k, convertFieldToObject(&mValue, mType, arg1->timestamp_output_with_float));
             }
             PyList_SetItem(list, j, outList);
         }
@@ -2236,6 +2227,9 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     PyObject *outList;
     std::shared_ptr< griddb::AggregationResult > *aggResult = NULL;
     std::shared_ptr< griddb::QueryAnalysisEntry > *queryAnalyResult = NULL;
+    GSValue mValue;
+    GSType mType;
+    GSResult ret;
     switch(*$1) {
         case (GS_ROW_SET_CONTAINER_ROWS):
             if (*$2 == false) {
@@ -2248,9 +2242,14 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
                     PyErr_SetString(PyExc_ValueError, "Memory allocation for row is error");
                     SWIG_fail;
                 }
-
                 for (int i = 0; i < arg1->getColumnCount(); i++) {
-                    PyList_SetItem(outList, i, convertFieldToObject(row, i, arg1->timestamp_output_with_float));
+                    ret = gsGetRowFieldGeneral(row, i, &mValue, &mType);
+                    if (ret != GS_RESULT_OK) {
+                        char errorMsg[60];
+                        sprintf(errorMsg, "Can't get data for field %d", i);
+                        PyErr_SetString(PyExc_ValueError, errorMsg);
+                    }
+                    PyList_SetItem(outList, i, convertFieldToObject(&mValue, mType, arg1->timestamp_output_with_float));
                 }
                 $result = outList;
             }
