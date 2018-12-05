@@ -1577,26 +1577,234 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     $1 = NULL;
 }
 
-%typemap(argout, fragment = "convertFieldToObject") (GSRow *rowdata) {
+/**
+ * Support convert data from GSRow* row to Python list 
+ */
+%fragment("getRowFields", "header",
+        fragment = "convertStrToObj", fragment = "convertTimestampToObject") {
+static bool getRowFields(GSRow *row, int columnCount, GSType* typeList, bool timestampOutput, int* columnError, GSType* fieldTypeError, PyObject* outList) {
+    GSResult ret;
+    GSValue mValue;
+    bool retVal = true;
+    for (int i = 0; i < columnCount; i++) {
+        //Check NULL value
+        GSBool nullValue;
+%#if GS_COMPATIBILITY_SUPPORT_3_5
+        ret = gsGetRowFieldNull(row, (int32_t) i, &nullValue);
+        if (ret != GS_RESULT_OK) {
+            *columnError = i;
+            retVal = false;
+            *fieldTypeError = GS_TYPE_NULL;
+            return retVal;
+        }
+        if (nullValue) {
+            Py_INCREF(Py_None);
+            PyList_SetItem(outList, i, Py_None);
+            continue;
+        }
+%#endif
+        switch(typeList[i]) {
+            case GS_TYPE_LONG: {
+                int64_t longValue;
+                ret = gsGetRowFieldAsLong(row, (int32_t) i, &longValue);
+                PyList_SetItem(outList, i, PyLong_FromLong(longValue));
+                break;
+            }
+            case GS_TYPE_STRING: {
+                GSChar* stringValue;
+                ret = gsGetRowFieldAsString(row, (int32_t) i, (const GSChar **)&stringValue);
+                PyList_SetItem(outList, i, convertStrToObj(stringValue));
+                break;
+            }
+            case GS_TYPE_BLOB: {
+                GSBlob blobValue;
+                ret = gsGetRowFieldAsBlob(row, (int32_t) i, &blobValue);
+                PyList_SetItem(outList, i, PyByteArray_FromStringAndSize((const char*)blobValue.data, blobValue.size));
+                break;
+            }
+            case GS_TYPE_BOOL: {
+                GSBool boolValue;
+                ret = gsGetRowFieldAsBool(row, (int32_t) i, &boolValue);
+                PyList_SetItem(outList, i, PyBool_FromLong(boolValue));
+                break;
+            }
+            case GS_TYPE_INTEGER: {
+                int32_t intValue;
+                ret = gsGetRowFieldAsInteger(row, (int32_t) i, &intValue);
+                PyList_SetItem(outList, i, PyInt_FromLong(intValue));
+                break;
+            }
+            case GS_TYPE_FLOAT: {
+                float floatValue;
+                ret = gsGetRowFieldAsFloat(row, (int32_t) i, &floatValue);
+                PyList_SetItem(outList, i, PyFloat_FromDouble(floatValue));
+                break;
+            }
+            case GS_TYPE_DOUBLE: {
+                double doubleValue;
+                ret = gsGetRowFieldAsDouble(row, (int32_t) i, &doubleValue);
+                PyList_SetItem(outList, i, PyFloat_FromDouble(doubleValue));
+                break;
+            }
+            case GS_TYPE_TIMESTAMP: {
+                GSTimestamp timestampValue;
+                ret = gsGetRowFieldAsTimestamp(row, (int32_t) i, &timestampValue);
+                PyList_SetItem(outList, i, convertTimestampToObject(&timestampValue, timestampOutput));
+                break;
+            }
+            case GS_TYPE_BYTE: {
+                int8_t byteValue;
+                ret = gsGetRowFieldAsByte(row, (int32_t) i, &byteValue);
+                PyList_SetItem(outList, i, PyInt_FromLong(byteValue));
+                break;
+            }
+            case GS_TYPE_SHORT: {
+                int16_t shortValue;
+                ret = gsGetRowFieldAsShort(row, (int32_t) i, &shortValue);
+                PyList_SetItem(outList, i, PyInt_FromLong(shortValue));
+                break;
+            }
+            case GS_TYPE_GEOMETRY: {
+                GSChar* geoValue;
+                ret = gsGetRowFieldAsGeometry(row, (int32_t) i, (const GSChar **)&geoValue);
+                PyList_SetItem(outList, i, convertStrToObj(geoValue));
+                break;
+            }
+            case GS_TYPE_INTEGER_ARRAY: {
+                int32_t* intArr;
+                size_t size;
+                ret = gsGetRowFieldAsIntegerArray (row, (int32_t) i, (const int32_t **)&intArr, &size);
+                PyObject* list = PyList_New(size);
+                for (int j = 0; j < size; j++) {
+                    PyList_SetItem(list, j, PyInt_FromLong(intArr[j]));
+                }
+                PyList_SetItem(outList, i, list);
+                break;
+            }
+            case GS_TYPE_STRING_ARRAY: {
+                GSChar** stringArrVal;
+                size_t size;
+                ret = gsGetRowFieldAsStringArray (row, (int32_t) i, ( const GSChar *const **)&stringArrVal, &size);
+                PyObject* list = PyList_New(size);
+                for (int j = 0; j < size; j++) {
+                    PyList_SetItem(list, j, convertStrToObj(stringArrVal[j]));
+                }
+                PyList_SetItem(outList, i, list);
+                break;
+            }
+            case GS_TYPE_BOOL_ARRAY: {
+                GSBool* boolArr;
+                size_t size;
+                ret = gsGetRowFieldAsBoolArray(row, (int32_t) i, (const GSBool **)&boolArr, &size);
+                PyObject* list = PyList_New(size);
+                for (int j = 0; j < size; j++) {
+                    PyList_SetItem(list, j, PyBool_FromLong(boolArr[j]));
+                }
+                PyList_SetItem(outList, i, list);
+                break;
+            }
+            case GS_TYPE_BYTE_ARRAY: {
+                int8_t* byteArr;
+                size_t size;
+                ret = gsGetRowFieldAsByteArray(row, (int32_t) i, (const int8_t **)&byteArr, &size);
+                PyObject* list = PyList_New(size);
+                for (int j = 0; j < size; j++) {
+                    PyList_SetItem(list, j, PyInt_FromLong(byteArr[j]));
+                }
+                PyList_SetItem(outList, i, list);
+                break;
+            }
+            case GS_TYPE_SHORT_ARRAY: {
+                int16_t* shortArr;
+                size_t size;
+                ret = gsGetRowFieldAsShortArray(row, (int32_t) i, (const int16_t **)&shortArr, &size);
+                PyObject* list = PyList_New(size);
+                for (int j = 0; j < size; j++) {
+                    PyList_SetItem(list, j, PyInt_FromLong(shortArr[j]));
+                }
+                PyList_SetItem(outList, i, list);
+                break;
+            }
+            case GS_TYPE_LONG_ARRAY: {
+                int64_t* longArr;
+                size_t size;
+                ret = gsGetRowFieldAsLongArray(row, (int32_t) i, (const int64_t **)&longArr, &size);
+                PyObject* list = PyList_New(size);
+                for (int j = 0; j < size; j++) {
+                    PyList_SetItem(list, j, PyLong_FromLong(longArr[j]));
+                }
+                PyList_SetItem(outList, i, list);
+                break;
+            }
+            case GS_TYPE_FLOAT_ARRAY: {
+                float* floatArr;
+                size_t size;
+                ret = gsGetRowFieldAsFloatArray(row, (int32_t) i, (const float **)&floatArr, &size);
+                PyObject* list = PyList_New(size);
+                for (int j = 0; j < size; j++) {
+                    PyList_SetItem(list, j, PyFloat_FromDouble(static_cast<double>(floatArr[j])));
+                }
+                PyList_SetItem(outList, i, list);
+                break;
+            }
+            case GS_TYPE_DOUBLE_ARRAY: {
+                double* doubleArr;
+                size_t size;
+                ret = gsGetRowFieldAsDoubleArray(row, (int32_t) i, (const double **)&doubleArr, &size);
+                PyObject* list = PyList_New(size);
+                for (int j = 0; j < size; j++) {
+                    PyList_SetItem(list, j, PyFloat_FromDouble(doubleArr[j]));
+                }
+                PyList_SetItem(outList, i, list);
+                break;
+            }
+            case GS_TYPE_TIMESTAMP_ARRAY: {
+                GSTimestamp* timestampArr;
+                size_t size;
+                ret = gsGetRowFieldAsTimestampArray(row, (int32_t) i, (const GSTimestamp **)&timestampArr, &size);
+                PyObject* list = PyList_New(size);
+                for (int j = 0; j < size; j++) {
+                    PyList_SetItem(list, j, convertTimestampToObject(&timestampArr[j], timestampOutput));
+                }
+                PyList_SetItem(outList, i, list);
+                break;
+            }
+            default: {
+                // NOT OK
+                ret = -1;
+                break;
+            }
+        }
+        if (ret != GS_RESULT_OK) {
+            *columnError = i;
+            *fieldTypeError = typeList[i];
+            retVal = false;
+            return retVal;
+        }
+    }
+    return retVal;
+}
+}
+
+%typemap(argout, fragment = "getRowFields") (GSRow *rowdata) {
     GSRow* row = arg1->getGSRowPtr();
     PyObject *outList = PyList_New(arg1->getColumnCount());
     if (outList == NULL) {
         PyErr_SetString(PyExc_ValueError, "Memory allocation for row is error");
         SWIG_fail;
     }
-
     GSValue mValue;
     GSType mType;
     GSResult ret;
-    for (int i = 0; i < arg1->getColumnCount(); i++) {
-        ret = gsGetRowFieldGeneral(row, i, &mValue, &mType);
-        if (ret != GS_RESULT_OK) {
-            char errorMsg[60];
-            sprintf(errorMsg, "Can't get data for field %d", i);
-            PyErr_SetString(PyExc_ValueError, errorMsg);
-            SWIG_fail;
-        }
-        PyList_SetItem(outList, i, convertFieldToObject(&mValue, mType, arg1->timestamp_output_with_float));
+    bool retVal;
+    int errorColumn;
+    GSType errorType;
+    retVal = getRowFields(row, arg1->getColumnCount(), arg1->getGSTypeList(),arg1->timestamp_output_with_float, &errorColumn, &errorType, outList);
+    if (retVal == false) {
+        char errorMsg[60];
+        sprintf(errorMsg, "Can't get data for field %d with type%d", errorColumn, errorType);
+        PyErr_SetString(PyExc_ValueError, errorMsg);
+        SWIG_fail;
     }
     $result = outList;
 }
@@ -1840,20 +2048,24 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
 /**
  * Typemaps output for Store.multi_get() function
  */
-%typemap(in, numinputs = 0) (GSContainerRowEntry **entryList, size_t* containerCount, int **colNumList) 
-        (GSContainerRowEntry *tmpEntryList, size_t tmpContainerCount, int *tmpcolNumList) {
+%typemap(in, numinputs = 0) (GSContainerRowEntry **entryList, size_t* containerCount, int **colNumList, GSType*** typeList) 
+        (GSContainerRowEntry *tmpEntryList, size_t tmpContainerCount, int *tmpcolNumList, GSType** tmpTypeList) {
     $1 = &tmpEntryList;
     $2 = &tmpContainerCount;
     $3 = &tmpcolNumList;
+    $4 = &tmpTypeList;
 }
 
-%typemap(argout, numinputs = 0, fragment = "convertStrToObj", fragment = "convertFieldToObject") (GSContainerRowEntry **entryList, size_t* containerCount, int **colNumList) () {
+%typemap(argout, numinputs = 0, fragment = "convertStrToObj", fragment = "getRowFields") (GSContainerRowEntry **entryList, size_t* containerCount, int **colNumList, GSType*** typeList) () {
     PyObject* dict = PyDict_New();
     griddb::Container *tmpContainer;
     GSRow* row;
     GSValue mValue;
     GSType mType;
     GSResult ret;
+    bool retVal;
+    int errorColumn;
+    GSType errorType;
     for (int i = 0; i < *$2; i++) {
         PyObject* key = convertStrToObj((*$1)[i].containerName);
         PyObject* list = PyList_New((*$1)[i].rowCount);
@@ -1864,15 +2076,12 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
                 PyErr_SetString(PyExc_ValueError, "Memory allocation for row is error");
                 SWIG_fail;
             }
-            for (int k = 0; k < (*$3)[i]; k++) {
-                ret = gsGetRowFieldGeneral(row, k, &mValue, &mType);
-                if (ret != GS_RESULT_OK) {
-                    char errorMsg[60];
-                    sprintf(errorMsg, "Can't get data for field %d", i);
-                    PyErr_SetString(PyExc_ValueError, errorMsg);
-                    SWIG_fail;
-                }
-                PyList_SetItem(outList, k, convertFieldToObject(&mValue, mType, arg1->timestamp_output_with_float));
+            retVal = getRowFields(row, (*$3)[i], (*$4)[i], arg1->timestamp_output_with_float, &errorColumn, &errorType, outList);
+            if (retVal == false) {
+                char errorMsg[60];
+                sprintf(errorMsg, "Can't get data for field %d with type %d", errorColumn, errorType);
+                PyErr_SetString(PyExc_ValueError, errorMsg);
+                SWIG_fail;
             }
             PyList_SetItem(list, j, outList);
         }
@@ -1882,7 +2091,17 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
         Py_DECREF(key);
         Py_DECREF(list);
     }
-    delete (*$3);
+    if (*$4) {
+        for (int j = 0; j < *$2;j++) {
+            if ((*$4)[j]) {
+                free ((void*) (*$4)[j]);
+            }
+        }
+        delete (*$4);
+    }
+    if (*$3) {
+        delete (*$3);
+    }
     $result = dict;
 }
 
@@ -2207,7 +2426,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     $4 = &aggResultTmp;
 }
 
-%typemap(argout, fragment = "convertFieldToObject") (GSRowSetType* type, bool* hasNextRow,
+%typemap(argout, fragment = "getRowFields") (GSRowSetType* type, bool* hasNextRow,
     griddb::QueryAnalysisEntry** queryAnalysis, griddb::AggregationResult** aggResult) {
 
     PyObject *resultobj;
@@ -2217,6 +2436,8 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     GSValue mValue;
     GSType mType;
     GSResult ret;
+    bool retVal;
+    int errorColumn;
     switch (*$1) {
         case (GS_ROW_SET_CONTAINER_ROWS):
             if (*$2 == false) {
@@ -2229,15 +2450,13 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
                     PyErr_SetString(PyExc_ValueError, "Memory allocation for row is error");
                     SWIG_fail;
                 }
-                for (int i = 0; i < arg1->getColumnCount(); i++) {
-                    ret = gsGetRowFieldGeneral(row, i, &mValue, &mType);
-                    if (ret != GS_RESULT_OK) {
-                        char errorMsg[60];
-                        sprintf(errorMsg, "Can't get data for field %d", i);
-                        PyErr_SetString(PyExc_ValueError, errorMsg);
-                        SWIG_fail;
-                    }
-                    PyList_SetItem(outList, i, convertFieldToObject(&mValue, mType, arg1->timestamp_output_with_float));
+                GSType errorType;
+                retVal = getRowFields(row, arg1->getColumnCount(), arg1->getGSTypeList(),arg1->timestamp_output_with_float, &errorColumn, &errorType, outList);
+                if (retVal == false) {
+                    char errorMsg[60];
+                    sprintf(errorMsg, "Can't get data for field %d with type%d", errorColumn, errorType);
+                    PyErr_SetString(PyExc_ValueError, errorMsg);
+                    SWIG_fail;
                 }
                 $result = outList;
             }

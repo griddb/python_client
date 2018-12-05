@@ -155,15 +155,21 @@ namespace griddb {
      * muti_get method. Using gsGetMultipleContainerRows C-API
      */
     void Store::multi_get(const GSRowKeyPredicateEntry* const * predicateList,
-            size_t predicateCount, GSContainerRowEntry **entryList, size_t* containerCount, int **colNumList) {
+            size_t predicateCount, GSContainerRowEntry **entryList, size_t* containerCount, int **colNumList, GSType*** typeList) {
         // get number of column of rows in each container.
         *colNumList = new int[predicateCount]; //will be free in argout
-        for (int i = 0; i < predicateCount; i++) {
+        *typeList = new GSType*[predicateCount]; //will be free in argout
+        int length = (int)predicateCount;
+        for (int i = 0; i < length; i++) {
             Container *tmpContainer = this->get_container((*predicateList)[i].containerName);
             if (tmpContainer == NULL) {
                 throw GSException(mStore, "Not found container");
             }
             (*colNumList)[i] = tmpContainer->getColumnCount();
+            (*typeList)[i] = (GSType*) malloc(sizeof(GSType) * (*colNumList)[i]);
+            for (int j = 0; j < (*colNumList)[i]; j++) {
+                (*typeList)[i][j] = tmpContainer->getGSTypeList()[j];
+            }
             delete tmpContainer;
         }
         // Get data for entryList
