@@ -414,23 +414,11 @@ static bool convertObjectToGSTimestamp(PyObject* value, GSTimestamp* timestamp) 
         if (!SWIG_IsOK(res)) {
            return false;
         }
-        // error when string len is too short
-        if (strlen(v) < 19) {
-            cleanString(v, alloc);
-            return false;
-        }
-        // this is for convert python's string datetime (YYYY-MM-DDTHH:mm:ss:sssZ)
-        // to griddb's string datetime (YYYY-MM-DDTHH:mm:ss.sssZ)
-        v[19] = '.';
-        //Date format is YYYY-MM-DDTHH:mm:ss.sssZ
-
         retConvertTimestamp = gsParseTime(v, timestamp);
         cleanString(v, alloc);
-
         return (retConvertTimestamp == GS_TRUE);
     } else if (PyFloat_Check(value)) {
         // Input is python utc timestamp
-        //utcTimestamp = PyFloat_AsDouble(value);
         vbool = convertObjectToDouble(value, &utcTimestamp);
         if (!vbool) {
             return false;
