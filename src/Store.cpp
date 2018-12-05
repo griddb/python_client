@@ -48,7 +48,7 @@ namespace griddb {
      * Return information object of a specific container
      */
     ContainerInfo* Store::get_container_info(const char* name) {
-        GSContainerInfo containerInfo;
+        GSContainerInfo containerInfo = GS_CONTAINER_INFO_INITIALIZER;
         GSChar bExists;
         GSResult ret = gsGetContainerInfo(mStore, name, &containerInfo, &bExists);
         if (ret != GS_RESULT_OK) {
@@ -90,7 +90,7 @@ namespace griddb {
             //If not found container, return NULL in target language
             return NULL;
         }
-        GSContainerInfo containerInfo;
+        GSContainerInfo containerInfo = GS_CONTAINER_INFO_INITIALIZER;
         GSChar bExists;
         ret = gsGetContainerInfo(mStore, name, &containerInfo, &bExists);
         if (ret != GS_RESULT_OK) {
@@ -138,7 +138,6 @@ namespace griddb {
      */
     void Store::multi_put(GSRow*** listRow, const int *listRowContainerCount,
             const char ** listContainerName, size_t containerCount) {
-        const GSChar *containerName;
         GSResult ret;
         GSContainerRowEntry * entryList = (GSContainerRowEntry*) malloc (containerCount * sizeof(GSContainerRowEntry));
         for (int i= 0; i < containerCount; i++) {
