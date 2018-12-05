@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef _TIMESTAMP_H_
-#define _TIMESTAMP_H_
+#ifndef _TIMESTAMPUTILS_H_
+#define _TIMESTAMPUTILS_H_
 #include "gridstore.h"
 #include <string>
 #include "GSException.h"
