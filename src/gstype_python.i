@@ -1978,6 +1978,10 @@ static bool getRowFields(GSRow *row, int columnCount, GSType* typeList, bool tim
             $3[i] = convertObjToStr(containerName);
             int length;
             containerInfoTmp = arg1->get_container_info($3[i]);
+            if (containerInfoTmp == NULL) {
+                PyErr_SetString(PyExc_ValueError, "Not found container");
+                SWIG_fail;
+            }
             infoListTmp = containerInfoTmp->get_column_info_list();
             int* typeArr = (int*) malloc(infoListTmp.size * sizeof(int));
             if (containerInfoTmp == NULL) {
@@ -1993,6 +1997,10 @@ static bool getRowFields(GSRow *row, int columnCount, GSType* typeList, bool tim
                 typeArr[m] = infoListTmp.columnInfo[m].type;
             }
             tmpContainer = arg1->get_container($3[i]);
+            if (tmpContainer == NULL) {
+                PyErr_SetString(PyExc_ValueError, "Not found container");
+                SWIG_fail;
+            }
             GSResult ret;
             for (j = 0; j < numRowOfContainer; j++) {
                 PyObject* rowTmp = PyList_GetItem(listRowContainer, j);
