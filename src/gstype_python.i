@@ -2031,6 +2031,7 @@ static bool getRowFields(GSRow *row, int columnCount, GSType* typeList, bool tim
             }
             free((void *)typeArr);
             delete containerInfoTmp;
+            delete tmpContainer;
             i++;
         }
 
