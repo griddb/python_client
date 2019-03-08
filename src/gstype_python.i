@@ -1264,37 +1264,41 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
 */
 %typemap(in) (GSQuery* const* queryList, size_t queryCount) 
         (PyObject* pyQuery, std::shared_ptr<griddb::Query> query, void *vquery, int i, int res = 0) {
-    if (!PyList_Check($input)) {
+    if ($input == Py_None) {
+        $1 = NULL;
+        $2 = 0;
+    } else if (!PyList_Check($input)) {
         PyErr_SetString(PyExc_ValueError, "Expected a List");
         SWIG_fail;
-    }
-    $2 = (size_t)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size($input)));
-    $1 = NULL;
-    i = 0;
-    if ($2 > 0) {
-        $1 = (GSQuery**) malloc($2 * sizeof(GSQuery*));
-        if ($1 == NULL) {
-            PyErr_SetString(PyExc_ValueError, "Memory allocation error");
-            SWIG_fail;
-        }
-        while (i < $2) {
-            pyQuery = PyList_GetItem($input,i);
-            {
-                int newmem = 0;
-                res = SWIG_ConvertPtrAndOwn(pyQuery, (void **) &vquery, $descriptor(std::shared_ptr<griddb::Query>*), %convertptr_flags, &newmem);
-                if (!SWIG_IsOK(res)) {
-                    %argument_fail(res, "$type", $symname, $argnum);
-                }
-                if (vquery) {
-                    query = *%reinterpret_cast(vquery, std::shared_ptr<griddb::Query>*);
-                    $1[i] = query->gs_ptr();
-                    if (newmem & SWIG_CAST_NEW_MEMORY) {
-                        delete %reinterpret_cast(vquery, std::shared_ptr<griddb::Query>*);
+    } else {
+        $2 = (size_t)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size($input)));
+        $1 = NULL;
+        i = 0;
+        if ($2 > 0) {
+            $1 = (GSQuery**) malloc($2 * sizeof(GSQuery*));
+            if ($1 == NULL) {
+                PyErr_SetString(PyExc_ValueError, "Memory allocation error");
+                SWIG_fail;
+            }
+            while (i < $2) {
+                pyQuery = PyList_GetItem($input,i);
+                {
+                    int newmem = 0;
+                    res = SWIG_ConvertPtrAndOwn(pyQuery, (void **) &vquery, $descriptor(std::shared_ptr<griddb::Query>*), %convertptr_flags, &newmem);
+                    if (!SWIG_IsOK(res)) {
+                        %argument_fail(res, "$type", $symname, $argnum);
+                    }
+                    if (vquery) {
+                        query = *%reinterpret_cast(vquery, std::shared_ptr<griddb::Query>*);
+                        $1[i] = query->gs_ptr();
+                        if (newmem & SWIG_CAST_NEW_MEMORY) {
+                            delete %reinterpret_cast(vquery, std::shared_ptr<griddb::Query>*);
+                        }
                     }
                 }
+    
+                i++;
             }
-
-            i++;
         }
     }
 }
