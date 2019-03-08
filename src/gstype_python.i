@@ -574,10 +574,9 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
         }
         //Ignore null character
         *size = *size - 1;
-        if (blobData) {
-            *data = (void*) strdup(blobData);
-            cleanString(blobData, alloc);
-        }
+        *data = malloc(*size);
+        memcpy(*data, blobData, *size);
+        cleanString(blobData, alloc);
         return true;
     }
     return false;
@@ -681,7 +680,6 @@ static bool convertToRowKeyFieldWithType(griddb::Field &field, PyObject* value, 
             if (!SWIG_IsOK(res)) {
                 return false;
             }
-
             if (v) {
                 field.value.asString = strdup(v);
                 cleanString(v, alloc);
@@ -1171,10 +1169,10 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
     $1 = PyList_Check($input) ? 1 : 0;
 }
 
-%typemap(freearg, fragment = "cleanString") (const GSColumnInfo* props, int propsCount) (int i) {
+%typemap(freearg) (const GSColumnInfo* props, int propsCount) (int i) {
     if ($1) {
         for (int i = 0; i < $2; i++) {
-            cleanString($1[i].name, alloc$argnum[i]);
+            free((void*) $1[i].name);
         }
         free((void *) $1);
     }
@@ -1186,9 +1184,9 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
 
 %typemap(doc, name = "column_info_list") (const GSColumnInfo* props, int propsCount) "list[list[string, Type, TypeOption]]";
 /**
-* Typemaps for get_store() function
+* Typemaps for StoreFactory::set_properties() function
 */
-%typemap(in, fragment = "SWIG_AsCharPtrAndSize") (const GSPropertyEntry* props, int propsCount)
+%typemap(in, fragment = "SWIG_AsCharPtrAndSize", fragment = "cleanString") (const GSPropertyEntry* props, int propsCount)
 (int i, int j, Py_ssize_t si, PyObject* key, PyObject* val, size_t size = 0, int* alloc = 0, int res, char* v = 0) {
     if (!PyDict_Check($input)) {
         PyErr_SetString(PyExc_ValueError, "Expected a Dict");
@@ -1214,24 +1212,30 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
                 %variable_fail(res, "String", "name");
             }
 
-            $1[i].name = v;
+            $1[i].name = strdup(v);
+            cleanString(v, alloc[j]);
             res = SWIG_AsCharPtrAndSize(val, &v, &size, &alloc[j + 1]);
             if (!SWIG_IsOK(res)) {
                 %variable_fail(res, "String", "value");
             }
-            $1[i].value = v;
+            $1[i].value = strdup(v);
+            cleanString(v, alloc[j + 1]);
             i++;
             j+=2;
         }
     }
 }
 
-%typemap(freearg, fragment = "cleanString") (const GSPropertyEntry* props, int propsCount) 
+%typemap(freearg) (const GSPropertyEntry* props, int propsCount) 
         (int i = 0, int j = 0) {
     if ($1) {
         for (int i = 0; i < $2; i++) {
-            cleanString($1[i].name, alloc$argnum[j]);
-            cleanString($1[i].value, alloc$argnum[j + 1]);
+           if ($1[i].name) {
+                free((void*) $1[i].name);
+            }
+            if ($1[i].value) {
+                free((void*) $1[i].value);
+            }
             j += 2;
         }
         free((void *) $1);
@@ -1350,16 +1354,16 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
             GSRowKeyPredicateEntry *predicateEntry = &pList[i];
             res = SWIG_AsCharPtrAndSize(key, &v, &size, &alloc[i]);
             if (!SWIG_IsOK(res)) {
-                %variable_fail(res, "String", "containerName");
                 free((void*) pList);
+                %variable_fail(res, "String", "containerName");
             }
             predicateEntry->containerName = v;
             //Get GSRowKeyPredicate pointer from RowKeyPredicate pyObject
             int newmem = 0;
             res = SWIG_ConvertPtrAndOwn(val, (void **) &vpredicate, $descriptor(std::shared_ptr<griddb::RowKeyPredicate>*), %convertptr_flags, &newmem);
             if (!SWIG_IsOK(res)) {
-                %argument_fail(res, "$type", $symname, $argnum);
                 free((void*) pList);
+                %argument_fail(res, "$type", $symname, $argnum);
             }
             if (vpredicate) {
                 pPredicate = *%reinterpret_cast(vpredicate, std::shared_ptr<griddb::RowKeyPredicate>*);
@@ -1885,13 +1889,15 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
  */
 %typemap(in, fragment = "convertToFieldWithType", fragment = "convertObjToStr")
         (GSRow*** listRow, const int *listRowContainerCount, const char ** listContainerName, size_t containerCount) () {
+    $1 = NULL;
+    $2 = NULL;
+    $3 = NULL;
+    $4 = 0;
     if (!PyDict_Check($input)) {
         PyErr_SetString(PyExc_ValueError, "Expected a Dict");
         SWIG_fail;
     }
-    $1 = NULL;
-    $2 = NULL;
-    $3 = NULL;
+
     $4 = (size_t)PyInt_AsLong(PyLong_FromSsize_t(PyDict_Size($input)));
     griddb::Container* tmpContainer;
     if ($4 > 0) {
@@ -1998,14 +2004,14 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
 
 %typemap(freearg) (GSRow*** listRow, const int *listRowContainerCount, const char ** listContainerName, size_t containerCount) {
     for (int i = 0; i < $4; i++) {
-        if ($1[i]) {
+        if ($1[i] != NULL) {
             for (int j = 0; j < $2[i]; j++) {
                 gsCloseRow(&$1[i][j]);
             }
-            delete $1[i];
+            delete [] $1[i];
         }
     }
-    if ($1) delete $1;
+    if ($1) delete [] $1;
     if ($2) delete $2;
     if ($3) delete $3;
 }
@@ -2059,10 +2065,10 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
                 free ((void*) (*$4)[j]);
             }
         }
-        delete (*$4);
+        delete [] (*$4);
     }
     if (*$3) {
-        delete (*$3);
+        delete [] (*$3);
     }
     $result = dict;
 }
@@ -2071,11 +2077,8 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
  * Typemap for QueryAnalysisEntry.get()
  */
 %typemap(in, numinputs = 0) (GSQueryAnalysisEntry* queryAnalysis) (GSQueryAnalysisEntry queryAnalysis1) {
-    $1 = (GSQueryAnalysisEntry*) malloc(sizeof(GSQueryAnalysisEntry));
-    if ($1 == NULL) {
-        PyErr_SetString(PyExc_ValueError, "Memory allocation error");
-        SWIG_fail;
-    }
+    queryAnalysis1 = GS_QUERY_ANALYSIS_ENTRY_INITIALIZER;
+    $1 = &queryAnalysis1;
 }
 
 %typemap(argout, fragment = "convertStrToObj") (GSQueryAnalysisEntry* queryAnalysis) () {
@@ -2103,7 +2106,6 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
         if ($1->valueType) {
             free((void*) $1->valueType);
         }
-        free((void*) $1);
     }
 }
 
@@ -2135,21 +2137,14 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
 
 %typemap(argout, numinputs = 0, fragment = "convertStrToObj") (char*** listName, int* num) {
     $result = PyList_New(*$2);
-    if (*$2){
+    if (*$2 && *$1){
         for (int i = 0; i < *$2; i++) {
             PyList_SetItem($result, i, convertStrToObj((*$1)[i]));
-        }
-    }
-    return $result;
-}
-
-%typemap(freearg) (char*** listName, int* num) {
-    if (*$2){
-        for (int i = 0; i < *$2; i++) {
             free((*$1)[i]);
         }
         free((void *) *$1);
     }
+    return $result;
 }
 
 //Read only attribute Container::type
@@ -2242,18 +2237,18 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
 }
 
 %typemap(freearg) (GSRow** listRowdata, int rowCount) {
-    if ($1) {
+    if ($1 != NULL) {
         for (int rowNum = 0; rowNum < $2; rowNum++) {
             gsCloseRow(&$1[rowNum]);
         }
-        delete $1;
+        delete [] $1;
     }
 }
 
 %typemap(doc, name = "row_list") (GSRow** listRowdata, int rowCount) "list[list[object]]";
 
 //attribute ContainerInfo::column_info_list
-%typemap(in, fragment = "SWIG_AsCharPtrAndSize", fragment = "cleanString") (ColumnInfoList columnInfoList) (int* alloc){
+%typemap(in, fragment = "SWIG_AsCharPtrAndSize", fragment = "cleanString") (ColumnInfoList columnInfoList) (int* alloc = NULL){
 
     if (!PyList_Check($input)) {
         PyErr_SetString(PyExc_ValueError, "Expected a List");
@@ -2281,7 +2276,7 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
             PyErr_SetString(PyExc_ValueError, "Memory allocation for set column_info_list is error");
             SWIG_fail;
         }
-        memset($1.columnInfo, 0x0, size * sizeof(GSColumnInfo));
+        *($1.columnInfo) = GS_COLUMN_INFO_INITIALIZER;
 
         PyObject* columInfoList;
         int option;
@@ -2306,10 +2301,7 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
                 PyErr_SetString(PyExc_ValueError, "Can't convert field to string");
                 SWIG_fail;
             }
-            if (v) {
-                $1.columnInfo[i].name = strdup(v);
-                cleanString(v, alloc[i]);
-            }
+            $1.columnInfo[i].name = v;
             $1.columnInfo[i].type = PyLong_AsLong(PyList_GetItem(columInfoList, 1));
 %#if GS_COMPATIBILITY_SUPPORT_3_5
             if (sizeColumn == 3) {
@@ -2328,19 +2320,19 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
 }
 
 %typemap(freearg, fragment = "cleanString") (ColumnInfoList columnInfoList) {
-    size_t size = $1.size;
-
-    if (alloc$argnum) {
-        for (int i = 0; i < size; i++) {
-            cleanString($1.columnInfo[i].name, alloc$argnum[i]);
-        }
-        free(alloc$argnum);
+    size_t size = 0;
+    if ($1.size) {
+        size = $1.size;
     }
-    
-    if ($1.columnInfo) {
+    if ($1.columnInfo != NULL) {
+        if (alloc$argnum) {
+            for (int i = 0; i < size; i++) {
+                cleanString($1.columnInfo[i].name, alloc$argnum[i]);
+            }
+            free(alloc$argnum);
+        }
         free((void *) $1.columnInfo);
     }
-
 }
 
 %typemap(out, fragment = "convertStrToObj") (ColumnInfoList) {
