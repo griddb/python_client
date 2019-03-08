@@ -2083,6 +2083,12 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
     if (*$3) {
         delete [] (*$3);
     }
+    for (int i = 0; i < *$2; i++) {
+        for (int j = 0; j < (*$1)[i].rowCount; j++) {
+            row = (GSRow*)(*$1)[i].rowList[j];
+            gsCloseRow(&row);
+        }
+    }
     $result = dict;
 }
 
