@@ -20,12 +20,15 @@
 #include <datetime.h>
 #include <limits>
 %}
-%ignore griddb::Container::getGSTypeList;
-%ignore griddb::Container::getColumnCount;
+%ignore griddb::AggregationResult::setOutputTimestamp;
+%ignore griddb::Container::setOutputTimestamp;
+%ignore griddb::ContainerInfo::ContainerInfo(GSContainerInfo* containerInfo);
 %ignore griddb::RowSet::next_row;
 %ignore griddb::RowSet::get_next_query_analysis;
 %ignore griddb::RowSet::get_next_aggregation;
-%ignore griddb::ContainerInfo::ContainerInfo(GSContainerInfo* containerInfo);
+%ignore griddb::RowSet::setOutputTimestamp;
+%ignore griddb::Store::setOutputTimestamp;
+%ignore griddb::RowKeyPredicate::setOutputTimestamp;
 
 %pythonbegin %{
 from enum import IntEnum
