@@ -599,9 +599,8 @@ static void cleanStringArray(GSChar** arrString, size_t size) {
 }
 }
 
-%fragment("convertObjectToStringArray", "header", 
-        fragment = "checkPyObjIsStr", fragment = "cleanString",
-        fragment = "cleanStringArray") {
+%fragment("convertObjectToStringArray", "header", fragment = "checkPyObjIsStr",
+        fragment = "cleanString", fragment = "cleanStringArray") {
 static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     GSChar** arrString;
     size_t arraySize;
@@ -680,6 +679,7 @@ static bool convertToRowKeyFieldWithType(griddb::Field &field, PyObject* value, 
             if (!SWIG_IsOK(res)) {
                 return false;
             }
+
             if (v) {
                 field.value.asString = strdup(v);
                 cleanString(v, alloc);
@@ -1091,7 +1091,7 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
 }
 
 /**
-* Typemaps for put_container() function
+* Typemaps for new ContainerInfo()
 */
 %typemap(in, fragment = "SWIG_AsCharPtrAndSize", fragment = "cleanString") 
         (const GSColumnInfo* props, int propsCount)
