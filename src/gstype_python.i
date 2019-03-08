@@ -57,6 +57,19 @@ class FetchOption(IntEnum):
     def __int__(self):
         return int(self.value)
     LIMIT = 0
+%#if GS_COMPATIBILITY_SUPPORT_1_5
+
+%#if GS_INTERNAL_DEFINITION_VISIBLE
+%#if !GS_COMPATIBILITY_DEPRECATE_FETCH_OPTION_SIZE
+    SIZE = (LIMIT + 1)
+%#endif
+%#endif
+
+%#if GS_COMPATIBILITY_SUPPORT_4_0
+    PARTIAL_EXECUTION = (LIMIT + 2)
+%#endif
+
+%#endif
 class TimeUnit(IntEnum):
     def __int__(self):
         return int(self.value)
