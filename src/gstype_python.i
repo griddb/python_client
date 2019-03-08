@@ -106,11 +106,6 @@ class TypeOption(IntEnum):
 %feature("autodoc", "0");
 
 /**
- * Support find sub-string from string.
- * Use for create UTC datetime object in Python
- */
-
-/**
  * Support convert const GSChar* to PyObject* for typemap out
  */
 %fragment("convertStrToObj", "header") {
@@ -1440,38 +1435,6 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     }
 }
 
-%typemap(in, fragment = "convertObjectToBlob") (const GSBlob *fieldValue) {
-    $1 = (GSBlob*) malloc(sizeof(GSBlob));
-    if ($1 == NULL) {
-        PyErr_SetString(PyExc_ValueError, "Memory allocation error");
-        SWIG_fail;
-    }
-
-    vbool = convertObjectToBlob(value, &$1->size, (void**) &$1->data);
-    if (!vbool) {
-        free((void*) $1);
-        return false;
-    }
-}
-
-%typemap(freearg) (const GSBlob *fieldValue) {
-    if ($1) {
-        if ($1->data) {
-            free ((void*) $1->data);
-        }
-        free((void *) $1);
-    }
-}
-
-%typemap(in, numinputs = 0) (GSBlob *value) (GSBlob pValue) {
-    $1 = &pValue;
-}
-
-%typemap(argout) (GSBlob *value) {
-    GSBlob output = *$1;
-    $result = PyByteArray_FromStringAndSize((char*) output.data, output.size);
-}
-
 %typemap(out, fragment = "convertStrToObj") GSColumnInfo {
     $result = PyTuple_New(2);
     PyTuple_SetItem($result, 0, convertStrToObj($1.name));
@@ -1514,9 +1477,6 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     }
 }
 
-%typemap(freearg) (GSRow* row) {
-}
-
 /**
 * Typemaps for put_row() function
 */
@@ -1543,9 +1503,6 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
             SWIG_fail;
         }
     }
-}
-
-%typemap(freearg) (GSRow *rowContainer) {
 }
 
 %typemap(doc, name = "row") (GSRow *rowContainer) "list[object]";
