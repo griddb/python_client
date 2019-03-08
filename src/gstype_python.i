@@ -144,6 +144,19 @@ bool checkPyObjIsStr(PyObject* obj) {
 }
 }
 
+/**
+ * Support check PyObject* is long
+ */
+%fragment("checkPyObjIsLong", "header") {
+bool checkPyObjIsLong(PyObject* obj) {
+%#if PY_MAJOR_VERSION < 3
+    return (PyLong_Check(obj) || PyInt_Check(obj)) && !PyBool_Check(obj);
+%#else
+    return PyLong_Check(obj) && !PyBool_Check(obj);
+%#endif
+}
+}
+
 %fragment("convertTimestampToObject", "header") {
 static PyObject* convertTimestampToObject(GSTimestamp* timestamp, bool timestampToFloat = true) {
     // In C-API there is function PyDateTime_FromTimestamp convert from datetime to local datetime (not UTC).
@@ -368,7 +381,7 @@ static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestam
  * datetime object, string or float
  */
 %fragment("convertObjectToGSTimestamp", "header", fragment = "convertObjectToFloat"
-        , fragment = "cleanString") {
+        , fragment = "cleanString", fragment = "checkPyObjIsLong") {
 static bool convertObjectToGSTimestamp(PyObject* value, GSTimestamp* timestamp) {
     int year, month, day, hour, minute, second, milliSecond, microSecond;
     size_t size = 0;
@@ -404,7 +417,7 @@ static bool convertObjectToGSTimestamp(PyObject* value, GSTimestamp* timestamp) 
         return true;
     } else if (checkPyObjIsStr(value)) {
 
-        // Input is datetime string: ex
+        // Input is datetime string: ex 1970-01-01T00:00:00.000Z
         res = SWIG_AsCharPtrAndSize(value, &v, &size, &alloc);
 
         if (!SWIG_IsOK(res)) {
@@ -424,12 +437,12 @@ static bool convertObjectToGSTimestamp(PyObject* value, GSTimestamp* timestamp) 
             return false;
         }
         return true;
-    } else if (PyLong_Check(value)) {
+    } else if (checkPyObjIsLong(value)) {
         utcTimestamp = PyLong_AsLong(value);
         if (utcTimestamp > UTC_TIMESTAMP_MAX) {
             return false;
         }
-        *timestamp = utcTimestamp * 1000;
+        *timestamp = utcTimestamp * 1000; // convert from seconds to miliseconds
         return true;
     } else {
         // Invalid input
