@@ -2029,35 +2029,16 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
             $2[i] = numRowOfContainer;
             $3[i] = convertObjToStr(containerName);
             int length;
-            containerInfoTmp = arg1->get_container_info($3[i]);
-            if (containerInfoTmp == NULL) {
-                PyErr_SetString(PyExc_ValueError, "Not found container");
-                SWIG_fail;
-            }
-            infoListTmp = containerInfoTmp->get_column_info_list();
-            int* typeArr = (int*) malloc(infoListTmp.size * sizeof(int));
-            if (containerInfoTmp == NULL) {
-                PyErr_SetString(PyExc_ValueError, "Memory allocation error");
-                SWIG_fail;
-            }
-            if (typeArr == NULL) {
-                delete containerInfoTmp;
-                PyErr_SetString(PyExc_ValueError, "Memory allocation error");
-                SWIG_fail;
-            }
-            for (int m = 0; m < infoListTmp.size; m++) {
-                typeArr[m] = infoListTmp.columnInfo[m].type;
-            }
             tmpContainer = arg1->get_container($3[i]);
             if (tmpContainer == NULL) {
                 PyErr_SetString(PyExc_ValueError, "Not found container");
                 SWIG_fail;
             }
+            GSType* typeArr = tmpContainer->getGSTypeList();
             for (j = 0; j < numRowOfContainer; j++) {
                 PyObject* rowTmp = PyList_GetItem(listRowContainer, j);
                 if (!PyList_Check(rowTmp)) {
                     PyErr_SetString(PyExc_ValueError, "Expected a List");
-                    free((void *) typeArr);
                     delete containerInfoTmp;
                     SWIG_fail;
                 }
@@ -2065,22 +2046,19 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
                 GSResult ret = gsCreateRowByContainer(tmpContainer->getGSContainerPtr(), &$1[i][j]);
                 if ($1[i][j] == NULL || ret != GS_RESULT_OK) {
                     PyErr_SetString(PyExc_ValueError, "Memory allocation error");
-                    free((void *) typeArr);
                     delete containerInfoTmp;
                     SWIG_fail;
                 }
                 for (int k = 0; k < length; k++) {
-                    if (!(convertToFieldWithType($1[i][j], k, PyList_GetItem(rowTmp, k), typeArr[k]))) {
+                    if (!(convertToFieldWithType($1[i][j], k, PyList_GetItem(rowTmp, k), (int) typeArr[k]))) {
                         char gsType[200];
                         sprintf(gsType, "Invalid value for column %d, type should be : %d", k, typeArr[k]);
                         PyErr_SetString(PyExc_ValueError, gsType);
                         delete containerInfoTmp;
-                        free((void *) typeArr);
                         SWIG_fail;
                     }
                 }
             }
-            free((void *)typeArr);
             delete containerInfoTmp;
             delete tmpContainer;
             i++;
