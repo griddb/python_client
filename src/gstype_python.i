@@ -147,10 +147,10 @@ bool checkPyObjIsStr(PyObject* obj) {
 }
 
 %fragment("convertTimestampToObject", "header") {
-static PyObject* convertTimestampToObject(GSTimestamp* timestamp, bool timestamp_to_float = true) {
+static PyObject* convertTimestampToObject(GSTimestamp* timestamp, bool timestampToFloat = true) {
     // In C-API there is function PyDateTime_FromTimestamp convert from datetime to local datetime (not UTC).
     // But GridDB use UTC datetime => use the string output from gsFormatTime to convert to UTC datetime
-    if (timestamp_to_float) {
+    if (timestampToFloat) {
         return PyFloat_FromDouble(((double)(*timestamp)) / 1000);
     }
 
@@ -200,7 +200,7 @@ static void cleanString(const GSChar* string, int alloc){
 
 %fragment("convertFieldToObject", "header",
         fragment = "convertStrToObj", fragment = "convertTimestampToObject") {
-static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestamp_to_float = true) {
+static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestampToFloat = true) {
 
     size_t size;
     const int8_t *byteArrVal;
@@ -236,7 +236,7 @@ static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestam
         case GS_TYPE_DOUBLE:
             return PyFloat_FromDouble(value->asDouble);
         case GS_TYPE_TIMESTAMP:
-            return convertTimestampToObject(&value->asTimestamp, timestamp_to_float);
+            return convertTimestampToObject(&value->asTimestamp, timestampToFloat);
         case GS_TYPE_BYTE:
             return PyInt_FromLong(value->asByte);
         case GS_TYPE_SHORT:
@@ -357,7 +357,7 @@ static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestam
 %#endif
             list = PyList_New(size);
             for (i = 0; i < size; i++) {
-                PyList_SetItem(list, i, convertTimestampToObject((GSTimestamp*)&(timestampArrVal[i]), timestamp_to_float));
+                PyList_SetItem(list, i, convertTimestampToObject((GSTimestamp*)&(timestampArrVal[i]), timestampToFloat));
             }
             return list;
         default:
