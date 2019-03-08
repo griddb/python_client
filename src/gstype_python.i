@@ -1225,14 +1225,20 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
                 %variable_fail(res, "String", "name");
             }
 
-            $1[i].name = strdup(v);
-            cleanString(v, alloc[j]);
+            if (v) {
+                $1[i].name = strdup(v);
+                cleanString(v, alloc[j]);
+            } else {
+                $1[i].name = NULL;
+            }
             res = SWIG_AsCharPtrAndSize(val, &v, &size, &alloc[j + 1]);
             if (!SWIG_IsOK(res)) {
                 %variable_fail(res, "String", "value");
             }
-            $1[i].value = strdup(v);
-            cleanString(v, alloc[j + 1]);
+            if (v) {
+                $1[i].value = strdup(v);
+                cleanString(v, alloc[j + 1]);
+            }
             i++;
             j+=2;
         }
