@@ -2012,7 +2012,7 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
         ColumnInfoList infoListTmp;
         while (PyDict_Next($input, &si, &containerName, &listRowContainer)) {
             int numRowOfContainer = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(listRowContainer)));
-            if (numRowOfContainer < 0) {
+            if (numRowOfContainer <= 0) {
                 PyErr_SetString(PyExc_ValueError, "Num rows of container is invalid.");
                 SWIG_fail;
             }
