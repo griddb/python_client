@@ -158,14 +158,7 @@ static PyObject* convertTimestampToObject(GSTimestamp* timestamp, bool timestamp
     gsFormatTime(*timestamp, strBuf, bufSize);
 
     //Date format is YYYY-MM-DDTHH:mm:ss.sssZ
-    int year;
-    int month;
-    int day;
-    int hour;
-    int minute;
-    int second;
-    int miliSecond;
-    int microSecond;
+    int year, month, day, hour, minute, second, miliSecond, microSecond;
     sscanf(strBuf, "%d-%d-%dT%d:%d:%d.%dZ", &year, &month, &day, &hour, &minute, &second, &miliSecond);
     microSecond = miliSecond * 1000;
     dateTime = PyDateTime_FromDateAndTime(year, month, day, hour, minute, second, microSecond);
@@ -191,25 +184,13 @@ static void cleanString(const GSChar* string, int alloc){
 /*
 * fragment to support converting Field to PyObject support RowKeyPredicate, AggregationResult
 */
-
-
 %fragment("convertFieldToObject", "header",
         fragment = "convertStrToObj", fragment = "convertTimestampToObject") {
 static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestampToFloat = true) {
 
     size_t size;
-    const int8_t *byteArrVal;
-    const int16_t *shortArrVal;
-    const int32_t *intArrVal;
-    const int64_t *longArrVal;
-    const double *doubleArrVal;
-    const float *floatArrVal;
-    const GSChar *const *stringArrVal;
-    const GSBool *boolArrVal;
-    const GSTimestamp *timestampArrVal;
     PyObject* list;
     int i;
-
     switch (type) {
         case GS_TYPE_LONG:
             return PyLong_FromLong(value->asLong);
@@ -238,7 +219,8 @@ static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestam
             return PyInt_FromLong(value->asShort);
         case GS_TYPE_GEOMETRY:
             return convertStrToObj(value->asGeometry);
-        case GS_TYPE_INTEGER_ARRAY:
+        case GS_TYPE_INTEGER_ARRAY:{
+            const int32_t *intArrVal;
 %#if GS_COMPATIBILITY_VALUE_1_1_106
             size = value->asIntegerArray.size;
             intArrVal = value->asIntegerArray.elements;
@@ -251,7 +233,9 @@ static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestam
                 PyList_SetItem(list, i, PyInt_FromLong(intArrVal[i]));
             }
             return list;
-        case GS_TYPE_STRING_ARRAY:
+        }
+        case GS_TYPE_STRING_ARRAY: {
+            const GSChar *const *stringArrVal;
 %#if GS_COMPATIBILITY_VALUE_1_1_106
             size = value->asStringArray.size;
             stringArrVal = value->asStringArray.elements;
@@ -264,7 +248,9 @@ static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestam
                 PyList_SetItem(list, i, convertStrToObj(stringArrVal[i]));
             }
             return list;
+        }
         case GS_TYPE_BOOL_ARRAY:
+            const GSBool *boolArrVal;
 %#if GS_COMPATIBILITY_VALUE_1_1_106
             size = value->asBoolArray.size;
             boolArrVal = value->value.asBoolArray.elements;
@@ -277,7 +263,8 @@ static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestam
                 PyList_SetItem(list, i, PyBool_FromLong(boolArrVal[i]));
             }
             return list;
-        case GS_TYPE_BYTE_ARRAY:
+        case GS_TYPE_BYTE_ARRAY: {
+            const int8_t *byteArrVal;
 %#if GS_COMPATIBILITY_VALUE_1_1_106
             size = value->asByteArray.size;
             byteArrVal = value->asByteArray.elements;
@@ -290,7 +277,9 @@ static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestam
                 PyList_SetItem(list, i, PyInt_FromLong(byteArrVal[i]));
             }
             return list;
-        case GS_TYPE_SHORT_ARRAY:
+        }
+        case GS_TYPE_SHORT_ARRAY: {
+            const int16_t *shortArrVal;
 %#if GS_COMPATIBILITY_VALUE_1_1_106
             size = value->asShortArray.size;
             shortArrVal = value->asShortArray.elements;
@@ -303,7 +292,9 @@ static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestam
                 PyList_SetItem(list, i, PyInt_FromLong(shortArrVal[i]));
             }
             return list;
-        case GS_TYPE_LONG_ARRAY:
+        }
+        case GS_TYPE_LONG_ARRAY: {
+            const int64_t *longArrVal;
 %#if GS_COMPATIBILITY_VALUE_1_1_106
             size = value->asLongArray.size;
             longArrVal = value->asLongArray.elements;
@@ -316,7 +307,9 @@ static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestam
                 PyList_SetItem(list, i, PyLong_FromLong(longArrVal[i]));
             }
             return list;
-        case GS_TYPE_FLOAT_ARRAY:
+        }
+        case GS_TYPE_FLOAT_ARRAY: {
+            const float *floatArrVal;
 %#if GS_COMPATIBILITY_VALUE_1_1_106
             size = value->asFloatArray.size;
             floatArrVal = value->asFloatArray.elements;
@@ -329,7 +322,9 @@ static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestam
                 PyList_SetItem(list, i, PyFloat_FromDouble(static_cast<double>(floatArrVal[i])));
             }
             return list;
-        case GS_TYPE_DOUBLE_ARRAY:
+        }
+        case GS_TYPE_DOUBLE_ARRAY: {
+            const double *doubleArrVal;
 %#if GS_COMPATIBILITY_VALUE_1_1_106
             size = value->asDoubleArray.size;
             doubleArrVal = value->asDoubleArray.elements;
@@ -342,7 +337,9 @@ static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestam
                 PyList_SetItem(list, i, PyFloat_FromDouble(doubleArrVal[i]));
             }
             return list;
-        case GS_TYPE_TIMESTAMP_ARRAY:
+        }
+        case GS_TYPE_TIMESTAMP_ARRAY: {
+            const GSTimestamp *timestampArrVal;
 %#if GS_COMPATIBILITY_VALUE_1_1_106
             size = value->asTimestampArray.size;
             timestampArrVal = value->asTimestampArray.elements;
@@ -355,6 +352,7 @@ static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestam
                 PyList_SetItem(list, i, convertTimestampToObject((GSTimestamp*)&(timestampArrVal[i]), timestampToFloat));
             }
             return list;
+        }
         default:
             return NULL;
     }
@@ -539,7 +537,6 @@ static bool convertObjectToFloat(PyObject* value, float* floatValPtr) {
 %fragment("convertObjectToBlob", "header", fragment = "checkPyObjIsStr", fragment = "cleanString") {
 static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
     GSChar* blobData;
-    GSChar* tmpBlobData;
     int res;
     if (PyByteArray_Check(value)) {
         *size = PyByteArray_Size(value);
@@ -639,458 +636,444 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
  */
 %fragment("convertToRowKeyFieldWithType", "header", fragment = "SWIG_AsCharPtrAndSize",
         fragment = "checkPyObjIsStr", fragment = "convertObjToStr", fragment = "convertObjectToDouble",
-        fragment = "convertObjectToGSTimestamp", fragment = "SWIG_AsVal_bool",
-        fragment = "convertObjectToBlob", fragment = "convertObjectToBool",
-        fragment = "convertObjectToFloat", fragment = "convertObjectToStringArray",
-        fragment = "cleanString") {
-    static bool convertToRowKeyFieldWithType(griddb::Field &field, PyObject* value, GSType type) {
-        size_t size = 0;
-        int res;
-        char* v = 0;
-        bool vbool;
-        int alloc;
-        field.type = type;
+        fragment = "convertObjectToGSTimestamp", fragment = "cleanString") {
+static bool convertToRowKeyFieldWithType(griddb::Field &field, PyObject* value, GSType type) {
+    field.type = type;
 
-        if (value == Py_None) {
+    if (value == Py_None) {
 %#if GS_COMPATIBILITY_SUPPORT_3_5
-            field.type = GS_TYPE_NULL;
-            return true;
+        field.type = GS_TYPE_NULL;
+        return true;
 %#else
         //Not support NULL
         return false;
 %#endif
-        }
-
-        GSChar *mydata;
-        void *blobData;
-        int year, month, day, hour, minute, second, milliSecond;
-        char s[30];
-        int checkConvert = 0;
-        GSBool retConvertTimestamp;
-        char* pyobjToStr;
-        char* buffer;
-        GSChar** arrString = NULL;
-        PyObject* objectsRepresentation;
-        int arraySize, i;
-        void* arrayPtr;
-        int tmpInt;
-        long double tmpLongDouble;
-        double tmpDouble; //support convert to double, double array
-        float tmpFloat; //support convert to float, float array
-        bool inBorderVal = false;
-        bool inRange = false;
-        GSBool* tmpPtr;
-        switch (type) {
-            case (GS_TYPE_STRING):
-                if (!checkPyObjIsStr(value)) {
-                    return false;
-                }
-                res = SWIG_AsCharPtrAndSize(value, &v, &size, &alloc);
-
-                if (!SWIG_IsOK(res)) {
-                    return false;
-                }
-
-                if (v) {
-                    field.value.asString = strdup(v);
-                    if (!field.value.asString) {
-                        return false;
-                    }
-                }
-
-                cleanString(v, alloc);
-                break;
-            case (GS_TYPE_INTEGER):
-                if (PyBool_Check(value)) {
-                    return false;
-                }
-                checkConvert = SWIG_AsVal_int(value, &field.value.asInteger);
-                if (!SWIG_IsOK(checkConvert)) {
-                    return false;
-                }
-                break;
-
-            case (GS_TYPE_LONG):
-                if (PyBool_Check(value)) {
-                    return false;
-                }
-                checkConvert = SWIG_AsVal_long(value, &field.value.asLong);
-                if (!SWIG_IsOK(checkConvert)) {
-                    return false;
-                }
-                break;
-            case (GS_TYPE_TIMESTAMP):
-                return convertObjectToGSTimestamp(value, &field.value.asTimestamp);
-                break;
-            default:
-                //Not support for now
-                return false;
-                break;
-        }
-        return true;
     }
+
+    int checkConvert = 0;
+    switch (type) {
+        case (GS_TYPE_STRING): {
+            size_t size = 0;
+            int res;
+            char* v;
+            int alloc;
+            if (!checkPyObjIsStr(value)) {
+                return false;
+            }
+            res = SWIG_AsCharPtrAndSize(value, &v, &size, &alloc);
+
+            if (!SWIG_IsOK(res)) {
+                return false;
+            }
+
+            if (v) {
+                field.value.asString = strdup(v);
+                cleanString(v, alloc);
+            }
+            break;
+        }
+        case (GS_TYPE_INTEGER):
+            if (PyBool_Check(value)) {
+                return false;
+            }
+            checkConvert = SWIG_AsVal_int(value, &field.value.asInteger);
+            if (!SWIG_IsOK(checkConvert)) {
+                return false;
+            }
+            break;
+
+        case (GS_TYPE_LONG):
+            if (PyBool_Check(value)) {
+                return false;
+            }
+            checkConvert = SWIG_AsVal_long(value, &field.value.asLong);
+            if (!SWIG_IsOK(checkConvert)) {
+                return false;
+            }
+            break;
+        case (GS_TYPE_TIMESTAMP):
+            return convertObjectToGSTimestamp(value, &field.value.asTimestamp);
+            break;
+        default:
+            //Not support for now
+            return false;
+            break;
+    }
+    return true;
+}
 }
 
 %fragment("convertToFieldWithType", "header", fragment = "SWIG_AsCharPtrAndSize",
-        fragment = "checkPyObjIsStr", fragment = "convertObjToStr", fragment = "convertObjectToDouble",
-        fragment = "convertObjectToGSTimestamp", fragment = "SWIG_AsVal_bool",
+        fragment = "checkPyObjIsStr", fragment = "convertObjectToDouble",
+        fragment = "convertObjectToGSTimestamp",
         fragment = "convertObjectToBlob", fragment = "convertObjectToBool",
         fragment = "convertObjectToFloat", fragment = "convertObjectToStringArray",
         fragment = "cleanString") {
-    static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSType type) {
-        int8_t byteVal;
-        int16_t shortVal;
-        int32_t intVal;
-        int64_t longVal;
-        float floatVal;
-        double doubleVal;
-        GSChar* stringVal;
-        GSBlob blobValTmp;
-        GSBlob *blobVal = &blobValTmp;
-        GSBool boolVal;
-        GSTimestamp timestampVal;
-        GSChar *geometryVal;
+static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSType type) {
+    int32_t intVal;
+    size_t size;
+    int tmpInt; //support convert to byte array, short array
+    int res;
+    bool vbool;
+    int alloc;
+    int i;
+    GSResult ret;
 
-        size_t size;
-        int8_t *byteArrVal;
-        int16_t *shortArrVal;
-        int32_t *intArrVal;
-        int64_t *longArrVal;
-        double *doubleArrVal;
-        float *floatArrVal;
-        const GSChar *const *stringArrVal;
-        GSBool *boolArrVal;
-        GSTimestamp *timestampArrVal;
-
-        int tmpInt; //support convert 
-        double tmpDouble; //support convert to double, double array
-        float tmpFloat; //support convert to float, float array
-        int res;
-        char* v = 0;
-        bool vbool;
-        int alloc;
-        int i;
-        GSResult ret;
-
-        if (value == Py_None) {
+    if (value == Py_None) {
 %#if GS_COMPATIBILITY_SUPPORT_3_5
-            ret = gsSetRowFieldNull(row, column);
-            return (ret == GS_RESULT_OK);
+        ret = gsSetRowFieldNull(row, column);
+        return (ret == GS_RESULT_OK);
 %#else
         //Not support NULL
         return false;
 %#endif
-        }
-
-        int checkConvert = 0;
-        switch (type) {
-            case (GS_TYPE_STRING):
-                if (!checkPyObjIsStr(value)) {
-                    return false;
-                }
-                res = SWIG_AsCharPtrAndSize(value, &stringVal, &size, &alloc);
-                if (!SWIG_IsOK(res)) {
-                    return false;
-                }
-                ret = gsSetRowFieldByString(row, column, stringVal);
-                cleanString(stringVal, alloc);
-                break;
-            case (GS_TYPE_LONG):
-                if (PyBool_Check(value)) {
-                    return false;
-                }
-                checkConvert = SWIG_AsVal_long(value, &longVal);
-                if (!SWIG_IsOK(checkConvert)) {
-                    return false;
-                }
-                ret = gsSetRowFieldByLong(row, column, longVal);
-                break;
-            case (GS_TYPE_BOOL):
-                vbool = convertObjectToBool(value, &boolVal);
-                if (!vbool) {
-                    return false;
-                }
-                ret = gsSetRowFieldByBool(row, column, boolVal);
-                break;
-            case (GS_TYPE_BYTE):
-                if (PyBool_Check(value)) {
-                    return false;
-                }
-                checkConvert = SWIG_AsVal_int(value, (int*)&intVal);
-                if (!SWIG_IsOK(checkConvert) ||
-                        intVal < std::numeric_limits<int8_t>::min() ||
-                        intVal > std::numeric_limits<int8_t>::max()) {
-                    return false;
-                }
-                byteVal = intVal;
-                ret = gsSetRowFieldByByte(row, column, byteVal);
-                break;
-
-            case (GS_TYPE_SHORT):
-                if (PyBool_Check(value)) {
-                    return false;
-                }
-                checkConvert = SWIG_AsVal_int(value, (int*)&intVal);
-                if (!SWIG_IsOK(checkConvert) ||
-                        intVal < std::numeric_limits<int16_t>::min() ||
-                        intVal > std::numeric_limits<int16_t>::max()) {
-                    return false;
-                }
-                shortVal = intVal;
-                ret = gsSetRowFieldByShort(row, column, shortVal);
-                break;
-
-            case (GS_TYPE_INTEGER):
-                if (PyBool_Check(value)) {
-                    return false;
-                }
-                checkConvert = SWIG_AsVal_int(value, &intVal);
-                if (!SWIG_IsOK(checkConvert)) {
-                    return false;
-                }
-                ret = gsSetRowFieldByInteger(row, column, intVal);
-                break;
-            case (GS_TYPE_FLOAT):
-                vbool = convertObjectToFloat(value, &floatVal);
-                if (!vbool) {
-                    return false;
-                }
-                ret = gsSetRowFieldByFloat(row, column, floatVal);
-                break;
-            case (GS_TYPE_DOUBLE):
-                vbool = convertObjectToDouble(value, &doubleVal);
-                if (!vbool) {
-                    return false;
-                }
-                ret = gsSetRowFieldByDouble(row, column, doubleVal);
-                break;
-            case (GS_TYPE_TIMESTAMP):
-                vbool = convertObjectToGSTimestamp(value, &timestampVal);
-                if (!vbool) {
-                    return false;
-                }
-                ret = gsSetRowFieldByTimestamp(row, column, timestampVal);
-                break;
-            case (GS_TYPE_BLOB):
-                vbool = convertObjectToBlob(value, &blobVal->size, (void**) &blobVal->data);
-                if (!vbool) {
-                    return false;
-                }
-                ret = gsSetRowFieldByBlob(row, column, (const GSBlob *)blobVal);
-                if (blobVal->data) {
-                    free((void*)blobVal->data);
-                }
-                break;
-            case (GS_TYPE_STRING_ARRAY):
-                stringArrVal = convertObjectToStringArray(value, &size);
-                if (!stringArrVal) {
-                    return false;
-                }
-                ret = gsSetRowFieldByStringArray(row, column, stringArrVal, size);
-                if (stringArrVal) {
-                    for (i = 0; i < size; i++) {
-                        if (stringArrVal[i]) {
-                            free(const_cast<GSChar*> (stringArrVal[i]));
-                        }
-                    }
-                    free(const_cast<GSChar**> (stringArrVal));
-                }
-                break;
-                
-            case (GS_TYPE_GEOMETRY):
-                if (!checkPyObjIsStr(value)) {
-                    return false;
-                }
-                res = SWIG_AsCharPtrAndSize(value, &geometryVal, &size, &alloc);
-
-                if (!SWIG_IsOK(res)) {
-                    return false;
-                }
-
-                ret = gsSetRowFieldByGeometry(row, column, geometryVal);
-                cleanString(geometryVal, alloc);
-                break;
-            case (GS_TYPE_INTEGER_ARRAY):
-                if (!PyList_Check(value)) {
-                    return false;
-                }
-                size = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(value)));
-                intArrVal = (int32_t *) malloc(size * sizeof(int32_t));
-                if (intArrVal == NULL) {
-                    return false;
-                }
-                for (i = 0; i < size; i++) {
-                    vbool = PyBool_Check(PyList_GetItem(value, i));
-                    checkConvert = SWIG_AsVal_int(PyList_GetItem(value, i), &intArrVal[i]);
-                    if (!SWIG_IsOK(checkConvert) || vbool) {
-                        free((void*)intArrVal);
-                        intArrVal = NULL;
-                        return false;
-                    }
-                }
-                ret = gsSetRowFieldByIntegerArray(row, column, (const int32_t *) intArrVal, size);
-                free ((void*) intArrVal);
-                break;
-            case GS_TYPE_BOOL_ARRAY:
-                if (!PyList_Check(value)) {
-                    return false;
-                }
-                size = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(value)));
-                boolArrVal = (GSBool *) malloc(size * sizeof(GSBool));
-                if (boolArrVal == NULL) {
-                    return false;
-                }
-                for (i = 0; i < size; i++) {
-                    vbool = convertObjectToBool(PyList_GetItem(value, i), &boolArrVal[i]);
-                    if (!vbool) {
-                        free((void*)boolArrVal);
-                        boolArrVal = NULL;
-                        return false;
-                    }
-                }
-                ret = gsSetRowFieldByBoolArray(row, column, (const GSBool *)boolArrVal, size);
-                free ((void*) boolArrVal);
-                break;
-            case GS_TYPE_BYTE_ARRAY:
-                if (!PyList_Check(value)) {
-                    return false;
-                }
-                size = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(value)));
-                byteArrVal = (int8_t *) malloc(size * sizeof(int8_t));
-                if (byteArrVal == NULL) {
-                    return false;
-                }
-
-                for (i = 0; i < size; i++) {
-                    vbool = PyBool_Check(PyList_GetItem(value, i));
-                    checkConvert = SWIG_AsVal_int(PyList_GetItem(value, i), &tmpInt);
-                    *(((int8_t*)byteArrVal + i)) = (int8_t)tmpInt;
-                     if (vbool || !SWIG_IsOK(checkConvert) ||
-                        tmpInt < std::numeric_limits<int8_t>::min() ||
-                        tmpInt > std::numeric_limits<int8_t>::max()) {
-                         free((void*)byteArrVal);
-                         byteArrVal = NULL;
-                         return false;
-                    }
-                }
-                ret = gsSetRowFieldByByteArray(row, column, (const int8_t *)byteArrVal, size);
-                free ((void*) byteArrVal);
-                break;
-            case GS_TYPE_SHORT_ARRAY:
-                if (!PyList_Check(value)) {
-                    return false;
-                }
-                size = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(value)));
-                shortArrVal = (int16_t *) malloc(size * sizeof(int16_t));
-                if (shortArrVal == NULL) {
-                    return false;
-                }
-
-                for (i = 0; i < size; i++) {
-                    vbool = PyBool_Check(PyList_GetItem(value, i));
-                    checkConvert = SWIG_AsVal_int(PyList_GetItem(value, i), &tmpInt);
-                    *(((int16_t*)shortArrVal + i)) = (int16_t)tmpInt;
-                    if (vbool || !SWIG_IsOK(checkConvert) ||
-                        tmpInt < std::numeric_limits<int16_t>::min() ||
-                        tmpInt > std::numeric_limits<int16_t>::max()) {
-                            free((void*)shortArrVal);
-                            shortArrVal = NULL;
-                        return false;
-                    }
-                }
-                ret = gsSetRowFieldByShortArray(row, column, (const int16_t *)shortArrVal, size);
-                free ((void*) shortArrVal);
-                break;
-            case GS_TYPE_LONG_ARRAY:
-                if (!PyList_Check(value)) {
-                    return false;
-                }
-                size = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(value)));
-                longArrVal = (int64_t *) malloc(size * sizeof(int64_t));
-                if (longArrVal == NULL) {
-                    return false;
-                }
-                for (i = 0; i < size; i++) {
-                    vbool = PyBool_Check(PyList_GetItem(value, i));
-                    checkConvert = SWIG_AsVal_long(PyList_GetItem(value, i), ((int64_t *)longArrVal + i));
-                    if (!SWIG_IsOK(checkConvert) || vbool) {
-                        free((void*)longArrVal);
-                        longArrVal = NULL;
-                        return false;
-                    }
-                }
-                ret = gsSetRowFieldByLongArray(row, column, (const int64_t *)longArrVal, size);
-                free ((void*) longArrVal);
-                break;
-            case GS_TYPE_FLOAT_ARRAY:
-                if (!PyList_Check(value)) {
-                    return false;
-                }
-                size = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(value)));
-                floatArrVal = (float *) malloc(size * sizeof(float));
-                if (floatArrVal == NULL) {
-                    return false;
-                }
-                for (i = 0; i < size; i++) {
-                    vbool = convertObjectToFloat(PyList_GetItem(value, i), &floatArrVal[i]);
-                    if (!vbool) {
-                        free((void*)floatArrVal);
-                        floatArrVal = NULL;
-                        return false;
-                    }
-                }
-                ret = gsSetRowFieldByFloatArray(row, column, (const float *) floatArrVal, size);
-                free ((void*) floatArrVal);
-                break;
-            case GS_TYPE_DOUBLE_ARRAY:
-                if (!PyList_Check(value)) {
-                    return false;
-                }
-                size = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(value)));
-                doubleArrVal = (double *) malloc(size * sizeof(double));
-                if (doubleArrVal == NULL) {
-                    return false;
-                }
-                for (i = 0; i < size; i++) {
-                    vbool = convertObjectToDouble(PyList_GetItem(value, i), &tmpDouble);
-                    *((double *)doubleArrVal + i) = tmpDouble;
-                    if (!vbool){
-                        free((void*)doubleArrVal);
-                        doubleArrVal = NULL;
-                        return false;
-                    }
-                }
-                ret = gsSetRowFieldByDoubleArray(row, column, (const double *)doubleArrVal, size);
-                free ((void*) doubleArrVal);
-                break;
-            case GS_TYPE_TIMESTAMP_ARRAY:
-                if (!PyList_Check(value)) {
-                    return false;
-                }
-                size = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(value)));
-                timestampArrVal = (GSTimestamp *) malloc(size * sizeof(GSTimestamp));
-                if (timestampArrVal == NULL) {
-                    return false;
-                }
-                bool checkRet;
-                for (i = 0; i < size; i++) {
-                    checkRet = convertObjectToGSTimestamp(PyList_GetItem(value, i), ((GSTimestamp *)timestampArrVal + i));
-                    if (!checkRet) {
-                        free((void*)timestampArrVal);
-                        timestampArrVal = NULL;
-                        return false;
-                    }
-                }
-                ret = gsSetRowFieldByTimestampArray(row, column, (const GSTimestamp *)timestampArrVal, size);
-                free ((void*) timestampArrVal);
-                break;
-            default:
-                //Not support for now
-                return false;
-                break;
-        }
-        return (ret == GS_RESULT_OK);
     }
+
+    int checkConvert = 0;
+    switch (type) {
+        case GS_TYPE_STRING: {
+            GSChar* stringVal;
+            if (!checkPyObjIsStr(value)) {
+                return false;
+            }
+            res = SWIG_AsCharPtrAndSize(value, &stringVal, &size, &alloc);
+            if (!SWIG_IsOK(res)) {
+                return false;
+            }
+            ret = gsSetRowFieldByString(row, column, stringVal);
+            cleanString(stringVal, alloc);
+            break;
+        }
+        case GS_TYPE_LONG: {
+            int64_t longVal;
+            if (PyBool_Check(value)) {
+                return false;
+            }
+            checkConvert = SWIG_AsVal_long(value, &longVal);
+            if (!SWIG_IsOK(checkConvert)) {
+                return false;
+            }
+            ret = gsSetRowFieldByLong(row, column, longVal);
+            break;
+        }
+        case GS_TYPE_BOOL: {
+            GSBool boolVal;
+            vbool = convertObjectToBool(value, &boolVal);
+            if (!vbool) {
+                return false;
+            }
+            ret = gsSetRowFieldByBool(row, column, boolVal);
+            break;
+        }
+        case GS_TYPE_BYTE: {
+            int8_t byteVal;
+            if (PyBool_Check(value)) {
+                return false;
+            }
+            checkConvert = SWIG_AsVal_int(value, (int*)&intVal);
+            if (!SWIG_IsOK(checkConvert) ||
+                    intVal < std::numeric_limits<int8_t>::min() ||
+                    intVal > std::numeric_limits<int8_t>::max()) {
+                return false;
+            }
+            byteVal = intVal;
+            ret = gsSetRowFieldByByte(row, column, byteVal);
+            break;
+        }
+        case GS_TYPE_SHORT: {
+            int16_t shortVal;
+            if (PyBool_Check(value)) {
+                return false;
+            }
+            checkConvert = SWIG_AsVal_int(value, (int*)&intVal);
+            if (!SWIG_IsOK(checkConvert) ||
+                    intVal < std::numeric_limits<int16_t>::min() ||
+                    intVal > std::numeric_limits<int16_t>::max()) {
+                return false;
+            }
+            shortVal = intVal;
+            ret = gsSetRowFieldByShort(row, column, shortVal);
+            break;
+        }
+        case GS_TYPE_INTEGER:
+            if (PyBool_Check(value)) {
+                return false;
+            }
+            checkConvert = SWIG_AsVal_int(value, &intVal);
+            if (!SWIG_IsOK(checkConvert)) {
+                return false;
+            }
+            ret = gsSetRowFieldByInteger(row, column, intVal);
+            break;
+        case GS_TYPE_FLOAT: {
+            float floatVal;
+            vbool = convertObjectToFloat(value, &floatVal);
+            if (!vbool) {
+                return false;
+            }
+            ret = gsSetRowFieldByFloat(row, column, floatVal);
+            break;
+        }
+        case GS_TYPE_DOUBLE: {
+            double doubleVal;
+            vbool = convertObjectToDouble(value, &doubleVal);
+            if (!vbool) {
+                return false;
+            }
+            ret = gsSetRowFieldByDouble(row, column, doubleVal);
+            break;
+        }
+        case GS_TYPE_TIMESTAMP: {
+            GSTimestamp timestampVal;
+            vbool = convertObjectToGSTimestamp(value, &timestampVal);
+            if (!vbool) {
+                return false;
+            }
+            ret = gsSetRowFieldByTimestamp(row, column, timestampVal);
+            break;
+        }
+        case GS_TYPE_BLOB: {
+            GSBlob blobValTmp;
+            GSBlob *blobVal = &blobValTmp;
+            vbool = convertObjectToBlob(value, &blobVal->size, (void**) &blobVal->data);
+            if (!vbool) {
+                return false;
+            }
+            ret = gsSetRowFieldByBlob(row, column, (const GSBlob *)blobVal);
+            if (blobVal->data) {
+                free((void*)blobVal->data);
+            }
+            break;
+        }
+        case GS_TYPE_STRING_ARRAY: {
+            const GSChar *const *stringArrVal;
+            stringArrVal = convertObjectToStringArray(value, &size);
+            if (!stringArrVal) {
+                return false;
+            }
+            ret = gsSetRowFieldByStringArray(row, column, stringArrVal, size);
+            if (stringArrVal) {
+                for (i = 0; i < size; i++) {
+                    if (stringArrVal[i]) {
+                        free(const_cast<GSChar*> (stringArrVal[i]));
+                    }
+                }
+                free(const_cast<GSChar**> (stringArrVal));
+            }
+            break;
+        }
+        case GS_TYPE_GEOMETRY: {
+            GSChar *geometryVal;
+            if (!checkPyObjIsStr(value)) {
+                return false;
+            }
+            res = SWIG_AsCharPtrAndSize(value, &geometryVal, &size, &alloc);
+
+            if (!SWIG_IsOK(res)) {
+                return false;
+            }
+            ret = gsSetRowFieldByGeometry(row, column, geometryVal);
+            cleanString(geometryVal, alloc);
+            break;
+        }
+        case GS_TYPE_INTEGER_ARRAY: {
+            int32_t *intArrVal;
+            if (!PyList_Check(value)) {
+                return false;
+            }
+            size = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(value)));
+            intArrVal = (int32_t *) malloc(size * sizeof(int32_t));
+            if (intArrVal == NULL) {
+                return false;
+            }
+            for (i = 0; i < size; i++) {
+                vbool = PyBool_Check(PyList_GetItem(value, i));
+                checkConvert = SWIG_AsVal_int(PyList_GetItem(value, i), &intArrVal[i]);
+                if (!SWIG_IsOK(checkConvert) || vbool) {
+                    free((void*)intArrVal);
+                    intArrVal = NULL;
+                    return false;
+                }
+            }
+            ret = gsSetRowFieldByIntegerArray(row, column, (const int32_t *) intArrVal, size);
+            free ((void*) intArrVal);
+            break;
+        }
+        case GS_TYPE_BOOL_ARRAY: {
+            GSBool *boolArrVal;
+            if (!PyList_Check(value)) {
+                return false;
+            }
+            size = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(value)));
+            boolArrVal = (GSBool *) malloc(size * sizeof(GSBool));
+            if (boolArrVal == NULL) {
+                return false;
+            }
+            for (i = 0; i < size; i++) {
+                vbool = convertObjectToBool(PyList_GetItem(value, i), &boolArrVal[i]);
+                if (!vbool) {
+                    free((void*)boolArrVal);
+                    boolArrVal = NULL;
+                    return false;
+                }
+            }
+            ret = gsSetRowFieldByBoolArray(row, column, (const GSBool *)boolArrVal, size);
+            free ((void*) boolArrVal);
+            break;
+        }
+        case GS_TYPE_BYTE_ARRAY: {
+            int8_t *byteArrVal;
+            if (!PyList_Check(value)) {
+                return false;
+            }
+            size = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(value)));
+            byteArrVal = (int8_t *) malloc(size * sizeof(int8_t));
+            if (byteArrVal == NULL) {
+                return false;
+            }
+
+            for (i = 0; i < size; i++) {
+                vbool = PyBool_Check(PyList_GetItem(value, i));
+                checkConvert = SWIG_AsVal_int(PyList_GetItem(value, i), &tmpInt);
+                *(((int8_t*)byteArrVal + i)) = (int8_t)tmpInt;
+                 if (vbool || !SWIG_IsOK(checkConvert) ||
+                    tmpInt < std::numeric_limits<int8_t>::min() ||
+                    tmpInt > std::numeric_limits<int8_t>::max()) {
+                     free((void*)byteArrVal);
+                     byteArrVal = NULL;
+                     return false;
+                }
+            }
+            ret = gsSetRowFieldByByteArray(row, column, (const int8_t *)byteArrVal, size);
+            free ((void*) byteArrVal);
+            break;
+        }
+        case GS_TYPE_SHORT_ARRAY: {
+            int16_t *shortArrVal;
+            if (!PyList_Check(value)) {
+                return false;
+            }
+            size = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(value)));
+            shortArrVal = (int16_t *) malloc(size * sizeof(int16_t));
+            if (shortArrVal == NULL) {
+                return false;
+            }
+
+            for (i = 0; i < size; i++) {
+                vbool = PyBool_Check(PyList_GetItem(value, i));
+                checkConvert = SWIG_AsVal_int(PyList_GetItem(value, i), &tmpInt);
+                *(((int16_t*)shortArrVal + i)) = (int16_t)tmpInt;
+                if (vbool || !SWIG_IsOK(checkConvert) ||
+                    tmpInt < std::numeric_limits<int16_t>::min() ||
+                    tmpInt > std::numeric_limits<int16_t>::max()) {
+                        free((void*)shortArrVal);
+                        shortArrVal = NULL;
+                    return false;
+                }
+            }
+            ret = gsSetRowFieldByShortArray(row, column, (const int16_t *)shortArrVal, size);
+            free ((void*) shortArrVal);
+            break;
+        }
+        case GS_TYPE_LONG_ARRAY: {
+            int64_t *longArrVal;
+            if (!PyList_Check(value)) {
+                return false;
+            }
+            size = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(value)));
+            longArrVal = (int64_t *) malloc(size * sizeof(int64_t));
+            if (longArrVal == NULL) {
+                return false;
+            }
+            for (i = 0; i < size; i++) {
+                vbool = PyBool_Check(PyList_GetItem(value, i));
+                checkConvert = SWIG_AsVal_long(PyList_GetItem(value, i), ((int64_t *)longArrVal + i));
+                if (!SWIG_IsOK(checkConvert) || vbool) {
+                    free((void*)longArrVal);
+                    longArrVal = NULL;
+                    return false;
+                }
+            }
+            ret = gsSetRowFieldByLongArray(row, column, (const int64_t *)longArrVal, size);
+            free ((void*) longArrVal);
+            break;
+        }
+        case GS_TYPE_FLOAT_ARRAY: {
+            float *floatArrVal;
+            if (!PyList_Check(value)) {
+                return false;
+            }
+            size = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(value)));
+            floatArrVal = (float *) malloc(size * sizeof(float));
+            if (floatArrVal == NULL) {
+                return false;
+            }
+            for (i = 0; i < size; i++) {
+                vbool = convertObjectToFloat(PyList_GetItem(value, i), &floatArrVal[i]);
+                if (!vbool) {
+                    free((void*)floatArrVal);
+                    floatArrVal = NULL;
+                    return false;
+                }
+            }
+            ret = gsSetRowFieldByFloatArray(row, column, (const float *) floatArrVal, size);
+            free ((void*) floatArrVal);
+            break;
+        }
+        case GS_TYPE_DOUBLE_ARRAY: {
+            double *doubleArrVal;
+            double tmpDouble; //support convert to double array
+            if (!PyList_Check(value)) {
+                return false;
+            }
+            size = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(value)));
+            doubleArrVal = (double *) malloc(size * sizeof(double));
+            if (doubleArrVal == NULL) {
+                return false;
+            }
+            for (i = 0; i < size; i++) {
+                vbool = convertObjectToDouble(PyList_GetItem(value, i), &tmpDouble);
+                *((double *)doubleArrVal + i) = tmpDouble;
+                if (!vbool){
+                    free((void*)doubleArrVal);
+                    doubleArrVal = NULL;
+                    return false;
+                }
+            }
+            ret = gsSetRowFieldByDoubleArray(row, column, (const double *)doubleArrVal, size);
+            free ((void*) doubleArrVal);
+            break;
+        }
+        case GS_TYPE_TIMESTAMP_ARRAY: {
+            GSTimestamp *timestampArrVal;
+            if (!PyList_Check(value)) {
+                return false;
+            }
+            size = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(value)));
+            timestampArrVal = (GSTimestamp *) malloc(size * sizeof(GSTimestamp));
+            if (timestampArrVal == NULL) {
+                return false;
+            }
+            bool checkRet;
+            for (i = 0; i < size; i++) {
+                checkRet = convertObjectToGSTimestamp(PyList_GetItem(value, i), ((GSTimestamp *)timestampArrVal + i));
+                if (!checkRet) {
+                    free((void*)timestampArrVal);
+                    timestampArrVal = NULL;
+                    return false;
+                }
+            }
+            ret = gsSetRowFieldByTimestampArray(row, column, (const GSTimestamp *)timestampArrVal, size);
+            free ((void*) timestampArrVal);
+            break;
+        }
+        default:
+            //Not support for now
+            return false;
+            break;
+    }
+    return (ret == GS_RESULT_OK);
+}
 }
 
 /**
@@ -1098,7 +1081,7 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
 */
 %typemap(in, fragment = "SWIG_AsCharPtrAndSize", fragment = "cleanString") 
         (const GSColumnInfo* props, int propsCount)
-(PyObject* list, int i, size_t size = 0, int* alloc = 0, int res, char* v = 0, int val) {
+(PyObject* list, int i, size_t size = 0, int* alloc = 0, int res, char* v = 0) {
 //Convert Python list of tuple into GSColumnInfo properties
     if (!PyList_Check($input)) {        
         $2 = 0;
@@ -1246,7 +1229,8 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
 /**
 * Typemaps for fetch_all() function
 */
-%typemap(in) (GSQuery* const* queryList, size_t queryCount) (PyObject* pyQuery, std::shared_ptr<griddb::Query> query, void *vquery, int i, int res = 0) {
+%typemap(in) (GSQuery* const* queryList, size_t queryCount) 
+        (PyObject* pyQuery, std::shared_ptr<griddb::Query> query, void *vquery, int i, int res = 0) {
     if (!PyList_Check($input)) {
         PyErr_SetString(PyExc_ValueError, "Expected a List");
         SWIG_fail;
@@ -1324,7 +1308,9 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
 * Typemaps input for get_multi_container_row() function
 */
 
-%typemap(in, fragment = "SWIG_AsCharPtrAndSize") (const GSRowKeyPredicateEntry *const * predicateList, size_t predicateCount) (PyObject* key, PyObject* val, std::shared_ptr<griddb::RowKeyPredicate> pPredicate, GSRowKeyPredicateEntry* pList = NULL, void *vpredicate, Py_ssize_t si, int i, int res = 0, size_t size = 0, int* alloc = 0, char* v = 0) {
+%typemap(in, fragment = "SWIG_AsCharPtrAndSize") (const GSRowKeyPredicateEntry *const * predicateList, size_t predicateCount)
+        (PyObject* key, PyObject* val, std::shared_ptr<griddb::RowKeyPredicate> pPredicate, GSRowKeyPredicateEntry* pList = NULL, 
+                void *vpredicate, Py_ssize_t si, int i, int res = 0, size_t size = 0, int* alloc = 0, char* v = 0) {
     if (!PyDict_Check($input)) {
         PyErr_SetString(PyExc_ValueError, "Expected a Dict");
         SWIG_fail;
@@ -1430,8 +1416,8 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
     size_t size = *$2;
     $result = PyList_New(size);
     for (int i = 0; i < size; i++) {
-        PyObject *o = PyFloat_FromDouble(longList[i]);
-        PyList_SetItem($result,i,o);
+        PyObject* obj = PyFloat_FromDouble(longList[i]);
+        PyList_SetItem($result, i, obj);
     }
 }
 
@@ -1539,7 +1525,8 @@ static GSChar** convertObjectToStringArray(PyObject* value, size_t* size) {
  */
 %fragment("getRowFields", "header",
         fragment = "convertStrToObj", fragment = "convertTimestampToObject") {
-static bool getRowFields(GSRow *row, int columnCount, GSType* typeList, bool timestampOutput, int* columnError, GSType* fieldTypeError, PyObject* outList) {
+static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool timestampOutput, int* columnError, 
+        GSType* fieldTypeError, PyObject* outList) {
     GSResult ret;
     GSValue mValue;
     bool retVal = true;
@@ -1750,13 +1737,10 @@ static bool getRowFields(GSRow *row, int columnCount, GSType* typeList, bool tim
         PyErr_SetString(PyExc_ValueError, "Memory allocation for row is error");
         SWIG_fail;
     }
-    GSValue mValue;
-    GSType mType;
-    GSResult ret;
     bool retVal;
     int errorColumn;
     GSType errorType;
-    retVal = getRowFields(row, arg1->getColumnCount(), arg1->getGSTypeList(),arg1->timestamp_output_with_float, &errorColumn, &errorType, outList);
+    retVal = getRowFields(row, arg1->getColumnCount(), arg1->getGSTypeList(), arg1->timestamp_output_with_float, &errorColumn, &errorType, outList);
     if (retVal == false) {
         char errorMsg[60];
         sprintf(errorMsg, "Can't get data for field %d with type%d", errorColumn, errorType);
@@ -1883,7 +1867,8 @@ static bool getRowFields(GSRow *row, int columnCount, GSType* typeList, bool tim
 /**
  * Typemaps for Store.multi_put
  */
-%typemap(in, fragment = "convertToFieldWithType", fragment = "convertObjToStr") (GSRow*** listRow, const int *listRowContainerCount, const char ** listContainerName, size_t containerCount) () {
+%typemap(in, fragment = "convertToFieldWithType", fragment = "convertObjToStr")
+        (GSRow*** listRow, const int *listRowContainerCount, const char ** listContainerName, size_t containerCount) () {
     if (!PyDict_Check($input)) {
         PyErr_SetString(PyExc_ValueError, "Expected a Dict");
         SWIG_fail;
@@ -1905,7 +1890,6 @@ static bool getRowFields(GSRow *row, int columnCount, GSType* typeList, bool tim
         int i = 0;
         int j = 0;
         //Init default null list row for each container
-        j = 0;
         for (j = 0; j < $4; j++) {
             $1[j] = NULL;
         }
@@ -1958,7 +1942,6 @@ static bool getRowFields(GSRow *row, int columnCount, GSType* typeList, bool tim
                 PyErr_SetString(PyExc_ValueError, "Not found container");
                 SWIG_fail;
             }
-            GSResult ret;
             for (j = 0; j < numRowOfContainer; j++) {
                 PyObject* rowTmp = PyList_GetItem(listRowContainer, j);
                 if (!PyList_Check(rowTmp)) {
@@ -1968,7 +1951,7 @@ static bool getRowFields(GSRow *row, int columnCount, GSType* typeList, bool tim
                     SWIG_fail;
                 }
                 length = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(rowTmp)));
-                ret = gsCreateRowByContainer(tmpContainer->getGSContainerPtr(), &$1[i][j]);
+                GSResult ret = gsCreateRowByContainer(tmpContainer->getGSContainerPtr(), &$1[i][j]);
                 if ($1[i][j] == NULL || ret != GS_RESULT_OK) {
                     PyErr_SetString(PyExc_ValueError, "Memory allocation error");
                     free((void *) typeArr);
@@ -2022,13 +2005,10 @@ static bool getRowFields(GSRow *row, int columnCount, GSType* typeList, bool tim
     $4 = &tmpTypeList;
 }
 
-%typemap(argout, numinputs = 0, fragment = "convertStrToObj", fragment = "getRowFields") (GSContainerRowEntry **entryList, size_t* containerCount, int **colNumList, GSType*** typeList) () {
+%typemap(argout, numinputs = 0, fragment = "convertStrToObj", fragment = "getRowFields") 
+        (GSContainerRowEntry **entryList, size_t* containerCount, int **colNumList, GSType*** typeList) () {
     PyObject* dict = PyDict_New();
-    griddb::Container *tmpContainer;
     GSRow* row;
-    GSValue mValue;
-    GSType mType;
-    GSResult ret;
     bool retVal;
     int errorColumn;
     GSType errorType;
@@ -2207,9 +2187,6 @@ static bool getRowFields(GSRow *row, int columnCount, GSType* typeList, bool tim
     GSResult ret;
     if ($2 > 0) {
         GSContainer *mContainer = arg1->getGSContainerPtr();
-        int columnCount = arg1->getColumnCount();
-        GSType type;
-
         GSType* typeList = arg1->getGSTypeList();
 
         $1 = new GSRow*[$2];
@@ -2219,6 +2196,8 @@ static bool getRowFields(GSRow *row, int columnCount, GSType* typeList, bool tim
             SWIG_fail;
         }
         int length;
+        GSType type;
+        int columnCount = arg1->getColumnCount();
         for (int i = 0; i < $2; i++) {
             PyObject* rowTmp = PyList_GetItem($input, i);
             length = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(rowTmp)));
@@ -2356,10 +2335,10 @@ static bool getRowFields(GSRow *row, int columnCount, GSType* typeList, bool tim
         PyErr_SetString(PyExc_ValueError, "Memory allocation for column_info_list is error");
         SWIG_fail;
     }
+    PyObject* info;
     for (int i = 0; i < size; i++) {
 %#if GS_COMPATIBILITY_SUPPORT_3_5
-        PyObject* info = 0;
-        if ((data.columnInfo)[i].options != 0 ) {
+        if ((data.columnInfo)[i].options != 0) {
             info = PyList_New(3);
             PyList_SetItem(info, 0, convertStrToObj((data.columnInfo)[i].name));
             PyList_SetItem(info, 1, PyInt_FromLong((data.columnInfo)[i].type));
@@ -2370,7 +2349,7 @@ static bool getRowFields(GSRow *row, int columnCount, GSType* typeList, bool tim
             PyList_SetItem(info, 1, PyInt_FromLong((data.columnInfo)[i].type));
         }
 %#else
-        PyObject* info = PyList_New(2);
+        info = PyList_New(2);
         PyList_SetItem(info, 0, convertStrToObj((data.columnInfo)[i].name));
         PyList_SetItem(info, 1, PyInt_FromLong((data.columnInfo)[i].type));
 %#endif
@@ -2395,17 +2374,10 @@ static bool getRowFields(GSRow *row, int columnCount, GSType* typeList, bool tim
 %typemap(argout, fragment = "getRowFields") (GSRowSetType* type, bool* hasNextRow,
     griddb::QueryAnalysisEntry** queryAnalysis, griddb::AggregationResult** aggResult) {
 
-    PyObject *resultobj;
-    PyObject *outList;
-    std::shared_ptr< griddb::AggregationResult > *aggResult = NULL;
-    std::shared_ptr< griddb::QueryAnalysisEntry > *queryAnalyResult = NULL;
-    GSValue mValue;
-    GSType mType;
-    GSResult ret;
-    bool retVal;
-    int errorColumn;
     switch (*$1) {
-        case (GS_ROW_SET_CONTAINER_ROWS):
+        case (GS_ROW_SET_CONTAINER_ROWS): {
+            bool retVal;
+            int errorColumn;
             if (*$2 == false) {
                 PyErr_SetNone(PyExc_StopIteration);
                 $result= NULL;
@@ -2417,7 +2389,7 @@ static bool getRowFields(GSRow *row, int columnCount, GSType* typeList, bool tim
                     SWIG_fail;
                 }
                 GSType errorType;
-                retVal = getRowFields(row, arg1->getColumnCount(), arg1->getGSTypeList(),arg1->timestamp_output_with_float, &errorColumn, &errorType, outList);
+                retVal = getRowFields(row, arg1->getColumnCount(), arg1->getGSTypeList(), arg1->timestamp_output_with_float, &errorColumn, &errorType, outList);
                 if (retVal == false) {
                     char errorMsg[60];
                     sprintf(errorMsg, "Can't get data for field %d with type%d", errorColumn, errorType);
@@ -2427,22 +2399,24 @@ static bool getRowFields(GSRow *row, int columnCount, GSType* typeList, bool tim
                 $result = outList;
             }
             break;
-
-        case (GS_ROW_SET_AGGREGATION_RESULT):
+        }
+        case (GS_ROW_SET_AGGREGATION_RESULT): {
+            std::shared_ptr< griddb::AggregationResult > *aggResult = NULL;
             if (*$2 == false) {
                 PyErr_SetNone(PyExc_StopIteration);
                 $result= NULL;
             } else {
                 aggResult = *$4 ? new std::shared_ptr<  griddb::AggregationResult >(*$4 SWIG_NO_NULL_DELETER_SWIG_POINTER_OWN) : 0;
-                resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(aggResult), SWIGTYPE_p_std__shared_ptrT_griddb__AggregationResult_t, SWIG_POINTER_OWN | SWIG_POINTER_OWN);
-                $result = resultobj;
+                $result = SWIG_NewPointerObj(SWIG_as_voidptr(aggResult), SWIGTYPE_p_std__shared_ptrT_griddb__AggregationResult_t, SWIG_POINTER_OWN | SWIG_POINTER_OWN);
             }
             break;
-        default:
+        }
+        default: {
+            std::shared_ptr< griddb::QueryAnalysisEntry >* queryAnalyResult = NULL;
             queryAnalyResult = *$3 ? new std::shared_ptr<  griddb::QueryAnalysisEntry >(*$3 SWIG_NO_NULL_DELETER_SWIG_POINTER_OWN) : 0;
-            resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(queryAnalyResult), SWIGTYPE_p_std__shared_ptrT_griddb__QueryAnalysisEntry_t, SWIG_POINTER_OWN | SWIG_POINTER_OWN);
-            $result = resultobj;
+            $result = SWIG_NewPointerObj(SWIG_as_voidptr(queryAnalyResult), SWIGTYPE_p_std__shared_ptrT_griddb__QueryAnalysisEntry_t, SWIG_POINTER_OWN | SWIG_POINTER_OWN);
             break;
+        }
     }
     return $result;
 }
