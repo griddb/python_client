@@ -2179,7 +2179,7 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
 //Read and write attribute ContainerInfo::rowKeyAssign
 %attribute(griddb::ContainerInfo, bool, row_key, get_row_key_assigned, set_row_key_assigned);
 //Read and write attribute ContainerInfo::rowKeyAssign
-%attribute(griddb::ContainerInfo, griddb::ExpirationInfo, expiration, get_expiration_info, set_expiration_info);
+%attribute(griddb::ContainerInfo, griddb::ExpirationInfo*, expiration, get_expiration_info, set_expiration_info);
 //Read only attribute ExpirationInfo::time
 %attribute(griddb::ExpirationInfo, int, time, get_time, set_time);
 //Read and write attribute ExpirationInfo::unit
