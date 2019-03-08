@@ -20,7 +20,7 @@
 namespace griddb {
 
     Container::Container(GSContainer *container, GSContainerInfo* containerInfo) : mContainer(container),
-            mContainerInfo(NULL), mRow(NULL), typeList(NULL), timestamp_output_with_float(false) {
+            mContainerInfo(NULL), mRow(NULL), mTypeList(NULL), timestamp_output_with_float(false) {
         GSResult ret;
         if ((ret = gsCreateRowByContainer(mContainer, &mRow)) != GS_RESULT_OK) {
             throw GSException(ret, "can not create row from Container");
@@ -29,11 +29,15 @@ namespace griddb {
         //create local mContainerInfo: there is issue from C-API about using share memory that
         // make GSContainerInfo* pointer error in case : create gsRow, get GSContainerInfo from gsRow, set field of gs Row
         mContainerInfo = (GSContainerInfo*) malloc(sizeof(GSContainerInfo));
-        mContainerInfo->columnCount = containerInfo->columnCount;
+        (*mContainerInfo) = (*containerInfo); // this is for set for normal data (int, float, double..)
         GSColumnInfo* columnInfoList = (GSColumnInfo *) malloc(sizeof (GSColumnInfo) * containerInfo->columnCount);
-        for (int i = 0; i< containerInfo->columnCount; i++) {
+        for (int i = 0; i < containerInfo->columnCount; i++) {
             columnInfoList[i].type = containerInfo->columnInfoList[i].type;
-            columnInfoList[i].name = strdup(containerInfo->columnInfoList[i].name);
+            if (containerInfo->columnInfoList[i].name) {
+                columnInfoList[i].name = strdup(containerInfo->columnInfoList[i].name);
+            } else {
+                columnInfoList[i].name = NULL;
+            }
 #if GS_COMPATIBILITY_SUPPORT_1_5
             columnInfoList[i].indexTypeFlags = containerInfo->columnInfoList[i].indexTypeFlags;
 #if GS_COMPATIBILITY_SUPPORT_3_5
@@ -41,7 +45,18 @@ namespace griddb {
 #endif
 #endif
         }
+        mContainerInfo->name = NULL;
+        if (containerInfo->name) {
+            mContainerInfo->name = strdup(containerInfo->name);
+        }
         mContainerInfo->columnInfoList = columnInfoList;
+        mContainerInfo->timeSeriesProperties = NULL;
+        mContainerInfo->triggerInfoList = NULL;
+        mContainerInfo->dataAffinity = NULL;
+        mTypeList = (GSType*) malloc(sizeof(GSType) * mContainerInfo->columnCount);
+        for (int i = 0; i < mContainerInfo->columnCount; i++){
+            mTypeList[i] = mContainerInfo->columnInfoList[i].type;
+        }
     }
 
     Container::~Container() {
@@ -50,11 +65,15 @@ namespace griddb {
     // allRelated = FALSE, since all row object is managed by Row class
         close(GS_FALSE);
 
-        for (int i = 0; i< mContainerInfo->columnCount;i++) {
-            free((void*)mContainerInfo->columnInfoList[i].name);
+        if (mContainerInfo) {
+            for (int i = 0; i < mContainerInfo->columnCount; i++) {
+                free((void*)mContainerInfo->columnInfoList[i].name);
+            }
+            free((void*) mContainerInfo->columnInfoList);
+            free((void*) mContainerInfo->name);
+            free((void*) mContainerInfo);
         }
-        free((void*) mContainerInfo->columnInfoList);
-        free((void*) mContainerInfo);
+        free((void*) mTypeList);
     }
 
     /**
@@ -65,7 +84,6 @@ namespace griddb {
         if (mContainer != NULL) {
             gsCloseContainer(&mContainer, allRelated);
             mContainer = NULL;
-        	free(typeList);
         }
     }
 
@@ -141,7 +159,7 @@ namespace griddb {
     }
 
     /**
-     * Get current container ty2pe
+     * Get current container type
      */
     GSContainerType Container::get_type() {
         GSContainerType containerType;
@@ -215,10 +233,6 @@ namespace griddb {
             }
             key = &keyFields->value.asString;
             break;
-        case GS_TYPE_BYTE:
-            keyFields->value.asInteger = keyFields->value.asByte;
-        case GS_TYPE_SHORT:
-            keyFields->value.asInteger = keyFields->value.asShort;
         case GS_TYPE_INTEGER:
             if (!(mContainerInfo->columnInfoList[0].type == GS_TYPE_INTEGER ||
                     mContainerInfo->columnInfoList[0].type == GS_TYPE_LONG)) {
@@ -239,7 +253,7 @@ namespace griddb {
             key = &keyFields->value.asTimestamp;
             break;
         default:
-            throw GSException("wrong type of rowKey timestamp");
+            throw GSException("wrong type of rowKey field");
         }
 
         ret = gsGetRow(mContainer, key, mRow, &exists);
@@ -268,10 +282,6 @@ namespace griddb {
                 }
                 ret = gsDeleteRow(mContainer, &keyFields->value.asString, &exists);
                 break;
-            case GS_TYPE_BYTE:
-                keyFields->value.asInteger = keyFields->value.asByte;
-            case GS_TYPE_SHORT:
-                keyFields->value.asInteger = keyFields->value.asShort;
             case GS_TYPE_INTEGER:
                 if (!(mContainerInfo->columnInfoList[0].type == GS_TYPE_INTEGER ||
                     mContainerInfo->columnInfoList[0].type == GS_TYPE_LONG)) {
@@ -292,7 +302,7 @@ namespace griddb {
                 ret = gsDeleteRow(mContainer, &keyFields->value.asTimestamp, &exists);
                 break;
             default:
-                throw GSException("wrong type of rowKey timestamp");
+                throw GSException("wrong type of rowKey field");
             }
 #if GS_COMPATIBILITY_SUPPORT_3_5
         }
@@ -327,29 +337,10 @@ namespace griddb {
     }
 
     /**
-     * Find column index from column name.
-     * Return -1 if not found
-     */
-    int Container::get_column_index(const char* columnName){
-        for (int i = 0; i < mContainerInfo->columnCount; i++) {
-            if (strcmp(mContainerInfo->columnInfoList[i].name, columnName) == 0) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    /**
      * Support put row
      */
     GSType* Container::getGSTypeList(){
-        if (typeList == NULL){
-             typeList = (GSType*) malloc(sizeof(GSType) * mContainerInfo->columnCount);
-            for (int i = 0; i < mContainerInfo->columnCount; i++){
-                typeList[i] = mContainerInfo->columnInfoList[i].type;
-            }
-        }
-        return typeList;
+        return mTypeList;
     }
 
     GSRow* Container::getGSRowPtr(){

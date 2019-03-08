@@ -152,32 +152,95 @@ namespace griddb {
         }
     }
     /**
-     * muti_get method. Using gsGetMultipleContainerRows C-API
+     * multi_get method. Using gsGetMultipleContainerRows C-API
      */
     void Store::multi_get(const GSRowKeyPredicateEntry* const * predicateList,
-            size_t predicateCount, GSContainerRowEntry **entryList, size_t* containerCount, int **colNumList, GSType*** typeList) {
+            size_t predicateCount, GSContainerRowEntry **entryList, size_t* containerCount,
+            int **colNumList, GSType*** typeList, int **orderFromInput) {
+        *colNumList = NULL;
+        *typeList = NULL;
+        *orderFromInput = NULL;
+        *containerCount = 0;
         // get number of column of rows in each container.
         *colNumList = new int[predicateCount]; //will be free in argout
+        *orderFromInput = new int[predicateCount]; //will be free in argout
         *typeList = new GSType*[predicateCount]; //will be free in argout
         int length = (int)predicateCount;
-        for (int i = 0; i < length; i++) {
-            Container *tmpContainer = this->get_container((*predicateList)[i].containerName);
-            if (tmpContainer == NULL) {
-                throw GSException(mStore, "Not found container");
-            }
-            (*colNumList)[i] = tmpContainer->getColumnCount();
-            (*typeList)[i] = (GSType*) malloc(sizeof(GSType) * (*colNumList)[i]);
-            for (int j = 0; j < (*colNumList)[i]; j++) {
-                (*typeList)[i][j] = tmpContainer->getGSTypeList()[j];
-            }
-            delete tmpContainer;
+        memset(*colNumList, 0, predicateCount * sizeof(int));
+        memset(*typeList, 0, predicateCount * sizeof(GSType*));
+
+        bool setNumList = this->setMultiContainerNumList(predicateList,
+                    length, &colNumList, &typeList);
+        if (!setNumList) {
+            this->freeMemoryMultiGet(colNumList, typeList, length, orderFromInput);
+            throw GSException(mStore, "Set multi containers number list and type list error");
         }
         // Get data for entryList
         GSResult ret = gsGetMultipleContainerRows(mStore, predicateList,
                 predicateCount, (const GSContainerRowEntry**) entryList, containerCount);
         if (ret != GS_RESULT_OK) {
+            this->freeMemoryMultiGet(colNumList, typeList, length, orderFromInput);
             throw GSException(mStore, ret);
+        }
+
+        // set data for orderFromInput
+        for (int i = 0; i < length; i++) {
+            for (int j = 0; j < length; j++) {
+                if (strcmp((*predicateList)[i].containerName, (*entryList)[j].containerName) == 0){
+                    (*orderFromInput)[i] = j;
+                }
+            }
         }
     }
 
+    /**
+     * Support free memory in multi_get function when exception happen
+     */
+    void Store::freeMemoryMultiGet(int **colNumList, GSType*** typeList,
+            int length, int **orderFromInput) {
+        if (*colNumList) {
+            delete [] *colNumList;
+            *colNumList = NULL;
+        }
+
+        if (*typeList) {
+            for (int i = 0; i < length; i++) {
+                if ((*typeList)[i]) {
+                    free((void*) (*typeList)[i]);
+                }
+            }
+            delete [] *typeList;
+            *typeList = NULL;
+        }
+        if (*orderFromInput) {
+            delete [] *orderFromInput;
+            *orderFromInput = NULL;
+        }
+    }
+
+    /**
+     * Support multi_get function to put data into colNumList and typeList
+     */
+    bool Store::setMultiContainerNumList(const GSRowKeyPredicateEntry* const * predicateList,
+            int length, int ***colNumList, GSType**** typeList) {
+        for (int i = 0; i < length; i++) {
+            Container *tmpContainer;
+            try {
+                tmpContainer = this->get_container((*predicateList)[i].containerName);
+            } catch (GSException e) {
+                return false;
+            }
+            if (tmpContainer == NULL) {
+                return false;
+            }
+            (**colNumList)[i] = tmpContainer->getColumnCount();
+            (**typeList)[i] = (GSType*) malloc(sizeof(GSType) * (**colNumList)[i]);
+            //(**typeList)[i] will be freed in freeMemoryMultiGet() function or argout
+            for (int j = 0; j < (**colNumList)[i]; j++) {
+                (**typeList)[i][j] = tmpContainer->getGSTypeList()[j];
+            }
+            delete tmpContainer;
+        }
+        return true;
+    }
 }

@@ -20,18 +20,40 @@ namespace griddb {
 
     QueryAnalysisEntry::QueryAnalysisEntry(GSQueryAnalysisEntry* queryAnalysis) : mQueryAnalysis(NULL) {
         if (queryAnalysis) {
-            mQueryAnalysis = (GSQueryAnalysisEntry*) malloc(sizeof(GSQueryAnalysisEntry));
+            if (!mQueryAnalysis) {
+                mQueryAnalysis = (GSQueryAnalysisEntry*) malloc(sizeof(GSQueryAnalysisEntry));
+            }
             //Copy value which queryAnalysis point to
             mQueryAnalysis->id = queryAnalysis->id;
             mQueryAnalysis->depth = queryAnalysis->depth;
-            mQueryAnalysis->statement = strdup(queryAnalysis->statement);
-            mQueryAnalysis->type = strdup(queryAnalysis->type);
-            mQueryAnalysis->value = strdup(queryAnalysis->value);
-            mQueryAnalysis->valueType = strdup(queryAnalysis->valueType);
+            if (queryAnalysis->statement) {
+                mQueryAnalysis->statement = strdup(queryAnalysis->statement);
+            } else {
+                mQueryAnalysis->statement = NULL;
+            }
+            if (queryAnalysis->type) {
+                mQueryAnalysis->type = strdup(queryAnalysis->type);
+            } else {
+                mQueryAnalysis->type = NULL;
+            }
+            if (queryAnalysis->value) {
+                mQueryAnalysis->value = strdup(queryAnalysis->value);
+            } else {
+                mQueryAnalysis->value = NULL;
+            }
+            if (queryAnalysis->valueType) {
+                mQueryAnalysis->valueType = strdup(queryAnalysis->valueType);
+            } else {
+                mQueryAnalysis->valueType = NULL;
+            }
         }
-}
+    }
 
     QueryAnalysisEntry::~QueryAnalysisEntry() {
+        this->close();
+    }
+
+    void QueryAnalysisEntry::close() {
         if (mQueryAnalysis) {
             if (mQueryAnalysis->statement) {
                 free((void*) mQueryAnalysis->statement);
@@ -48,7 +70,7 @@ namespace griddb {
             free((void *) mQueryAnalysis);
             mQueryAnalysis = NULL;
         }
-}
+    }
 
     /**
      * get QueryAnalysisEntry data
@@ -56,9 +78,25 @@ namespace griddb {
     void QueryAnalysisEntry::get(GSQueryAnalysisEntry* queryAnalysis) {
         queryAnalysis->id = mQueryAnalysis->id;
         queryAnalysis->depth = mQueryAnalysis->depth;
-        queryAnalysis->statement = strdup(mQueryAnalysis->statement);
-        queryAnalysis->type = strdup(mQueryAnalysis->type);
-        queryAnalysis->value = strdup(mQueryAnalysis->value);
-        queryAnalysis->valueType = strdup(mQueryAnalysis->valueType);
+        if (mQueryAnalysis->statement) {
+            queryAnalysis->statement = strdup(mQueryAnalysis->statement);
+        } else {
+            queryAnalysis->statement = NULL;
+        }
+        if (mQueryAnalysis->type) {
+            queryAnalysis->type = strdup(mQueryAnalysis->type);
+        } else {
+            queryAnalysis->type = NULL;
+        }
+        if (mQueryAnalysis->value) {
+            queryAnalysis->value = strdup(mQueryAnalysis->value);
+        } else {
+            queryAnalysis->value = NULL;
+        }
+        if (mQueryAnalysis->valueType) {
+            queryAnalysis->valueType = strdup(mQueryAnalysis->valueType);
+        } else {
+            queryAnalysis->valueType = NULL;
+        }
     }
 }

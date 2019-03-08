@@ -17,10 +17,14 @@
 %ignore griddb::Container::getGSContainerPtr;
 %ignore griddb::Container::getGSTypeList;
 %ignore griddb::Container::getColumnCount;
+%ignore griddb::Container::getGSRowPtr;
+%ignore griddb::ContainerInfo::gs_info;
+%ignore griddb::Field;
 %ignore griddb::Query::gs_ptr;
 %ignore griddb::RowKeyPredicate::gs_ptr;
 %ignore griddb::RowSet::getGSTypeList;
 %ignore griddb::RowSet::getColumnCount;
+%ignore griddb::RowSet::getGSRowPtr;
 %ignore griddb::AggregationResult::AggregationResult;
 %ignore griddb::QueryAnalysisEntry::QueryAnalysisEntry;
 %ignore griddb::TimeSeriesProperties;
@@ -54,7 +58,7 @@
 %module griddb_ruby_client
 #elif defined(SWIGJAVASCRIPT)
 %include "gstype_js_v8.i"
-%module griddb_js_client
+%module griddb_client
 #elif defined(SWIGPHP)
 %include "gstype_php.i"
 %module griddb_php_client
