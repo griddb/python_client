@@ -18,11 +18,12 @@
 #define _STORE_FACTORY_H_
 #define CLIENT_VERSION "GridDB Python Client 0.8.0"
 
-#include "gridstore.h"
-#include "Store.h"
-
 #include <map>
 #include <string>
+
+#include "gridstore.h"
+#include "Store.h"
+#include "GSException.h"
 
 using namespace std;
 
@@ -33,12 +34,12 @@ namespace griddb {
  * This class is implemented as singleton.
  */
 class StoreFactory {
-
-    GSGridStoreFactory* mFactory;
+    private:
+        GSGridStoreFactory* mFactory;
 
     public:
         ~StoreFactory();
-        void close(GSBool allRelated);
+        void close(GSBool allRelated = GS_FALSE);
         static StoreFactory* get_instance();
         Store* get_store(const char* host=NULL, int32_t port=0, const char* cluster_name=NULL,
                 const char* database=NULL, const char* username=NULL, const char* password=NULL,
