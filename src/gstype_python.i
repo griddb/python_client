@@ -706,7 +706,7 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
             break;
         }
         case GS_TYPE_BLOB: {
-            GSBlob blobValTmp;
+            GSBlob blobValTmp = {0};
             GSBlob *blobVal = &blobValTmp;
             vbool = convertObjectToBlob(value, &blobVal->size, (void**) &blobVal->data);
             if (!vbool) {
@@ -1489,7 +1489,7 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
                 break;
             }
             case GS_TYPE_BLOB: {
-                GSBlob blobValue;
+                GSBlob blobValue = {0};
                 ret = gsGetRowFieldAsBlob(row, (int32_t) i, &blobValue);
                 PyList_SetItem(outList, i, PyByteArray_FromStringAndSize((const char*)blobValue.data, blobValue.size));
                 break;
