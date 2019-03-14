@@ -519,13 +519,8 @@ static bool convertToRowKeyFieldWithType(griddb::Field &field, PyObject* value, 
     field.type = type;
 
     if (value == Py_None) {
-%#if GS_COMPATIBILITY_SUPPORT_3_5
-        field.type = GS_TYPE_NULL;
-        return true;
-%#else
         //Not support NULL
         return false;
-%#endif
     }
 
     int checkConvert = 0;
@@ -1735,8 +1730,16 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
         PyErr_SetString(PyExc_ValueError, "Memory allocation for row is error");
         SWIG_fail;
     }
-    PyList_SetItem($result, 0, convertFieldToObject(&($1->value), $1->type, arg1->timestamp_output_with_float));
-    PyList_SetItem($result, 1, convertFieldToObject(&($2->value), $1->type, arg1->timestamp_output_with_float));
+    if ($1->type != -1) { // -1 for all versions which do not support GS_TYPE_NULL
+        PyList_SetItem($result, 0, convertFieldToObject(&($1->value), $1->type, arg1->timestamp_output_with_float));
+    } else {
+        PyList_SetItem($result, 0, Py_None);
+    }
+    if ($2->type != -1) { // -1 for all versions which do not support GS_TYPE_NULL
+        PyList_SetItem($result, 1, convertFieldToObject(&($2->value), $1->type, arg1->timestamp_output_with_float));
+    } else {
+        PyList_SetItem($result, 1, Py_None);
+    }
 }
 
 /**
