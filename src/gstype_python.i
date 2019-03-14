@@ -1811,23 +1811,27 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
 }
 
 %typemap(argout, fragment = "getRowFields") (GSRow *rowdata) {
-    GSRow* row = arg1->getGSRowPtr();
-    PyObject *outList = PyList_New(arg1->getColumnCount());
-    if (outList == NULL) {
-        PyErr_SetString(PyExc_ValueError, "Memory allocation for row is error");
-        SWIG_fail;
+    if (result == GS_FALSE) {
+        Py_RETURN_NONE;
+    } else {
+        GSRow* row = arg1->getGSRowPtr();
+        PyObject *outList = PyList_New(arg1->getColumnCount());
+        if (outList == NULL) {
+            PyErr_SetString(PyExc_ValueError, "Memory allocation for row is error");
+            SWIG_fail;
+        }
+        bool retVal;
+        int errorColumn;
+        GSType errorType;
+        retVal = getRowFields(row, arg1->getColumnCount(), arg1->getGSTypeList(), arg1->timestamp_output_with_float, &errorColumn, &errorType, outList);
+        if (retVal == false) {
+            char errorMsg[60];
+            sprintf(errorMsg, "Can't get data for field %d with type%d", errorColumn, errorType);
+            PyErr_SetString(PyExc_ValueError, errorMsg);
+            SWIG_fail;
+        }
+        $result = outList;
     }
-    bool retVal;
-    int errorColumn;
-    GSType errorType;
-    retVal = getRowFields(row, arg1->getColumnCount(), arg1->getGSTypeList(), arg1->timestamp_output_with_float, &errorColumn, &errorType, outList);
-    if (retVal == false) {
-        char errorMsg[60];
-        sprintf(errorMsg, "Can't get data for field %d with type%d", errorColumn, errorType);
-        PyErr_SetString(PyExc_ValueError, errorMsg);
-        SWIG_fail;
-    }
-    $result = outList;
 }
 
 /**
