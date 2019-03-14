@@ -15,7 +15,6 @@
 */
 
 %{
-#include <Field.h>
 #include <ctime>
 #include <datetime.h>
 #include <limits>
@@ -1316,36 +1315,6 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
 }
 
 %typemap(doc, name = "query_list") (GSQuery* const* queryList, size_t queryCount) "list[Query] query_list";
-
-/**
-* Typemaps for set_field_by_byte_array() function
-*/
-%typemap(in) (const int8_t *fieldValue, size_t size) (int i) {
-    if (!PyList_Check($input)) {
-        PyErr_SetString(PyExc_ValueError, "Expected a List");
-        SWIG_fail;
-    }
-    $2 = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size($input)));
-    $1 = NULL;
-    if ($2 > 0) {
-        $1 = (int8_t *) malloc($2 * sizeof(int8_t));
-        if ($1 == NULL) {
-            PyErr_SetString(PyExc_ValueError, "Memory allocation error");
-            SWIG_fail;
-        }
-        i = 0;
-        while (i < $2) {
-            $1[i] = (int8_t)PyInt_AsLong(PyList_GetItem($input,i));
-            i++;
-        }
-    }
-}
-
-%typemap(freearg) (const int8_t *fieldValue, size_t size) {
-    if ($1) {
-        free((void *) $1);
-    }
-}
 
 /**
 * Typemaps input for multi_get() function
