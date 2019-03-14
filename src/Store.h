@@ -17,12 +17,14 @@
 #ifndef _STORE_H_
 #define _STORE_H_
 
+#include <map>
+#include <vector>
+
 #include "ContainerInfo.h"
 #include "Container.h"
 #include "PartitionController.h"
 #include "RowKeyPredicate.h"
-#include <map>
-#include <vector>
+#include "GSException.h"
 
 using namespace std;
 
@@ -36,7 +38,7 @@ class Store {
     public:
         bool timestamp_output_with_float;
         ~Store();
-        void close(GSBool allRelated);
+        void close(GSBool allRelated = GS_FALSE);
 
         Container* put_container(ContainerInfo* info, bool modifiable = false);
         Container* get_container(const char* name);

@@ -15,8 +15,6 @@
 */
 
 #include "RowSet.h"
-#include "GSException.h"
-#include "QueryAnalysisEntry.h"
 
 namespace griddb {
 
@@ -38,10 +36,11 @@ namespace griddb {
         switch(type) {
         case (GS_ROW_SET_CONTAINER_ROWS):
         case (GS_ROW_SET_AGGREGATION_RESULT):
+        case (GS_ROW_SET_QUERY_ANALYSIS):
             return (bool) gsHasNextRow(mRowSet);
             break;
         default:
-            return true;
+            return false;
             break;
         }
     }
@@ -101,6 +100,8 @@ namespace griddb {
             *queryAnalysis = this->get_next_query_analysis();
             *hasNextRow = true;
             break;
+        default:
+            throw GSException(mRowSet, "type for rowset is not correct");
         }
     }
     /**
