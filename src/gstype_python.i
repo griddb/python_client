@@ -304,11 +304,12 @@ static bool convertObjectToGSTimestamp(PyObject* value, GSTimestamp* timestamp) 
         return true;
     } else if (checkPyObjIsLong(value)) {
         utcTimestamp = PyLong_AsLong(value);
-        if (utcTimestamp > UTC_TIMESTAMP_MAX) {
+        if (utcTimestamp == 0) { // int type for timestamp input is not correct except 0 value.
+            *timestamp = 0;
+            return true;
+        } else {
             return false;
         }
-        *timestamp = utcTimestamp * 1000; // convert from seconds to miliseconds
-        return true;
     } else {
         // Invalid input
         return false;
