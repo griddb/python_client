@@ -1818,7 +1818,7 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
     $4 = (size_t)PyInt_AsLong(PyLong_FromSsize_t(PyDict_Size($input)));
     griddb::Container* tmpContainer;
     if ($4 > 0) {
-        $1 = new GSRow**[$4];
+        $1 = new GSRow**[$4]();
 
         $2 = (int*) malloc($4 * sizeof(int));
         $3 = (char **) malloc($4 * sizeof(char*));
@@ -1844,7 +1844,7 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
                 PyErr_SetString(PyExc_ValueError, "Num rows of container is invalid.");
                 SWIG_fail;
             }
-            $1[i] = new GSRow* [numRowOfContainer];
+            $1[i] = new GSRow* [numRowOfContainer]();
             if ($1[i] == NULL) {
                 PyErr_SetString(PyExc_ValueError, "Memory allocation error");
                 SWIG_fail;
@@ -2038,7 +2038,7 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
         GSContainer *mContainer = arg1->getGSContainerPtr();
         GSType* typeList = arg1->getGSTypeList();
 
-        $1 = new GSRow*[$2];
+        $1 = new GSRow*[$2]();
         if ($1 == NULL) {
             PyErr_SetString(PyExc_ValueError, "Memory allocation error");
             free((void*) typeList);
