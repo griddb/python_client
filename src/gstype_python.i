@@ -2429,3 +2429,21 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
         SWIG_fail;
     }
 }
+
+/**
+ * Support close method : Store.close()
+ */
+%typemap(in) GSBool allRelated{
+    
+    bool tmpBool;
+    int checkConvert = 0;
+
+    //input is boolean
+    checkConvert = SWIG_AsVal_bool($input, &tmpBool);
+    if (!SWIG_IsOK(checkConvert)) {
+        PyErr_SetString(PyExc_ValueError, "Invalid value for bool value");
+        SWIG_fail;
+    }
+    $1 = ((tmpBool == true) ? GS_TRUE : GS_FALSE);
+
+}
