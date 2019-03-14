@@ -2436,3 +2436,16 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
     }
     return $result;
 }
+
+//Correct check for input integer: when input invalid value (boolean), should throw exception
+%typemap(in) (int32_t) {
+    if (PyBool_Check($input)) {
+        PyErr_SetString(PyExc_ValueError, "Invalid value for int32_t value");
+        SWIG_fail;
+    }
+    int checkConvert = SWIG_AsVal_int($input, &$1);
+    if (!SWIG_IsOK(checkConvert)) {
+        PyErr_SetString(PyExc_ValueError, "Invalid value for int32_t value");
+        SWIG_fail;
+    }
+}
