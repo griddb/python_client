@@ -1368,6 +1368,8 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
                 if (newmem & SWIG_CAST_NEW_MEMORY) {
                     delete %reinterpret_cast(vpredicate, std::shared_ptr<griddb::RowKeyPredicate>*);
                 }
+            } else {
+                predicateEntry->predicate = NULL;
             }
             i++;
         }
@@ -2396,10 +2398,15 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
             }
             break;
         }
-        default: {
+        case (GS_ROW_SET_QUERY_ANALYSIS): {
             std::shared_ptr< griddb::QueryAnalysisEntry >* queryAnalyResult = NULL;
             queryAnalyResult = *$3 ? new std::shared_ptr<  griddb::QueryAnalysisEntry >(*$3 SWIG_NO_NULL_DELETER_SWIG_POINTER_OWN) : 0;
             $result = SWIG_NewPointerObj(SWIG_as_voidptr(queryAnalyResult), SWIGTYPE_p_std__shared_ptrT_griddb__QueryAnalysisEntry_t, SWIG_POINTER_OWN | SWIG_POINTER_OWN);
+            break;
+        }
+        default: {
+            PyErr_SetString(PyExc_ValueError, "Invalid type");
+            SWIG_fail;
             break;
         }
     }
