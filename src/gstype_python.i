@@ -438,8 +438,6 @@ static bool convertObjectToBlob(PyObject* value, size_t* size, void** data) {
         if (!SWIG_IsOK(res)) {
            return false;
         }
-        //Ignore null character
-        *size = *size - 1;
         *data = malloc(*size);
         memcpy(*data, blobData, *size);
         cleanString(blobData, alloc);
