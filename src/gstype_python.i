@@ -1065,7 +1065,7 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
             PyErr_SetString(PyExc_ValueError, "Memory allocation error");
             SWIG_fail;
         }
-
+        memset($1, 0x0, $2 * sizeof(GSPropertyEntry));
         memset(alloc, 0, $2 * 2 * sizeof(int));
         i = 0;
         j = 0;
@@ -1198,6 +1198,7 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
             PyErr_SetString(PyExc_ValueError, "Memory allocation error");
             SWIG_fail;
         }
+        memset(pList, 0x0, $2 * sizeof(GSRowKeyPredicateEntry));
         memset(alloc, 0x0, $2 * sizeof(int));
         $1 = &pList;
 
