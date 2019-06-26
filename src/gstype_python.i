@@ -56,18 +56,14 @@ class FetchOption(IntEnum):
     def __int__(self):
         return int(self.value)
     LIMIT = 0
-%#if GS_COMPATIBILITY_SUPPORT_1_5
 
 %#if GS_INTERNAL_DEFINITION_VISIBLE
 %#if !GS_COMPATIBILITY_DEPRECATE_FETCH_OPTION_SIZE
     SIZE = (LIMIT + 1)
 %#endif
 %#endif
-
 %#if GS_COMPATIBILITY_SUPPORT_4_0
     PARTIAL_EXECUTION = (LIMIT + 2)
-%#endif
-
 %#endif
 class TimeUnit(IntEnum):
     def __int__(self):
@@ -102,9 +98,7 @@ class Type(IntEnum):
     FLOAT_ARRAY = 17
     DOUBLE_ARRAY = 18
     TIMESTAMP_ARRAY = 19
-%#if GS_COMPATIBILITY_SUPPORT_3_5
     NULL = -1
-%#endif
 
 class TypeOption(IntEnum):
     def __int__(self):
@@ -224,10 +218,8 @@ static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestam
             return PyLong_FromLong(value->asLong);
         case GS_TYPE_STRING:
             return convertStrToObj(value->asString);
-%#if GS_COMPATIBILITY_SUPPORT_3_5
         case GS_TYPE_NULL:
             Py_RETURN_NONE;
-%#endif
         case GS_TYPE_INTEGER:
             return PyInt_FromLong(value->asInteger);
         case GS_TYPE_DOUBLE:
@@ -600,13 +592,8 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
     GSResult ret;
 
     if (value == Py_None) {
-%#if GS_COMPATIBILITY_SUPPORT_3_5
         ret = gsSetRowFieldNull(row, column);
         return (ret == GS_RESULT_OK);
-%#else
-        //Not support NULL
-        return false;
-%#endif
     }
 
     int checkConvert = 0;
@@ -999,7 +986,6 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
             }
 
             $1[i].type = (int) PyInt_AsLong(PyList_GetItem(list, 1));
-%#if GS_COMPATIBILITY_SUPPORT_3_5
             int tupleLength = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(list)));
             //Case user input option parameter
             if (tupleLength == 3) {
@@ -1015,7 +1001,6 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
             } else if (tupleLength == 2) {
                 $1[i].options = 0;
             }
-%#endif
             i++;
         }
     }
@@ -1436,11 +1421,7 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
 %typemap(in, fragment = "convertToRowKeyFieldWithType") (griddb::Field* keyFields)(griddb::Field field) {
     $1 = &field;
     if ($input == Py_None) {
-%#if GS_COMPATIBILITY_SUPPORT_3_5
         $1->type = GS_TYPE_NULL;
-%#else
-        %variable_fail(1, "String", "Not support for NULL");
-%#endif
     } else {
         GSType* typeList = arg1->getGSTypeList();
         GSType type = typeList[0];
@@ -1469,7 +1450,6 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
     for (int i = 0; i < columnCount; i++) {
         //Check NULL value
         GSBool nullValue;
-%#if GS_COMPATIBILITY_SUPPORT_3_5
         ret = gsGetRowFieldNull(row, (int32_t) i, &nullValue);
         if (ret != GS_RESULT_OK) {
             *columnError = i;
@@ -1482,7 +1462,6 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
             PyList_SetItem(outList, i, Py_None);
             continue;
         }
-%#endif
         switch(typeList[i]) {
             case GS_TYPE_LONG: {
                 int64_t longValue;
@@ -2135,7 +2114,6 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
             }
             $1.columnInfo[i].name = v;
             $1.columnInfo[i].type = PyLong_AsLong(PyList_GetItem(columInfoList, 1));
-%#if GS_COMPATIBILITY_SUPPORT_3_5
             if (sizeColumn == 3) {
                 option = PyInt_AsLong(PyList_GetItem(columInfoList, 2));
                 $1.columnInfo[i].options = option;
@@ -2146,7 +2124,6 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
             } else if (sizeColumn == 2) {
                 $1.columnInfo[i].options = 0;
             }
-%#endif
         }
     }
 }
@@ -2181,7 +2158,6 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
     }
     PyObject* info;
     for (int i = 0; i < size; i++) {
-%#if GS_COMPATIBILITY_SUPPORT_3_5
         if ((data.columnInfo)[i].options != 0) {
             info = PyList_New(3);
             PyList_SetItem(info, 0, convertStrToObj((data.columnInfo)[i].name));
@@ -2192,11 +2168,6 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
             PyList_SetItem(info, 0, convertStrToObj((data.columnInfo)[i].name));
             PyList_SetItem(info, 1, PyInt_FromLong((data.columnInfo)[i].type));
         }
-%#else
-        info = PyList_New(2);
-        PyList_SetItem(info, 0, convertStrToObj((data.columnInfo)[i].name));
-        PyList_SetItem(info, 1, PyInt_FromLong((data.columnInfo)[i].type));
-%#endif
         PyList_SetItem($result, i, info);
     }
 }
