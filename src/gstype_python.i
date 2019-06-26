@@ -210,7 +210,6 @@ static void cleanString(const GSChar* string, int alloc){
         fragment = "convertStrToObj", fragment = "convertTimestampToObject") {
 static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestampToFloat = true) {
 
-    size_t size;
     PyObject* list;
     int i;
     switch (type) {
@@ -218,8 +217,6 @@ static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestam
             return PyLong_FromLong(value->asLong);
         case GS_TYPE_STRING:
             return convertStrToObj(value->asString);
-        case GS_TYPE_NULL:
-            Py_RETURN_NONE;
         case GS_TYPE_INTEGER:
             return PyInt_FromLong(value->asInteger);
         case GS_TYPE_DOUBLE:
@@ -227,9 +224,8 @@ static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestam
         case GS_TYPE_TIMESTAMP:
             return convertTimestampToObject(&value->asTimestamp, timestampToFloat);
         default:
-            return NULL;
+            Py_RETURN_NONE;
     }
-    return NULL;
 }
 }
 
@@ -325,7 +321,6 @@ static bool convertObjectToBool(PyObject* value, GSBool* boolValPtr) {
             return false;
         }
         *boolValPtr = ((intVal != 0) ? GS_TRUE : GS_FALSE);
-        return true;
     } else {
         //input is boolean
         checkConvert = SWIG_AsVal_bool(value, &tmpBool);
@@ -333,8 +328,8 @@ static bool convertObjectToBool(PyObject* value, GSBool* boolValPtr) {
             return false;
         }
         *boolValPtr = ((tmpBool == true) ? GS_TRUE : GS_FALSE);
-        return true;
     }
+    return true;
 }
 }
 
@@ -964,6 +959,28 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
                 PyErr_SetString(PyExc_ValueError, "Expected a List as List element");
                 SWIG_fail;
             }
+            int tupleLength = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(list)));
+            if (tupleLength == 3) {
+                if (!PyInt_Check(PyList_GetItem(list, 2))) {
+                    PyErr_SetString(PyExc_ValueError, "Expected an Integer as column option");
+                    SWIG_fail;
+                }
+                $1[i].options = (int) PyInt_AsLong(PyList_GetItem(list, 2));
+                if ($1[i].options != GS_TYPE_OPTION_NULLABLE && $1[i].options != GS_TYPE_OPTION_NOT_NULL) {
+                    PyErr_SetString(PyExc_ValueError, "Invalid value for column option");
+                    SWIG_fail;
+                }
+            } else if (tupleLength == 2) {
+                if (i == 0) {
+                    $1[i].options = GS_TYPE_OPTION_NOT_NULL;
+                } else {
+                    $1[i].options = GS_TYPE_OPTION_NULLABLE;
+                }
+            } else {
+                PyErr_SetString(PyExc_ValueError, "Invalid element number for List");
+                SWIG_fail;
+            }
+
             res = SWIG_AsCharPtrAndSize(PyList_GetItem(list, 0), &v, &size, &alloc[i]);
             if (!SWIG_IsOK(res)) {
                 %variable_fail(res, "String", "name");
@@ -984,23 +1001,7 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
                 PyErr_SetString(PyExc_ValueError, "Expected an Integer as column type");
                 SWIG_fail;
             }
-
             $1[i].type = (int) PyInt_AsLong(PyList_GetItem(list, 1));
-            int tupleLength = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(list)));
-            //Case user input option parameter
-            if (tupleLength == 3) {
-                if (!PyInt_Check(PyList_GetItem(list, 2))) {
-                    PyErr_SetString(PyExc_ValueError, "Expected an Integer as column option");
-                    SWIG_fail;
-                }
-                $1[i].options = (int) PyInt_AsLong(PyList_GetItem(list, 2));
-                if ($1[i].options != GS_TYPE_OPTION_NULLABLE && $1[i].options != GS_TYPE_OPTION_NOT_NULL) {
-                    PyErr_SetString(PyExc_ValueError, "Invalid value for column option");
-                    SWIG_fail;
-                }
-            } else if (tupleLength == 2) {
-                $1[i].options = 0;
-            }
             i++;
         }
     }
@@ -1445,7 +1446,6 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
 static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool timestampOutput, int* columnError, 
         GSType* fieldTypeError, PyObject* outList) {
     GSResult ret;
-    GSValue mValue;
     bool retVal = true;
     for (int i = 0; i < columnCount; i++) {
         //Check NULL value
@@ -2102,8 +2102,21 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
                 SWIG_fail;
             }
             size_t sizeColumn = (size_t)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(columInfoList)));
-            if (sizeColumn < 2) {
-                PyErr_SetString(PyExc_ValueError, "Expect column info has 3 elements");
+            if (sizeColumn == 3) {
+                option = PyInt_AsLong(PyList_GetItem(columInfoList, 2));
+                $1.columnInfo[i].options = option;
+                if (option != GS_TYPE_OPTION_NULLABLE && option != GS_TYPE_OPTION_NOT_NULL) {
+                    PyErr_SetString(PyExc_ValueError, "Invalid value for column option");
+                    SWIG_fail;
+                }
+            } else if (sizeColumn == 2) {
+                    if (i == 0) {
+                        $1.columnInfo[i].options = GS_TYPE_OPTION_NOT_NULL;
+                    } else {
+                        $1.columnInfo[i].options = GS_TYPE_OPTION_NULLABLE;
+                    }
+            } else {
+                PyErr_SetString(PyExc_ValueError, "Invalid element number for List");
                 SWIG_fail;
             }
 
@@ -2114,16 +2127,6 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
             }
             $1.columnInfo[i].name = v;
             $1.columnInfo[i].type = PyLong_AsLong(PyList_GetItem(columInfoList, 1));
-            if (sizeColumn == 3) {
-                option = PyInt_AsLong(PyList_GetItem(columInfoList, 2));
-                $1.columnInfo[i].options = option;
-                if (option != GS_TYPE_OPTION_NULLABLE && option != GS_TYPE_OPTION_NOT_NULL) {
-                    PyErr_SetString(PyExc_ValueError, "Invalid value for column option");
-                    SWIG_fail;
-                }
-            } else if (sizeColumn == 2) {
-                $1.columnInfo[i].options = 0;
-            }
         }
     }
 }
@@ -2195,7 +2198,7 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
             int errorColumn;
             if (*$2 == false) {
                 PyErr_SetNone(PyExc_StopIteration);
-                $result= NULL;
+                return NULL;
             } else {
                 GSRow* row = arg1->getGSRowPtr();
                 PyObject *outList = PyList_New(arg1->getColumnCount());
@@ -2218,8 +2221,7 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
         case (GS_ROW_SET_AGGREGATION_RESULT): {
             std::shared_ptr< griddb::AggregationResult > *aggResult = NULL;
             if (*$2 == false) {
-                PyErr_SetNone(PyExc_StopIteration);
-                $result= NULL;
+                Py_RETURN_NONE;
             } else {
                 aggResult = *$4 ? new std::shared_ptr<  griddb::AggregationResult >(*$4 SWIG_NO_NULL_DELETER_SWIG_POINTER_OWN) : 0;
                 $result = SWIG_NewPointerObj(SWIG_as_voidptr(aggResult), SWIGTYPE_p_std__shared_ptrT_griddb__AggregationResult_t, SWIG_POINTER_OWN | SWIG_POINTER_OWN);
@@ -2228,8 +2230,12 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
         }
         case (GS_ROW_SET_QUERY_ANALYSIS): {
             std::shared_ptr< griddb::QueryAnalysisEntry >* queryAnalyResult = NULL;
-            queryAnalyResult = *$3 ? new std::shared_ptr<  griddb::QueryAnalysisEntry >(*$3 SWIG_NO_NULL_DELETER_SWIG_POINTER_OWN) : 0;
-            $result = SWIG_NewPointerObj(SWIG_as_voidptr(queryAnalyResult), SWIGTYPE_p_std__shared_ptrT_griddb__QueryAnalysisEntry_t, SWIG_POINTER_OWN | SWIG_POINTER_OWN);
+            if (*$2 == false) {
+                Py_RETURN_NONE;
+            } else {
+                queryAnalyResult = *$3 ? new std::shared_ptr<  griddb::QueryAnalysisEntry >(*$3 SWIG_NO_NULL_DELETER_SWIG_POINTER_OWN) : 0;
+                $result = SWIG_NewPointerObj(SWIG_as_voidptr(queryAnalyResult), SWIGTYPE_p_std__shared_ptrT_griddb__QueryAnalysisEntry_t, SWIG_POINTER_OWN | SWIG_POINTER_OWN);
+            }
             break;
         }
         default: {
