@@ -1871,6 +1871,7 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
                 if (!PyList_Check(rowTmp)) {
                     PyErr_SetString(PyExc_ValueError, "Expected a List");
                     delete containerInfoTmp;
+                    delete tmpContainer;
                     SWIG_fail;
                 }
                 length = (int)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(rowTmp)));
@@ -1878,6 +1879,7 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
                 if ($1[i][j] == NULL || ret != GS_RESULT_OK) {
                     PyErr_SetString(PyExc_ValueError, "Memory allocation error");
                     delete containerInfoTmp;
+                    delete tmpContainer;
                     SWIG_fail;
                 }
                 for (int k = 0; k < length; k++) {
@@ -1886,6 +1888,7 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
                         sprintf(gsType, "Invalid value for column %d, type should be : %d", k, typeArr[k]);
                         PyErr_SetString(PyExc_ValueError, gsType);
                         delete containerInfoTmp;
+                        delete tmpContainer;
                         SWIG_fail;
                     }
                 }
