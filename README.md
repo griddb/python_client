@@ -16,11 +16,11 @@ Main differences to [the old Python Client](https://github.com/griddb/griddb_cli
 
 Building of the library and execution of the sample programs have been checked in the following environment.
 
-    OS:              CentOS 6.7(x64)
+    OS:              CentOS 7.6(x64)
     SWIG:            3.0.12
-    GCC:             4.4.7
+    GCC:             4.8.5
     Python:          3.6
-    GridDB Server and C Client:   4.0 CE / 3.0 CE
+    GridDB Server and C Client:   4.2 CE
 
 ## QuickStart
 ### Preparations
@@ -93,8 +93,7 @@ Please refer to the following files for more detailed information.
 
 Note:
 1. The current API might be changed in the next version. e.g. ContainerInfo
-2. When you use GridDB V3.0 CE, please replace gridstore.h with gridstoreForV3.0.h on include/ folder and build sources.
-3. There is [Python Package for 0.7.6 on The Python Package Index (PyPI)](https://pypi.org/project/griddb-python/) .
+2. There is [Python Package for 0.7.6 on The Python Package Index (PyPI)](https://pypi.org/project/griddb-python/) .
 
 ## Community
 

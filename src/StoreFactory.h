@@ -16,7 +16,7 @@
 
 #ifndef _STORE_FACTORY_H_
 #define _STORE_FACTORY_H_
-#define CLIENT_VERSION "GridDB Python Client 0.8.0"
+#define CLIENT_VERSION "GridDB Python Client 0.8"
 
 #include <map>
 #include <string>
