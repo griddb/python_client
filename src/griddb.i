@@ -70,6 +70,7 @@
 %{
 #include "gridstore.h"
 #include "GSException.h"
+#include "Util.h"
 #include "TimeSeriesProperties.h"
 #include "ExpirationInfo.h"
 #include "ContainerInfo.h"

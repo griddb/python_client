@@ -26,6 +26,8 @@ SOURCES = 	  src/TimeSeriesProperties.cpp \
 		  src/RowKeyPredicate.cpp	\
 		  src/RowSet.cpp			\
 		  src/TimestampUtils.cpp			\
+		  src/Field.cpp \
+		  src/Util.cpp
 
 all: $(PROGRAM)
 
