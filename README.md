@@ -4,21 +4,12 @@ GridDB Python Client
 
 GridDB Python Client is developed using GridDB C Client and [SWIG](http://www.swig.org/) (Simplified Wrapper and Interface Generator).  
 
-The new Python Client brings improved usability. 
-
-Main differences to [the old Python Client](https://github.com/griddb/griddb_client) are as follows:
-- Put and get row data without C-based methods defined for each data-type
-- Array type for GridDB is available
-- Connectivity for Pandas library
-- Error handling, date and time handling
-
 ## Operating environment
 
 Building of the library and execution of the sample programs have been checked in the following environment.
 
-    OS:              CentOS 7.6(x64)
+    OS/GCC:          CentOS 7.6(x64)/GCC 4.8.5, Ubuntu 18.04/GCC 7.3.0
     SWIG:            3.0.12
-    GCC:             4.8.5
     Python:          3.6
     GridDB Server and C Client:   4.2 CE
 
@@ -27,19 +18,17 @@ Building of the library and execution of the sample programs have been checked i
 
 Install SWIG as below.
 
-    $ wget https://sourceforge.net/projects/pcre/files/pcre/8.39/pcre-8.39.tar.gz
-    $ tar xvfz pcre-8.39.tar.gz
-    $ cd pcre-8.39
-    $ ./configure
-    $ make
-    $ make install
-
     $ wget https://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
     $ tar xvfz swig-3.0.12.tar.gz
     $ cd swig-3.0.12
     $ ./configure
     $ make
-    $ make install
+    $ sudo make install
+   
+    Note: If CentOS, you might need to install pcre in advance.
+    $ sudo yum install pcre2-devel.x86_64
+
+Install [GridDB Server](https://github.com/griddb/griddb_nosql) and [C Client](https://github.com/griddb/c_client). (Note: If you build them from source code, please use GCC 4.8.5.) 
 
 Set CPATH and LIBRARY_PATH. 
 
@@ -93,7 +82,8 @@ Please refer to the following files for more detailed information.
 
 Note:
 1. The current API might be changed in the next version. e.g. ContainerInfo
-2. There is [Python Package for 0.7.6 on The Python Package Index (PyPI)](https://pypi.org/project/griddb-python/) .
+2. When you install C Client with RPM or DEB, you don't need to set LIBRARY_PATH and LD_LIBRARY_PATH.
+3. There is [Python Client (0.7.6) Package for CentOS on The Python Package Index (PyPI)](https://pypi.org/project/griddb-python/) .
 
 ## Community
 
