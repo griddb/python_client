@@ -8,12 +8,25 @@ GridDB Python Client is developed using GridDB C Client and [SWIG](http://www.sw
 
 Building of the library and execution of the sample programs have been checked in the following environment.
 
-    OS/GCC:          CentOS 7.6(x64)/GCC 4.8.5, Ubuntu 18.04/GCC 7.3.0
-    SWIG:            3.0.12
-    Python:          3.6
-    GridDB Server and C Client:   4.2 CE
+    OS: CentOS 7.6(x64) (GCC 4.8.5)
+    SWIG: 3.0.12
+    Python: 3.6
+    GridDB C client: V4.2 CE(Community Edition)
+    GridDB server: V4.2 CE, CentOS 7.6(x64) (GCC 4.8.5)
 
-## QuickStart
+    OS: Ubuntu 18.04(x64) (gcc 7.3.0)
+    SWIG: 3.0.12
+    Python: 3.6
+    GridDB C client: V4.2 CE (Note: If you build from source code, please use GCC 4.8.5.)
+    GridDB server: V4.2 CE, Ubuntu 18.04(x64) (Note: If you build from source code, please use GCC 4.8.5.)
+    
+    OS: Windows 10(x64) (VS2017)
+    SWIG: 3.0.12
+    Python: 3.6
+    GridDB C client: V4.2 CE
+    GridDB server: V4.2 CE, CentOS 7.6(x64) (GCC 4.8.5)
+
+## QuickStart (CentOS, Ubuntu)
 ### Preparations
 
 Install SWIG as below.
@@ -61,6 +74,10 @@ GridDB Server need to be started in advance.
         $ sample/sample1.py <GridDB notification address> <GridDB notification port>
             <GridDB cluster name> <GridDB user> <GridDB password>
           -->Person: name=name02 status=False count=2 lob=[65, 66, 67, 68, 69, 70, 71, 72, 73, 74]
+
+## QuickStart (Windows)
+
+Please refer to [Cmake Build Guide](https://griddb.github.io/python_client/cmake_build_guide.html)
 
 ## Function
 
