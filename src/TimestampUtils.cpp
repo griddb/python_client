@@ -27,8 +27,8 @@ namespace griddb {
     /**
      * Convert from Python timestamp to GridDB timestamp
      */
-    long TimestampUtils::get_time_millis(double timestamp){
-        return long(timestamp * 1000);
+    int64_t TimestampUtils::get_time_millis(double timestamp){
+        return int64_t(timestamp * 1000);
     }
 
 } /* namespace griddb */

@@ -1,0 +1,79 @@
+#+TITLE: Cmake Build Guide For GridDB Python Client
+
+#+STARTUP: showall
+#+STARTUP: logdone
+#+STARTUP: hidestars
+
+#+OPTIONS: author:nil timestamp:nil creator:nil 
+#+OPTIONS: ^:nil _:nil
+
+#+DRAWERS: NOTE
+
+[TABLE-OF-CONTENTS]
+
+#+STYLE: <STYLE type="text/css">
+#+STYLE: <!-
+#+STYLE: .break { page-break-before: always; }
+#+STYLE: -->
+#+STYLE: </STYLE>
+
+#+HTML: <DIV class="break"></DIV><BR>
+
+* Building the GridDB python client
+
+This section shows how to build the GridDB python client on a single machine.
+
+** Confirming the environment
+
+Confirm that OS is Windows 10 64 bit
+
+** Required software to build GridDB python client
+- cmake: version 3.14.5
+- python: version 3.6.4
+- swig: version 3.0.12
+- GridDB C client: version 4.2.0
+In order to build, we also need to install Visual Studio 2017
+
+** Installing required software
+*** Install cmake
+- Download zip package from https://github.com/Kitware/CMake/releases/download/v3.14.5/cmake-3.14.5-win64-x64.zip
+- Extract the zip package and get resource of cmake tool
+*** Install python
+- Download and install python 3.6.4 from https://www.python.org/ftp/python/3.6.4/python-3.6.4-amd64.exe
+- Set path for PYTHON_RESOURCE in *CmakeList.txt*
+#+BEGIN_EXAMPLE
+set(PYTHON_RESOURCE C:/Users/username/AppData/Local/Programs/Python/Python36)
+#+END_EXAMPLE
+*** Install swig
+- Download zip package from https://sourceforge.net/projects/swig/files/swigwin/swigwin-3.0.12/swigwin-3.0.12.zip/download
+- Extract the zip package then set path for SWIG_RESOURCE in *CmakeList.txt*
+#+BEGIN_EXAMPLE
+set(SWIG_RESOURCE E:/swigwin-3.0.12)
+#+END_EXAMPLE
+*** Install GridDB C client
+- Please refer to https://github.com/griddb/c_client to install GridDB C client.
+- After installing GridDB C client, set path for C_LIB (path for gridstore_c.lib) and C_HEADER (path for gridstore.h) in *CmakeList.txt*
+#+BEGIN_EXAMPLE
+set(C_LIB E:/c_client-master/bin/x64/Release)
+set(C_HEADER E:/c_client-master/client/c/include)
+#+END_EXAMPLE
+** Building GridDB python client
+Before building Griddb python client, please set link for SOURCE_HEADER (link to folder store cpp headers) in *CmakeList.txt*
+#+BEGIN_EXAMPLE
+set(SOURCE_HEADER E:/SourceCode/src)
+#+END_EXAMPLE
+*** Generate standard build files from cmake
+- Open <PATH_TO_CMAKE>/cmake-3.14.5-win64-x64/bin/cmake-gui.exe
+- Set link for *source code* in cmake gui: link to folder store *CmakeList.txt*
+- Set link for *the binaries* in cmake gui: link to folder which generated files are store (sln file, py file)
+- Run *Configure* with set *Specify the generator for this project*  is *Visual Studio 15 2017*, and for *Optional toolset to use* is *x64*
+- Run *Generate* to get standard build files
+*** Build python client
+- Open <PATH_TO_OUTPUT_CMAKE>/griddb_python.sln by Visual Studio 2017
+- Build *griddb_python* project to get *_griddb_python.pyd* library and *griddb_python.py* interface
+** Run sample to check for building Python client
+- Put *_griddb_python.pyd*, *gridstore_c.dll* libraries and *griddb_python.py* interface into folder store *sample1.py*
+#+BEGIN_EXAMPLE
+<PATH_TO>/python.exe sample1.py 239.0.0.1 <port> <cluster> <username> <password>
+#+END_EXAMPLE
+

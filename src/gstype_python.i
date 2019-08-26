@@ -214,7 +214,7 @@ static PyObject* convertFieldToObject(GSValue* value, GSType type, bool timestam
     int i;
     switch (type) {
         case GS_TYPE_LONG:
-            return PyLong_FromLong(value->asLong);
+            return SWIG_From_dec(long long)(value->asLong);
         case GS_TYPE_STRING:
             return convertStrToObj(value->asString);
         case GS_TYPE_INTEGER:
@@ -291,7 +291,9 @@ static bool convertObjectToGSTimestamp(PyObject* value, GSTimestamp* timestamp) 
         }
         return true;
     } else if (checkPyObjIsLong(value)) {
-        utcTimestamp = PyLong_AsLong(value);
+        int64_t tmp;
+        SWIG_AsVal_dec(long long)(value, (long long *)&tmp);
+        utcTimestamp = tmp;
         if (utcTimestamp == 0) { // int type for timestamp input is not correct except 0 value.
             *timestamp = 0;
             return true;
@@ -345,8 +347,8 @@ static bool convertObjectToDouble(PyObject* value, double* floatValPtr) {
     }
     if (PyInt_Check(value)) {
         //input can be integer
-        long int intVal;
-        checkConvert = SWIG_AsVal_long(value, &intVal);
+        int64_t intVal;
+        checkConvert = SWIG_AsVal_dec(long long)(value, (long long *)&intVal);
         if (!SWIG_IsOK(checkConvert)) {
             return false;
         }
@@ -376,8 +378,8 @@ static bool convertObjectToFloat(PyObject* value, float* floatValPtr) {
     }
     if (PyInt_Check(value)) {
         //input can be integer
-        long int intVal;
-        checkConvert = SWIG_AsVal_long(value, &intVal);
+        int64_t intVal;
+        checkConvert = SWIG_AsVal_dec(long long)(value, (long long *)&intVal);
         if (!SWIG_IsOK(checkConvert)) {
             return false;
         }
@@ -553,7 +555,7 @@ static bool convertToRowKeyFieldWithType(griddb::Field &field, PyObject* value, 
             if (PyBool_Check(value)) {
                 return false;
             }
-            checkConvert = SWIG_AsVal_long(value, &field.value.asLong);
+            checkConvert = SWIG_AsVal_dec(long long)(value, (long long *)&field.value.asLong);
             if (!SWIG_IsOK(checkConvert)) {
                 return false;
             }
@@ -611,7 +613,7 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
             if (PyBool_Check(value)) {
                 return false;
             }
-            checkConvert = SWIG_AsVal_long(value, &longVal);
+            checkConvert = SWIG_AsVal_dec(long long)(value, (long long *)&longVal);
             if (!SWIG_IsOK(checkConvert)) {
                 return false;
             }
@@ -840,7 +842,7 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
             }
             for (i = 0; i < size; i++) {
                 vbool = PyBool_Check(PyList_GetItem(value, i));
-                checkConvert = SWIG_AsVal_long(PyList_GetItem(value, i), ((int64_t *)longArrVal + i));
+                checkConvert = SWIG_AsVal_dec(long long)(PyList_GetItem(value, i), ((long long *)longArrVal + i));
                 if (!SWIG_IsOK(checkConvert) || vbool) {
                     delete [] longArrVal;
                     return false;
@@ -1466,7 +1468,7 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
             case GS_TYPE_LONG: {
                 int64_t longValue;
                 ret = gsGetRowFieldAsLong(row, (int32_t) i, &longValue);
-                PyList_SetItem(outList, i, PyLong_FromLong(longValue));
+                PyList_SetItem(outList, i, SWIG_From_dec(long long)(longValue));
                 break;
             }
             case GS_TYPE_STRING: {
@@ -1590,7 +1592,7 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
                 ret = gsGetRowFieldAsLongArray(row, (int32_t) i, (const int64_t **)&longArr, &size);
                 PyObject* list = PyList_New(size);
                 for (int j = 0; j < size; j++) {
-                    PyList_SetItem(list, j, PyLong_FromLong(longArr[j]));
+                    PyList_SetItem(list, j, SWIG_From_dec(long long)(longArr[j]));
                 }
                 PyList_SetItem(outList, i, list);
                 break;
@@ -2126,7 +2128,7 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
                 SWIG_fail;
             }
             $1.columnInfo[i].name = v;
-            $1.columnInfo[i].type = PyLong_AsLong(PyList_GetItem(columInfoList, 1));
+            $1.columnInfo[i].type = PyInt_AsLong(PyList_GetItem(columInfoList, 1));
         }
     }
 }
