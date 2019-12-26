@@ -17,6 +17,9 @@ try:
 except IOError:
     readme = ''
 
+os.environ["CXX"] = "g++"
+os.environ["CC"] = "g++"
+
 SOURCES = [
     'src/AggregationResult.cpp',
     'src/Container.cpp',
@@ -101,7 +104,6 @@ griddb_module = Extension('_griddb_python',
 classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: POSIX :: Linux",
-    "Programming Language :: Python",
     "Programming Language :: Python :: 3.6",
 ]
 
