@@ -239,7 +239,7 @@ namespace griddb {
             } catch (bad_alloc& ba) {
                 throw GSException(mRowSet, "Memory allocation error");
             }
-            
+
             for (int i = 0; i < mContainerInfo->columnCount; i++){
                 typeList[i] = mContainerInfo->columnInfoList[i].type;
             }
@@ -263,4 +263,19 @@ namespace griddb {
         return mRow;
     }
 
+    /**
+     * @brief Get row list data
+     * @param **row List row data
+     * @param **rowSet Rowset data
+     * @return A pointer store row list data in RowList object
+     */
+    griddb::RowList* RowSet::fetch_rows(GSRow **row, GSRowSet **rowSet) {
+        try {
+            return new RowList(this->getGSRowPtr(), this->mRowSet,
+                    this->getGSTypeList(), this->getColumnCount(),
+                    this->timestamp_output_with_float);
+        } catch (bad_alloc &ba) {
+            throw GSException(mRowSet, "Memory allocation error");
+        }
+    }
 }

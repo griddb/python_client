@@ -61,7 +61,7 @@ namespace griddb {
             freeMemoryContainer();
             throw GSException(mContainer, "Memory allocation error");
         }
-        
+
         mContainerInfo->timeSeriesProperties = NULL;
         mContainerInfo->triggerInfoList = NULL;
         mContainerInfo->dataAffinity = NULL;
@@ -74,8 +74,6 @@ namespace griddb {
     }
 
     Container::~Container() {
-        
-
     // allRelated = FALSE, since all row object is managed by Row class
         close(GS_FALSE);
     }
@@ -408,5 +406,12 @@ namespace griddb {
      */
     int Container::getColumnCount(){
         return mContainerInfo->columnCount;
+    }
+
+    /**
+     * @brief Put rows with input is numpy data
+     */
+    void Container::put_rows(GSRow** listRow, int rowCount) {
+        this->multi_put(listRow, rowCount);
     }
 }

@@ -18,6 +18,9 @@
 #include <ctime>
 #include <datetime.h>
 #include <limits>
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include <numpy/arrayobject.h>
+#include <numpy/npy_math.h>
 %}
 %ignore griddb::AggregationResult::setOutputTimestamp;
 %ignore griddb::Container::setOutputTimestamp;
@@ -31,6 +34,7 @@
 
 %pythonbegin %{
 from enum import IntEnum
+import pandas
 %}
 
 %pythoncode {
@@ -933,11 +937,11 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
 /**
 * Typemaps for new ContainerInfo()
 */
-%typemap(in, fragment = "SWIG_AsCharPtrAndSize", fragment = "cleanString") 
+%typemap(in, fragment = "SWIG_AsCharPtrAndSize", fragment = "cleanString")
         (const GSColumnInfo* props, int propsCount)
 (PyObject* list, int i, size_t size = 0, int* alloc = 0, int res, char* v = 0) {
 //Convert Python list of tuple into GSColumnInfo properties
-    if (!PyList_Check($input)) {        
+    if (!PyList_Check($input)) {
         $2 = 0;
         $1 = NULL;
         PyErr_SetString(PyExc_ValueError, "Expected a List");
@@ -1113,7 +1117,7 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
 /**
 * Typemaps for fetch_all() function
 */
-%typemap(in) (GSQuery* const* queryList, size_t queryCount) 
+%typemap(in) (GSQuery* const* queryList, size_t queryCount)
         (PyObject* pyQuery, std::shared_ptr<griddb::Query> query, void *vquery, int i, int res = 0) {
     if ($input == Py_None) {
         $1 = NULL;
@@ -1168,8 +1172,8 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
 
 %typemap(in, fragment = "SWIG_AsCharPtrAndSize") (const GSRowKeyPredicateEntry *const * predicateList, size_t predicateCount
         , GSContainerRowEntry **entryList, size_t* containerCount, int **colNumList, GSType*** typeList, int **orderFromInput)
-        (PyObject* key, PyObject* val, std::shared_ptr<griddb::RowKeyPredicate> pPredicate, GSRowKeyPredicateEntry* pList = NULL, 
-                void *vpredicate, Py_ssize_t si, int i, int res = 0, size_t size = 0, int* alloc = 0, char* v = 0, 
+        (PyObject* key, PyObject* val, std::shared_ptr<griddb::RowKeyPredicate> pPredicate, GSRowKeyPredicateEntry* pList = NULL,
+                void *vpredicate, Py_ssize_t si, int i, int res = 0, size_t size = 0, int* alloc = 0, char* v = 0,
                 GSContainerRowEntry *tmpEntryList, size_t tmpContainerCount, int *tmpcolNumList, GSType** tmpTypeList, int *tmpOrderFromInput) {
     if (!PyDict_Check($input)) {
         PyErr_SetString(PyExc_ValueError, "Expected a Dict");
@@ -1217,11 +1221,11 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
             }
             i++;
         }
-       
+
     }
 }
 
-%typemap(argout, numinputs = 1, fragment = "convertStrToObj", fragment = "getRowFields") 
+%typemap(argout, numinputs = 1, fragment = "convertStrToObj", fragment = "getRowFields")
         (const GSRowKeyPredicateEntry *const * predicateList, size_t predicateCount
                 , GSContainerRowEntry **entryList, size_t* containerCount, int **colNumList, GSType*** typeList, int **orderFromInput) () {
     PyObject* dict = PyDict_New();
@@ -1441,206 +1445,465 @@ static bool convertToFieldWithType(GSRow *row, int column, PyObject* value, GSTy
 }
 
 /**
- * Support convert data from GSRow* row to Python list 
+ * Support convert data from GSRow* row to Python list
  */
-%fragment("getRowFields", "header",
+%fragment("getRowFields", "header", fragment = "checkNullField",
         fragment = "convertStrToObj", fragment = "convertTimestampToObject") {
-static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool timestampOutput, int* columnError, 
+static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool timestampOutput, int* columnError,
         GSType* fieldTypeError, PyObject* outList) {
     GSResult ret;
     bool retVal = true;
     for (int i = 0; i < columnCount; i++) {
-        //Check NULL value
-        GSBool nullValue;
-        ret = gsGetRowFieldNull(row, (int32_t) i, &nullValue);
-        if (ret != GS_RESULT_OK) {
-            *columnError = i;
-            retVal = false;
-            *fieldTypeError = GS_TYPE_NULL;
-            return retVal;
-        }
-        if (nullValue) {
-            Py_INCREF(Py_None);
-            PyList_SetItem(outList, i, Py_None);
-            continue;
-        }
-        switch(typeList[i]) {
+        // Column and type index in error case
+        *columnError = i;
+        *fieldTypeError = typeList[i];
+
+        switch (typeList[i]) {
             case GS_TYPE_LONG: {
                 int64_t longValue;
                 ret = gsGetRowFieldAsLong(row, (int32_t) i, &longValue);
-                PyList_SetItem(outList, i, SWIG_From_dec(long long)(longValue));
+                if (ret != GS_RESULT_OK) {
+                    return false;
+                }
+                if (longValue) {
+                    PyList_SetItem(outList, i, PyLong_FromLong(longValue));
+                } else if (checkNullField(row, i)) {
+                    // NULL value
+                    Py_INCREF(Py_None);
+                    PyList_SetItem(outList, i, Py_None);
+                } else {
+                    PyList_SetItem(outList, i, PyLong_FromLong(longValue));
+                }
                 break;
             }
             case GS_TYPE_STRING: {
                 GSChar* stringValue;
-                ret = gsGetRowFieldAsString(row, (int32_t) i, (const GSChar **)&stringValue);
-                PyList_SetItem(outList, i, convertStrToObj(stringValue));
+                ret = gsGetRowFieldAsString(row, (int32_t) i,
+                    (const GSChar **)&stringValue);
+                if (ret != GS_RESULT_OK) {
+                    return false;
+                }
+                if ((stringValue != NULL) && (stringValue[0] == '\0')) {
+                    // Empty string
+                    if (checkNullField(row, i)) {
+                        // NULL value
+                        Py_INCREF(Py_None);
+                        PyList_SetItem(outList, i, Py_None);
+                    } else {
+                        PyList_SetItem(outList, i,
+                                convertStrToObj(stringValue));
+                    }
+                } else {
+                    PyList_SetItem(outList, i, convertStrToObj(stringValue));
+                }
+
                 break;
             }
             case GS_TYPE_BLOB: {
                 GSBlob blobValue = {0};
                 ret = gsGetRowFieldAsBlob(row, (int32_t) i, &blobValue);
-                PyList_SetItem(outList, i, PyByteArray_FromStringAndSize((const char*)blobValue.data, blobValue.size));
+                if (ret != GS_RESULT_OK) {
+                    return false;
+                }
+                if (blobValue.size) {
+                    PyList_SetItem(outList, i,
+                        PyByteArray_FromStringAndSize(
+                                (const char*)blobValue.data, blobValue.size));
+                } else if (checkNullField(row, i)) {
+                    // NULL value
+                    Py_INCREF(Py_None);
+                    PyList_SetItem(outList, i, Py_None);
+                } else {
+                    PyList_SetItem(outList, i,
+                        PyByteArray_FromStringAndSize(
+                                (const char*)blobValue.data, blobValue.size));
+                }
                 break;
             }
             case GS_TYPE_BOOL: {
                 GSBool boolValue;
                 ret = gsGetRowFieldAsBool(row, (int32_t) i, &boolValue);
-                PyList_SetItem(outList, i, PyBool_FromLong(boolValue));
+                if (ret != GS_RESULT_OK) {
+                    return false;
+                }
+                if (boolValue) {
+                    PyList_SetItem(outList, i, PyBool_FromLong(boolValue));
+                } else if (checkNullField(row, i)) {
+                    // NULL value
+                    Py_INCREF(Py_None);
+                    PyList_SetItem(outList, i, Py_None);
+                } else {
+                    PyList_SetItem(outList, i, PyBool_FromLong(boolValue));
+                }
                 break;
             }
             case GS_TYPE_INTEGER: {
                 int32_t intValue;
                 ret = gsGetRowFieldAsInteger(row, (int32_t) i, &intValue);
-                PyList_SetItem(outList, i, PyInt_FromLong(intValue));
+                if (ret != GS_RESULT_OK) {
+                    return false;
+                }
+                if (intValue) {
+                    PyList_SetItem(outList, i, PyInt_FromLong(intValue));
+                } else if (checkNullField(row, i)) {
+                    // NULL value
+                    Py_INCREF(Py_None);
+                    PyList_SetItem(outList, i, Py_None);
+                } else {
+                    PyList_SetItem(outList, i, PyInt_FromLong(intValue));
+                }
                 break;
             }
             case GS_TYPE_FLOAT: {
                 float floatValue;
                 ret = gsGetRowFieldAsFloat(row, (int32_t) i, &floatValue);
-                PyList_SetItem(outList, i, PyFloat_FromDouble(floatValue));
+                if (ret != GS_RESULT_OK) {
+                    return false;
+                }
+                if (floatValue) {
+                    PyList_SetItem(outList, i, PyFloat_FromDouble(floatValue));
+                } else if (checkNullField(row, i)) {
+                    // NULL value
+                    Py_INCREF(Py_None);
+                    PyList_SetItem(outList, i, Py_None);
+                } else {
+                    PyList_SetItem(outList, i, PyFloat_FromDouble(floatValue));
+                }
                 break;
             }
             case GS_TYPE_DOUBLE: {
                 double doubleValue;
                 ret = gsGetRowFieldAsDouble(row, (int32_t) i, &doubleValue);
-                PyList_SetItem(outList, i, PyFloat_FromDouble(doubleValue));
+                if (ret != GS_RESULT_OK) {
+                    return false;
+                }
+                if (doubleValue) {
+                    PyList_SetItem(outList, i, PyFloat_FromDouble(doubleValue));
+                } else if (checkNullField(row, i)) {
+                    // NULL value
+                    Py_INCREF(Py_None);
+                    PyList_SetItem(outList, i, Py_None);
+                } else {
+                    PyList_SetItem(outList, i, PyFloat_FromDouble(doubleValue));
+                }
                 break;
             }
             case GS_TYPE_TIMESTAMP: {
                 GSTimestamp timestampValue;
-                ret = gsGetRowFieldAsTimestamp(row, (int32_t) i, &timestampValue);
-                PyList_SetItem(outList, i, convertTimestampToObject(&timestampValue, timestampOutput));
+                ret = gsGetRowFieldAsTimestamp(row,
+                        (int32_t) i, &timestampValue);
+                if (ret != GS_RESULT_OK) {
+                    return false;
+                }
+                if (timestampValue) {
+                    PyList_SetItem(outList, i,
+                        convertTimestampToObject(&timestampValue, timestampOutput));
+                } else if (checkNullField(row, i)) {
+                    // NULL value
+                    Py_INCREF(Py_None);
+                    PyList_SetItem(outList, i, Py_None);
+                } else {
+                    PyList_SetItem(outList, i,
+                        convertTimestampToObject(&timestampValue, timestampOutput));
+                }
                 break;
             }
             case GS_TYPE_BYTE: {
                 int8_t byteValue;
                 ret = gsGetRowFieldAsByte(row, (int32_t) i, &byteValue);
-                PyList_SetItem(outList, i, PyInt_FromLong(byteValue));
+                if (ret != GS_RESULT_OK) {
+                    return false;
+                }
+                if (byteValue) {
+                    PyList_SetItem(outList, i, PyInt_FromLong(byteValue));
+                } else if (checkNullField(row, i)) {
+                    // NULL value
+                    Py_INCREF(Py_None);
+                    PyList_SetItem(outList, i, Py_None);
+                } else {
+                    PyList_SetItem(outList, i, PyInt_FromLong(byteValue));
+                }
                 break;
             }
             case GS_TYPE_SHORT: {
                 int16_t shortValue;
                 ret = gsGetRowFieldAsShort(row, (int32_t) i, &shortValue);
-                PyList_SetItem(outList, i, PyInt_FromLong(shortValue));
+                if (ret != GS_RESULT_OK) {
+                    return false;
+                }
+                if (shortValue) {
+                    PyList_SetItem(outList, i, PyInt_FromLong(shortValue));
+                } else if (checkNullField(row, i)) {
+                    // NULL value
+                    Py_INCREF(Py_None);
+                    PyList_SetItem(outList, i, Py_None);
+                } else {
+                    PyList_SetItem(outList, i, PyInt_FromLong(shortValue));
+                }
                 break;
             }
             case GS_TYPE_GEOMETRY: {
                 GSChar* geoValue;
                 ret = gsGetRowFieldAsGeometry(row, (int32_t) i, (const GSChar **)&geoValue);
-                PyList_SetItem(outList, i, convertStrToObj(geoValue));
+                if (ret != GS_RESULT_OK) {
+                    return false;
+                }
+                if ((geoValue != NULL) && (geoValue[0] == '\0')) {
+                    // Empty string
+                    if (checkNullField(row, i)) {
+                        // NULL value
+                        Py_INCREF(Py_None);
+                        PyList_SetItem(outList, i, Py_None);
+                    } else {
+                        PyList_SetItem(outList, i, convertStrToObj(geoValue));
+                    }
+                } else {
+                    PyList_SetItem(outList, i, convertStrToObj(geoValue));
+                }
                 break;
             }
             case GS_TYPE_INTEGER_ARRAY: {
                 int32_t* intArr;
                 size_t size;
-                ret = gsGetRowFieldAsIntegerArray (row, (int32_t) i, (const int32_t **)&intArr, &size);
+                ret = gsGetRowFieldAsIntegerArray(row, (int32_t) i,
+                        (const int32_t **)&intArr, &size);
+                if (ret != GS_RESULT_OK) {
+                    return false;
+                }
                 PyObject* list = PyList_New(size);
+                if (!list) {
+                    return false;
+                }
                 for (int j = 0; j < size; j++) {
                     PyList_SetItem(list, j, PyInt_FromLong(intArr[j]));
                 }
-                PyList_SetItem(outList, i, list);
+
+                if (size) {
+                    PyList_SetItem(outList, i, list);
+                } else if (checkNullField(row, i)) {
+                    // NULL value
+                    Py_INCREF(Py_None);
+                    PyList_SetItem(outList, i, Py_None);
+                } else {
+                    PyList_SetItem(outList, i, list);
+                }
                 break;
             }
             case GS_TYPE_STRING_ARRAY: {
                 GSChar** stringArrVal;
                 size_t size;
-                ret = gsGetRowFieldAsStringArray (row, (int32_t) i, ( const GSChar *const **)&stringArrVal, &size);
+                ret = gsGetRowFieldAsStringArray(row, (int32_t) i,
+                        (const GSChar *const **)&stringArrVal, &size);
+                if (ret != GS_RESULT_OK) {
+                    return false;
+                }
                 PyObject* list = PyList_New(size);
+                if (!list) {
+                    return false;
+                }
                 for (int j = 0; j < size; j++) {
                     PyList_SetItem(list, j, convertStrToObj(stringArrVal[j]));
                 }
-                PyList_SetItem(outList, i, list);
+                if (size) {
+                    PyList_SetItem(outList, i, list);
+                } else if (checkNullField(row, i)) {
+                    // NULL value
+                    Py_INCREF(Py_None);
+                    PyList_SetItem(outList, i, Py_None);
+                } else {
+                    PyList_SetItem(outList, i, list);
+                }
                 break;
             }
             case GS_TYPE_BOOL_ARRAY: {
                 GSBool* boolArr;
                 size_t size;
-                ret = gsGetRowFieldAsBoolArray(row, (int32_t) i, (const GSBool **)&boolArr, &size);
+                ret = gsGetRowFieldAsBoolArray(row, (int32_t) i,
+                        (const GSBool **)&boolArr, &size);
+                if (ret != GS_RESULT_OK) {
+                    return false;
+                }
                 PyObject* list = PyList_New(size);
+                if (!list) {
+                    return false;
+                }
                 for (int j = 0; j < size; j++) {
                     PyList_SetItem(list, j, PyBool_FromLong(boolArr[j]));
                 }
-                PyList_SetItem(outList, i, list);
+                if (size) {
+                    PyList_SetItem(outList, i, list);
+                } else if (checkNullField(row, i)) {
+                    // NULL value
+                    Py_INCREF(Py_None);
+                    PyList_SetItem(outList, i, Py_None);
+                } else {
+                    PyList_SetItem(outList, i, list);
+                }
                 break;
             }
             case GS_TYPE_BYTE_ARRAY: {
                 int8_t* byteArr;
                 size_t size;
-                ret = gsGetRowFieldAsByteArray(row, (int32_t) i, (const int8_t **)&byteArr, &size);
+                ret = gsGetRowFieldAsByteArray(row, (int32_t) i,
+                        (const int8_t **)&byteArr, &size);
+                if (ret != GS_RESULT_OK) {
+                    return false;
+                }
                 PyObject* list = PyList_New(size);
+                if (!list) {
+                    return false;
+                }
                 for (int j = 0; j < size; j++) {
                     PyList_SetItem(list, j, PyInt_FromLong(byteArr[j]));
                 }
-                PyList_SetItem(outList, i, list);
+                if (size) {
+                    PyList_SetItem(outList, i, list);
+                } else if (checkNullField(row, i)) {
+                    // NULL value
+                    Py_INCREF(Py_None);
+                    PyList_SetItem(outList, i, Py_None);
+                } else {
+                    PyList_SetItem(outList, i, list);
+                }
                 break;
             }
             case GS_TYPE_SHORT_ARRAY: {
                 int16_t* shortArr;
                 size_t size;
-                ret = gsGetRowFieldAsShortArray(row, (int32_t) i, (const int16_t **)&shortArr, &size);
+                ret = gsGetRowFieldAsShortArray(row, (int32_t) i,
+                        (const int16_t **)&shortArr, &size);
+                if (ret != GS_RESULT_OK) {
+                    return false;
+                }
                 PyObject* list = PyList_New(size);
+                if (!list) {
+                    return false;
+                }
                 for (int j = 0; j < size; j++) {
                     PyList_SetItem(list, j, PyInt_FromLong(shortArr[j]));
                 }
-                PyList_SetItem(outList, i, list);
+                if (size) {
+                    PyList_SetItem(outList, i, list);
+                } else if (checkNullField(row, i)) {
+                    // NULL value
+                    Py_INCREF(Py_None);
+                    PyList_SetItem(outList, i, Py_None);
+                } else {
+                    PyList_SetItem(outList, i, list);
+                }
                 break;
             }
             case GS_TYPE_LONG_ARRAY: {
                 int64_t* longArr;
                 size_t size;
-                ret = gsGetRowFieldAsLongArray(row, (int32_t) i, (const int64_t **)&longArr, &size);
-                PyObject* list = PyList_New(size);
-                for (int j = 0; j < size; j++) {
-                    PyList_SetItem(list, j, SWIG_From_dec(long long)(longArr[j]));
+                ret = gsGetRowFieldAsLongArray(row, (int32_t) i,
+                        (const int64_t **)&longArr, &size);
+                if (ret != GS_RESULT_OK) {
+                    return false;
                 }
-                PyList_SetItem(outList, i, list);
+                PyObject* list = PyList_New(size);
+                if (!list) {
+                    return false;
+                }
+                for (int j = 0; j < size; j++) {
+                    PyList_SetItem(list, j, PyLong_FromLong(longArr[j]));
+                }
+                if (size) {
+                    PyList_SetItem(outList, i, list);
+                } else if (checkNullField(row, i)) {
+                    // NULL value
+                    Py_INCREF(Py_None);
+                    PyList_SetItem(outList, i, Py_None);
+                } else {
+                    PyList_SetItem(outList, i, list);
+                }
                 break;
             }
             case GS_TYPE_FLOAT_ARRAY: {
                 float* floatArr;
                 size_t size;
-                ret = gsGetRowFieldAsFloatArray(row, (int32_t) i, (const float **)&floatArr, &size);
-                PyObject* list = PyList_New(size);
-                for (int j = 0; j < size; j++) {
-                    PyList_SetItem(list, j, PyFloat_FromDouble(static_cast<double>(floatArr[j])));
+                ret = gsGetRowFieldAsFloatArray(row, (int32_t) i,
+                        (const float **)&floatArr, &size);
+                if (ret != GS_RESULT_OK) {
+                    return false;
                 }
-                PyList_SetItem(outList, i, list);
+                PyObject* list = PyList_New(size);
+                if (!list) {
+                    return false;
+                }
+                for (int j = 0; j < size; j++) {
+                    PyList_SetItem(list, j,
+                            PyFloat_FromDouble(static_cast<double>(floatArr[j])));
+                }
+                if (size) {
+                    PyList_SetItem(outList, i, list);
+                } else if (checkNullField(row, i)) {
+                    // NULL value
+                    Py_INCREF(Py_None);
+                    PyList_SetItem(outList, i, Py_None);
+                } else {
+                    PyList_SetItem(outList, i, list);
+                }
                 break;
             }
             case GS_TYPE_DOUBLE_ARRAY: {
                 double* doubleArr;
                 size_t size;
-                ret = gsGetRowFieldAsDoubleArray(row, (int32_t) i, (const double **)&doubleArr, &size);
+                ret = gsGetRowFieldAsDoubleArray(row, (int32_t) i,
+                        (const double **)&doubleArr, &size);
+                if (ret != GS_RESULT_OK) {
+                    return false;
+                }
                 PyObject* list = PyList_New(size);
+                if (!list) {
+                    return false;
+                }
                 for (int j = 0; j < size; j++) {
                     PyList_SetItem(list, j, PyFloat_FromDouble(doubleArr[j]));
                 }
-                PyList_SetItem(outList, i, list);
+                if (size) {
+                    PyList_SetItem(outList, i, list);
+                } else if (checkNullField(row, i)) {
+                    // NULL value
+                    Py_INCREF(Py_None);
+                    PyList_SetItem(outList, i, Py_None);
+                } else {
+                    PyList_SetItem(outList, i, list);
+                }
                 break;
             }
             case GS_TYPE_TIMESTAMP_ARRAY: {
                 GSTimestamp* timestampArr;
                 size_t size;
-                ret = gsGetRowFieldAsTimestampArray(row, (int32_t) i, (const GSTimestamp **)&timestampArr, &size);
-                PyObject* list = PyList_New(size);
-                for (int j = 0; j < size; j++) {
-                    PyList_SetItem(list, j, convertTimestampToObject(&timestampArr[j], timestampOutput));
+                ret = gsGetRowFieldAsTimestampArray(row, (int32_t) i,
+                        (const GSTimestamp **)&timestampArr, &size);
+                if (ret != GS_RESULT_OK) {
+                    return false;
                 }
-                PyList_SetItem(outList, i, list);
+                PyObject* list = PyList_New(size);
+                if (!list) {
+                    return false;
+                }
+                for (int j = 0; j < size; j++) {
+                    PyList_SetItem(list, j,
+                            convertTimestampToObject(&timestampArr[j], timestampOutput));
+                }
+                if (size) {
+                    PyList_SetItem(outList, i, list);
+                } else if (checkNullField(row, i)) {
+                    // NULL value
+                    Py_INCREF(Py_None);
+                    PyList_SetItem(outList, i, Py_None);
+                } else {
+                    PyList_SetItem(outList, i, list);
+                }
                 break;
             }
             default: {
                 // NOT OK
-                ret = -1;
+                retVal = false;
                 break;
             }
-        }
-        if (ret != GS_RESULT_OK) {
-            *columnError = i;
-            *fieldTypeError = typeList[i];
-            retVal = false;
-            return retVal;
         }
     }
     return retVal;
@@ -2266,7 +2529,7 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
  * Support close method : Store.close()
  */
 %typemap(in) GSBool allRelated{
-    
+
     bool tmpBool;
     int checkConvert = 0;
 
@@ -2278,4 +2541,180 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
     }
     $1 = ((tmpBool == true) ? GS_TRUE : GS_FALSE);
 
+}
+
+%fragment("checkNullField", "header") {
+static bool checkNullField(GSRow* row, int32_t rowField) {
+    GSBool nullValue;
+    GSResult ret;
+
+    ret = gsGetRowFieldNull(row, (int32_t) rowField, &nullValue);
+    if (ret != GS_RESULT_OK) {
+        return false;
+    }
+    if (nullValue == GS_TRUE) {
+        return true;
+    }
+    return false;
+}
+}
+
+// Typemap for Container.put_rows()
+%typemap(in, numinputs = 0) (GSRow** row, GSRowSet** rowSet) {
+    GSRow* rowPtr;
+    GSRowSet* rowSetPtr;
+    $1 = &rowPtr;
+    $2 = &rowSetPtr;
+}
+
+%feature("pythonappend") griddb::RowSet::fetch_rows(GSRow** row,
+        GSRowSet** rowSet) %{
+    #convert data from numpy.ndarray to pandas.DataFrame
+    #"val" is output
+    columnsList = self.get_column_names()
+    val = pandas.DataFrame(val, columns = columnsList)
+%}
+
+%typemap(in, numinputs = 0) (bool* hasRow) {
+    bool hasNextRowTmp = true;
+    $1 = &hasNextRowTmp;
+}
+
+%typemap(argout, fragment = "getRowFields") (bool* hasRow) {
+    bool retVal;
+    int errorColumn;
+    if (*$1 == false) {
+        PyErr_SetNone(PyExc_StopIteration);
+        return NULL;
+    }
+    GSRow* row = arg1->get_gsrow_ptr();
+    PyObject *outList = PyList_New(arg1->get_column_count());
+    if (outList == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Memory allocation for row is error");
+        SWIG_fail;
+    }
+    GSType errorType;
+    retVal = getRowFields(row, arg1->get_column_count(), arg1->get_gstype_list(),
+        arg1->get_timestamp_to_float(), &errorColumn, &errorType, outList);
+    if (retVal == false) {
+        const int SIZE = 60;
+        char errorMsg[SIZE];
+        sprintf(errorMsg, "Can't get data for field %d with type %d", errorColumn,
+            errorType);
+        PyErr_SetString(PyExc_ValueError, errorMsg);
+        SWIG_fail;
+    }
+    $result = outList;
+}
+
+// Typemap for Container.put_rows()
+%feature("pythonprepend")
+        griddb::Container::put_rows(GSRow** listRow, int rowCount) %{
+    # listRow is input
+    if isinstance(listRow, pandas.DataFrame) != True:
+        raise Exception('Input should be DataFrame')
+    # Convert to numpy ndarray
+    listRow = listRow.to_numpy()
+%}
+
+%typemap(in, numinputs = 1, fragment ="cleanString",
+        fragment = "convertToFieldWithType") (GSRow** listRow, int rowCount) {
+    $1 = NULL;
+    if (PyArray_API == NULL) {
+        import_array();
+    }
+    if (!PyArray_Check($input)) {
+        PyErr_SetString(PyExc_ValueError, "Input should be numpy.ndarray");
+        SWIG_fail;
+    }
+    PyArrayObject* array = (PyArrayObject*) PyArray_EnsureArray($input);
+
+    npy_intp* dim = PyArray_DIMS(array);
+    $2 = dim[0];  // number of rows
+
+    if ($2) {
+        GSType* fieldTypes = arg1->getGSTypeList();
+        try {
+            $1 = new GSRow*[$2]();
+        } catch (bad_alloc& ba) {
+            PyErr_SetString(PyExc_ValueError, "Memory allocation error");
+            SWIG_fail;
+        }
+        int length = dim[1];
+        GSType type;
+        int columnNumber = arg1->getColumnCount();
+        if (length != columnNumber) {
+            PyErr_SetString(PyExc_ValueError,
+                    "num row is different with container info");
+            SWIG_fail;
+        }
+
+        GSResult ret;
+        GSContainer *mContainer = arg1->getGSContainerPtr();
+
+        PyArrayIterObject* arrayInter =
+                (PyArrayIterObject*)PyArray_IterNew((PyObject*)array);
+        int rowCountVal = 0;  // Avoid confuse with input "int rowCount"
+        int columnCount = 0;
+        int count = 0;
+        int alloc = 0;
+        size_t size = 0;
+        int res;
+        PyObject* rowFieldPyObject;
+        GSChar* stringVal;
+
+        for (int i = 0; i < $2; i++) {
+            ret = gsCreateRowByContainer(mContainer, &$1[i]);
+            if (!GS_SUCCEEDED(ret)) {
+                PyErr_SetString(PyExc_ValueError, "Can't create row");
+                SWIG_fail;
+            }
+        }
+
+        GSType* typeList = arg1->getGSTypeList();
+        bool checkConvert;
+        while (PyArray_ITER_NOTDONE(arrayInter)) {
+            // Get data from numpy C array
+            rowFieldPyObject = PyArray_GETITEM((const PyArrayObject*)array,
+                    (char*)PyArray_ITER_DATA(arrayInter));
+            // Convert to C type
+            checkConvert = convertToFieldWithType($1[rowCountVal],
+                    columnCount, rowFieldPyObject, typeList[columnCount]);
+            if (!checkConvert) {
+                const int SIZE = 60;
+                char errorMsg[SIZE];
+                sprintf(errorMsg, "Can't set data for field %d with type %d",
+                        columnCount, typeList[columnCount]);
+                PyErr_SetString(PyExc_ValueError, errorMsg);
+                Py_DECREF(arrayInter);
+                SWIG_fail;
+            }
+
+            // Update rowCountVal, columnCount and count++
+            count++;
+            if (count % length == 0 && rowCountVal < $2) {
+                // New row data for GSRow
+                rowCountVal++;
+                columnCount = 0;
+            } else if (columnCount < length && rowCountVal < $2) {
+                // Still old row
+                columnCount++;
+            }
+             // Get next data
+            PyArray_ITER_NEXT(arrayInter);
+        }
+
+        Py_DECREF(arrayInter);
+    }
+}
+
+%typemap(freearg) (GSRow** listRow, int rowCount) {
+    if ($1) {
+        for (int i = 0; i < $2; i++) {
+            if ($1[i]) {
+                gsCloseRow(&$1[i]);
+            }
+        }
+        delete [] $1;
+    }
 }
