@@ -58,6 +58,7 @@ class Container {
         GSType* getGSTypeList();
         int getColumnCount();
         GSRow* getGSRowPtr();
+        void put_rows(GSRow** listRow, int rowCount);
 
     private:
         Container(GSContainer *container, GSContainerInfo* containerInfo);

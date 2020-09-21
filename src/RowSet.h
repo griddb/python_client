@@ -29,6 +29,7 @@
 #include "QueryAnalysisEntry.h"
 #include "GSException.h"
 #include "Util.h"
+#include "RowList.h"
 
 using namespace std;
 
@@ -67,6 +68,7 @@ class RowSet {
         int getColumnCount();
 
         GSRow* getGSRowPtr();
+        griddb::RowList* fetch_rows(GSRow** row, GSRowSet** rowSet);
 
     private:
         RowSet(GSRowSet *rowSet, GSContainerInfo *containerInfo, GSRow *mRow);

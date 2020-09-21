@@ -42,6 +42,7 @@
 %feature("new") griddb::Query::get_row_set;
 %feature("new") griddb::RowSet::get_next_query_analysis;
 %feature("new") griddb::RowSet::get_next_aggregation;
+%feature("new") griddb::RowSet::fetch_rows;
 %feature("new") griddb::Store::put_container;
 %feature("new") griddb::Store::get_container;
 %feature("new") griddb::Store::get_container_info;
@@ -83,6 +84,7 @@
 #include "RowKeyPredicate.h"
 #include "Store.h"
 #include "StoreFactory.h"
+#include "RowList.h"
 %}
 #if !defined(SWIGJAVASCRIPT)
 %{
@@ -109,6 +111,7 @@
 %shared_ptr(griddb::RowKeyPredicate)
 %shared_ptr(griddb::Store)
 %shared_ptr(griddb::PartitionController)
+%shared_ptr(griddb::RowList)
 #endif
 
 %include "GSException.h"
@@ -125,6 +128,7 @@
 %include "RowKeyPredicate.h"
 %include "Store.h"
 %include "StoreFactory.h"
+%include "RowList.h"
 #if !defined(SWIGJAVASCRIPT)
 %include "TimestampUtils.h"
 #endif

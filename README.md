@@ -49,6 +49,11 @@ Set CPATH and LIBRARY_PATH.
 
     export LIBRARY_PATH=$LIBRARY_PATH:<C client library file directory path>
 
+Install Pandas and Numpy as below:
+
+    $ python -m pip install numpy
+    $ python -m pip install pandas
+
 ### Build and Run 
 
     1. Execute the command on project directory.
