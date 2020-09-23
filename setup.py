@@ -5,6 +5,7 @@ setup.py file for GridDB python client
 """
 
 from distutils.command.build import build
+import os
 
 try:
     from setuptools import setup, Extension
@@ -29,13 +30,14 @@ SOURCES = [
     'src/Query.cpp',
     'src/QueryAnalysisEntry.cpp',
     'src/RowKeyPredicate.cpp',
+    'src/RowList.cpp',
     'src/RowSet.cpp',
     'src/Store.cpp',
     'src/StoreFactory.cpp',
     'src/TimeSeriesProperties.cpp',
     'src/TimestampUtils.cpp',
     'src/griddb.i',
-    'src/Util.cpp',
+    'src/Util.cpp'
 ]
 
 DEPENDENTS = [
@@ -49,6 +51,7 @@ DEPENDENTS = [
     'src/Query.h',
     'src/QueryAnalysisEntry.h',
     'src/RowKeyPredicate.h',
+    'src/RowList.h',
     'src/RowSet.h',
     'src/Store.h',
     'src/StoreFactory.h',
@@ -56,13 +59,14 @@ DEPENDENTS = [
     'src/TimestampUtils.h',
     'src/gstype_python.i',
     'src/gstype.i',
-    'include/gridstore.h',
-    'include/Util.h',
+    'src/Util.h',
+    'include/gridstore.h'
 ]
 
 INCLUDES = [
     'include',
     'src',
+    os.environ['HOME'] + '/.pyenv/versions/3.6.9/lib/python3.6/site-packages/numpy/core/include/'
 ]
 
 COMPILE_ARGS = [
@@ -71,7 +75,7 @@ COMPILE_ARGS = [
 
 LIBRARIES = [
     'rt',
-    'gridstore',
+    'gridstore'
 ]
 
 SWIG_OPTS = [
@@ -88,7 +92,7 @@ class CustomBuild(build):
         ('build_ext', build.has_ext_modules),
         ('build_py', build.has_pure_modules),
         ('build_clib', build.has_c_libraries),
-        ('build_scripts', build.has_scripts),
+        ('build_scripts', build.has_scripts)
     ]
 
 
@@ -98,17 +102,17 @@ griddb_module = Extension('_griddb_python',
                           libraries=LIBRARIES,
                           extra_compile_args=COMPILE_ARGS,
                           swig_opts=SWIG_OPTS,
-                          depends=DEPENDENTS,
+                          depends=DEPENDENTS
                           )
 
 classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: POSIX :: Linux",
-    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.6"
 ]
 
 setup(name='griddb_python',
-      version='0.8.2',
+      version='0.8.3',
       author='Katsuhiko Nonomura',
       author_email='contact@griddb.org',
       description='GridDB Python Client Library built using SWIG',
@@ -119,5 +123,5 @@ setup(name='griddb_python',
       license='Apache Software License',
       cmdclass={'build': CustomBuild},
       long_description_content_type = 'text/x-rst',
-      classifiers=classifiers,
+      classifiers=classifiers
       )
