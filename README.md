@@ -105,7 +105,7 @@ Please refer to the following files for more detailed information.
 Note:
 1. The current API might be changed in the next version. e.g. ContainerInfo
 2. When you install C Client with RPM or DEB, you don't need to set LIBRARY_PATH and LD_LIBRARY_PATH.
-3. There is [Python Client (0.8.2) Package for CentOS and Ubuntu on The Python Package Index (PyPI)](https://pypi.org/project/griddb-python/) .
+3. There is [Python Client Package for CentOS and Ubuntu on The Python Package Index (PyPI)](https://pypi.org/project/griddb-python/) .
 
 ## Community
 
