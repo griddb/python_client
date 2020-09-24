@@ -32,5 +32,5 @@ Install Pandas and Numpy by these commands:
 
 Install the package by the following:
 
-    $ pip3 install griddb_python
+    $ pip install griddb_python
 
