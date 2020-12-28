@@ -82,7 +82,26 @@ GridDB Server need to be started in advance.
 
 ## QuickStart (Windows)
 
+### Using source code
+
 Please refer to [Cmake Build Guide](https://griddb.github.io/python_client/cmake_build_guide.html)
+
+### Using MSI
+
+#### Install Python Client
+
+Install the MSI package, the package is extracted into C:/Program Files/griddb/Python Client/X.X.X folder.
+
+#### Execute a Python client sample program
+
+* Put sample1.py into C:/Program Files/GridDB/Python Client/X.X.X
+* Run following command to execute program
+    ```
+    <PATH_TO>/python.exe sample1.py <GridDB notification address> <GridDB notification port>
+            <GridDB cluster name> <GridDB user> <GridDB password>
+    ```
+
+Note: X.X.X is the software version.
 
 ## Function
 
