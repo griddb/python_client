@@ -11,20 +11,26 @@ Building of the library and execution of the sample programs have been checked i
     OS: CentOS 7.6(x64) (GCC 4.8.5)
     SWIG: 3.0.12
     Python: 3.6
-    GridDB C client: V4.2 CE(Community Edition)
-    GridDB server: V4.2 CE, CentOS 7.6(x64) (GCC 4.8.5)
+    GridDB C client: V4.5 CE(Community Edition)
+    GridDB server: V4.5 CE, CentOS 7.6(x64) (GCC 4.8.5)
 
     OS: Ubuntu 18.04(x64) (gcc 7.3.0)
     SWIG: 3.0.12
     Python: 3.6
-    GridDB C client: V4.2 CE (Note: If you build from source code, please use GCC 4.8.5.)
-    GridDB server: V4.2 CE, Ubuntu 18.04(x64) (Note: If you build from source code, please use GCC 4.8.5.)
+    GridDB C client: V4.5 CE (Note: If you build from source code, please use GCC 4.8.5.)
+    GridDB server: V4.5 CE, Ubuntu 18.04(x64) (Note: If you build from source code, please use GCC 4.8.5.)
     
     OS: Windows 10(x64) (VS2017)
     SWIG: 3.0.12
     Python: 3.6
-    GridDB C client: V4.2 CE
-    GridDB server: V4.2 CE, CentOS 7.6(x64) (GCC 4.8.5)
+    GridDB C client: V4.5 CE
+    GridDB server: V4.5 CE, CentOS 7.6(x64) (GCC 4.8.5)
+
+    OS: MacOS Catalina (x86_64)
+    SWIG: 3.0.12
+    Python: 3.6.9
+    GridDB C client: V4.5 CE
+    GridDB server: V4.5 CE, Centos 7.6(x64) (GCC 4.8.5)
 
 ## QuickStart (CentOS, Ubuntu)
 ### Preparations
@@ -41,7 +47,7 @@ Install SWIG as below.
     Note: If CentOS, you might need to install pcre in advance.
     $ sudo yum install pcre2-devel.x86_64
 
-Install [GridDB Server](https://github.com/griddb/griddb_nosql) and [C Client](https://github.com/griddb/c_client). (Note: If you build them from source code, please use GCC 4.8.5.) 
+Install [GridDB Server](https://github.com/griddb/griddb) and [C Client](https://github.com/griddb/c_client). (Note: If you build them from source code, please use GCC 4.8.5.) 
 
 Set CPATH and LIBRARY_PATH. 
 
@@ -103,6 +109,73 @@ Install the MSI package, the package is extracted into C:/Program Files/griddb/P
 
 Note: X.X.X is the software version.
 
+## QuickStart (MacOS)
+### Preparations
+
+Install SWIG as below.
+
+    $ wget https://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
+    $ tar xvfz swig-3.0.12.tar.gz
+    $ cd swig-3.0.12
+    $ ./configure
+    $ make
+    $ sudo make install
+
+    Note: If MacOS, you might need to install pcre in advance.
+    $ sudo brew install pcre
+
+Install [GridDB Server](https://github.com/griddb/griddb) and [C Client](https://github.com/griddb/c_client). (Note: If you build them from source code, please use clang 11.0.0)
+
+Set CPATH and LIBRARY_PATH.
+
+    export CPATH=$CPATH:<Python header file directory path>
+
+    export LIBRARY_PATH=$LIBRARY_PATH:<C client library file directory path>
+
+Install Pandas and Numpy as below:
+
+    $ python -m pip install numpy
+    $ python -m pip install pandas
+
+Modify **Makefile** to make python_client compatible with MacOS:
+- Change python include path and numpy include path on MacOS. For example:
+    ```bash
+    INCLUDES_PYTHON = $(INCLUDES)	\
+                            -I$(HOME)/.pyenv/versions/3.6.9/include/python3.6m	\
+                            -I$(HOME)/.pyenv/versions/3.6.9/lib/python3.6/site-packages/numpy/core/include
+    ```
+								
+- Remove "-Llibs -lrt" (not support on MacOS) from LDFLAGS on Makefile
+- Add "-undefined dynamic_lookup" like
+    ```bash
+    $(CXX) -shared -undefined dynamic_lookup -o $@ $(OBJS) $(SWIG_PYTHON_OBJS) $(LDFLAGS)
+    ```
+### Build and Run
+
+    1. Execute the command on project directory.
+
+    $ make
+
+    2. Set the PYTHONPATH variable for griddb Python module files.
+
+    $ export PYTHONPATH=$PYTHONPATH:<installed directory path>
+
+    3. Import griddb_python in Python.
+
+### How to run sample
+
+GridDB Server need to be started in advance.
+
+    1. Set DYLD_LIBRARY_PATH
+
+        export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:<C client library file directory path>
+
+    2. The command to run sample
+
+        $ python3 sample/sample1.py <GridDB notification address> <GridDB notification port>
+            <GridDB cluster name> <GridDB user> <GridDB password>
+          -->Person: name=name02 status=False count=2 lob=[65, 66, 67, 68, 69, 70, 71, 72, 73, 74]
+
 ## Function
 
 (available)
@@ -124,7 +197,7 @@ Please refer to the following files for more detailed information.
 Note:
 1. The current API might be changed in the next version. e.g. ContainerInfo
 2. When you install C Client with RPM or DEB, you don't need to set LIBRARY_PATH and LD_LIBRARY_PATH.
-3. There is [Python Client Package for CentOS and Ubuntu on The Python Package Index (PyPI)](https://pypi.org/project/griddb-python/) .
+3. There is [Python Client Package for CentOS, Ubuntu and MacOS on The Python Package Index (PyPI)](https://pypi.org/project/griddb-python/) .
 
 ## Community
 
