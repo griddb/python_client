@@ -8,29 +8,47 @@ This is Python Client Library for GridDB.
 Installation
 =========================
 
-Package dependencies
+1. Package dependencies
+-------------------------
 
-* GridDB C Client
+GridDB C Client
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Download and install RPM or DEB package in GridDB C Client (https://github.com/griddb/c_client/releases).
+* **On Linux**
 
-Install RPM package by this command:
+  Download and install RPM or DEB package in GridDB C Client (https://github.com/griddb/c_client/releases).
 
-    $ sudo yum localinstall package_name.rpm
+  Install RPM package by this command::
 
-Install DEB package by this command:
+  $ sudo yum localinstall package_name.rpm
 
-    $ sudo dpkg -i package_name.deb
+  Install DEB package by this command::
 
-* Pandas and Numpy
+  $ sudo dpkg -i package_name.deb
 
-Install Pandas and Numpy by these commands:
+* **On MacOS**
 
-   $ python -m pip install numpy
+  Because GridDB Python Client already included C Client Library, so don't need install GridDB C Client on MacOS.
 
-   $ python -m pip install pandas
+  GridDB C Client Libraries installed at *path/to/python/sites-package/*
 
-Install the package by the following:
+  GridDB C Client licenses and header installed at *path/to/python/sites-package/griddb/griddb-c-client*
 
-    $ pip install griddb_python
+  Example::
 
+  ~/.pyenv/versions/3.6.9/lib/python3.6/site-packages/griddb/
+
+Pandas and Numpy
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Install Pandas and Numpy by these commands::
+
+  $ python -m pip install numpy
+  $ python -m pip install pandas
+
+2. Install griddb_python
+-------------------------
+
+Install the griddb_python by this command::
+
+$ python -m pip install griddb_python
