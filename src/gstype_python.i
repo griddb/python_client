@@ -136,7 +136,7 @@ char* convertObjToStr(PyObject *string) {
 %#if PY_MAJOR_VERSION < 3
     return PyString_AsString(string);
 %#else
-    return PyUnicode_AsUTF8(string);
+    return (char*) PyUnicode_AsUTF8(string);
 %#endif
 }
 }
@@ -2265,12 +2265,14 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
 %attribute(griddb::ExpirationInfo, int, division_count, get_division_count, set_division_count);
 
 //Attribute ContainerInfo::columnInfoList
+#if SWIG_VERSION < 0x040000
 %extend griddb::ContainerInfo{
     %pythoncode %{
         __swig_getmethods__["column_info_list"] = get_column_info_list
         __swig_setmethods__["column_info_list"] = set_column_info_list
     %}
 };
+#endif
 
 /**
  * Typemap for Container::multi_put
