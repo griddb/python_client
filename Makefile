@@ -9,8 +9,8 @@ CPPFLAGS = -fPIC -std=c++0x -g -O2
 INCLUDES = -Iinclude -Isrc
 
 INCLUDES_PYTHON = $(INCLUDES)	\
-				-I/usr/include/python3.6		\
-				-I$(HOME)/.pyenv/versions/3.6.4/lib/python3.6/site-packages/numpy/core/include
+				-I/usr/include/python3.9/		\
+				-I$(HOME)/.pyenv/versions/3.9.5/lib/python3.9/site-packages/numpy/core/include
 
 PROGRAM = _griddb_python.so
 EXTRA = griddb_python.py griddb_python.pyc

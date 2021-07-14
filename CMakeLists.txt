@@ -4,9 +4,10 @@ project(griddb_python)
 
 set(C_LIB E:/c_client-master/c_client-master/bin/x64/Release)
 set(C_HEADER E:/c_client-master/c_client-master/client/c/include)
-set(SOURCE_HEADER E:/cmake-fun/SourceCode/src)
-set(PYTHON_RESOURCE C:/Users/griddb/AppData/Local/Programs/Python/Python36/)
-set(SWIG_RESOURCE E:/swigwin-3.0.12)
+set(SOURCE_HEADER E:/griddb/python_client/SourceCode/src)
+set(PYTHON_RESOURCE C:/Users/griddb/AppData/Local/Programs/Python/Python39/)
+set(NUMPY_RESOURCE C:/Users/griddb/AppData/Local/Programs/Python/Python39/Lib/site-packages/numpy/core/include)
+set(SWIG_RESOURCE E:/swigwin-4.0.2)
 
 set(PYTHON_LIBRARIES ${PYTHON_RESOURCE}/libs)
 set(PYTHON_INCLUDE_DIRS ${PYTHON_RESOURCE}/include)
@@ -23,8 +24,8 @@ include(${SWIG_USE_FILE})
 set(CMAKE_SWIG_FLAGS -c++)
 set(CMAKE_CXX_FLAGS "/DLL /LD /D_USRDLL /D_WINDLL /MT /MD")
 
-include_directories(${C_HEADER} ${PYTHON_RESOURCE}/include ${SOURCE_HEADER})
-link_directories(${PYTHON_RESOURCE}/libs ${C_LIB})
+include_directories(${C_HEADER} ${PYTHON_RESOURCE}/include ${SOURCE_HEADER} ${NUMPY_RESOURCE})
+link_directories(${PYTHON_RESOURCE}/libs ${C_LIB} ${NUMPY_RESOURCE})
 
 set_property(SOURCE ${SOURCE_HEADER}/griddb.i PROPERTY CPLUSPLUS ON)
 swig_add_library(griddb_python TYPE SHARED LANGUAGE python SOURCES ${SOURCE_HEADER}/griddb.i
@@ -41,6 +42,8 @@ ${SOURCE_HEADER}/RowKeyPredicate.cpp
 ${SOURCE_HEADER}/RowSet.cpp
 ${SOURCE_HEADER}/TimestampUtils.cpp
 ${SOURCE_HEADER}/Field.cpp
+${SOURCE_HEADER}/RowList.cpp
+${SOURCE_HEADER}/RowSet.cpp
 ${SOURCE_HEADER}/Util.cpp)
 
 target_link_libraries(griddb_python gridstore_c)
