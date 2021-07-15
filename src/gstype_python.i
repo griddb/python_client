@@ -1466,13 +1466,13 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
                     return false;
                 }
                 if (longValue) {
-                    PyList_SetItem(outList, i, PyLong_FromLong(longValue));
+                    PyList_SetItem(outList, i, SWIG_From_dec(long long)(longValue));
                 } else if (checkNullField(row, i)) {
                     // NULL value
                     Py_INCREF(Py_None);
                     PyList_SetItem(outList, i, Py_None);
                 } else {
-                    PyList_SetItem(outList, i, PyLong_FromLong(longValue));
+                    PyList_SetItem(outList, i, SWIG_From_dec(long long)(longValue));
                 }
                 break;
             }
@@ -1806,7 +1806,7 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
                     return false;
                 }
                 for (int j = 0; j < size; j++) {
-                    PyList_SetItem(list, j, PyLong_FromLong(longArr[j]));
+                    PyList_SetItem(list, j, SWIG_From_dec(long long)(longArr[j]));
                 }
                 if (size) {
                     PyList_SetItem(outList, i, list);
