@@ -136,7 +136,7 @@ char* convertObjToStr(PyObject *string) {
 %#if PY_MAJOR_VERSION < 3
     return PyString_AsString(string);
 %#else
-    return PyUnicode_AsUTF8(string);
+    return (char*) PyUnicode_AsUTF8(string);
 %#endif
 }
 }
@@ -1466,13 +1466,13 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
                     return false;
                 }
                 if (longValue) {
-                    PyList_SetItem(outList, i, PyLong_FromLong(longValue));
+                    PyList_SetItem(outList, i, SWIG_From_dec(long long)(longValue));
                 } else if (checkNullField(row, i)) {
                     // NULL value
                     Py_INCREF(Py_None);
                     PyList_SetItem(outList, i, Py_None);
                 } else {
-                    PyList_SetItem(outList, i, PyLong_FromLong(longValue));
+                    PyList_SetItem(outList, i, SWIG_From_dec(long long)(longValue));
                 }
                 break;
             }
@@ -1806,7 +1806,7 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
                     return false;
                 }
                 for (int j = 0; j < size; j++) {
-                    PyList_SetItem(list, j, PyLong_FromLong(longArr[j]));
+                    PyList_SetItem(list, j, SWIG_From_dec(long long)(longArr[j]));
                 }
                 if (size) {
                     PyList_SetItem(outList, i, list);
@@ -2265,12 +2265,7 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
 %attribute(griddb::ExpirationInfo, int, division_count, get_division_count, set_division_count);
 
 //Attribute ContainerInfo::columnInfoList
-%extend griddb::ContainerInfo{
-    %pythoncode %{
-        __swig_getmethods__["column_info_list"] = get_column_info_list
-        __swig_setmethods__["column_info_list"] = set_column_info_list
-    %}
-};
+%attributeval(griddb::ContainerInfo, ColumnInfoList, column_info_list, get_column_info_list, set_column_info_list);
 
 /**
  * Typemap for Container::multi_put
@@ -2335,32 +2330,29 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
 %typemap(doc, name = "row_list") (GSRow** listRowdata, int rowCount) "list[list[object]]";
 
 //attribute ContainerInfo::column_info_list
-%typemap(in, fragment = "SWIG_AsCharPtrAndSize", fragment = "cleanString") (ColumnInfoList columnInfoList) (int* alloc = NULL){
+%typemap(in, fragment = "SWIG_AsCharPtrAndSize", fragment = "cleanString") (ColumnInfoList*) (int* alloc = NULL){
 
     if (!PyList_Check($input)) {
         PyErr_SetString(PyExc_ValueError, "Expected a List");
         SWIG_fail;
     }
-    int res;
-    char* v = 0;
-    bool vbool;
-    size_t size = 0;
-    size = (size_t)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size($input)));
-    $1.columnInfo = NULL;
-    $1.size = size;
-    size_t stringSize = 0;
+
+    $1 = NULL;
+    size_t size = (size_t)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size($input)));
     if (size) {
         try {
-            alloc         = new int[size]();
-            $1.columnInfo = new GSColumnInfo[size]();
+            $1             = new ColumnInfoList();
+            alloc          = new int[size]();
+            $1->columnInfo = new GSColumnInfo[size]();
         } catch (bad_alloc& ba) {
             PyErr_SetString(PyExc_ValueError, "Memory allocation for set column_info_list is error");
             SWIG_fail;
         }
+        $1->size = size;
         PyObject* columInfoList;
         int option;
         for (int i = 0; i < size; i++) {
-            $1.columnInfo[i] = GS_COLUMN_INFO_INITIALIZER;
+            $1->columnInfo[i] = GS_COLUMN_INFO_INITIALIZER;
             columInfoList = PyList_GetItem($input, i);
             if (!PyList_Check(columInfoList)) {
                 PyErr_SetString(PyExc_ValueError, "Expected a List");
@@ -2369,55 +2361,62 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
             size_t sizeColumn = (size_t)PyInt_AsLong(PyLong_FromSsize_t(PyList_Size(columInfoList)));
             if (sizeColumn == 3) {
                 option = PyInt_AsLong(PyList_GetItem(columInfoList, 2));
-                $1.columnInfo[i].options = option;
+                $1->columnInfo[i].options = option;
                 if (option != GS_TYPE_OPTION_NULLABLE && option != GS_TYPE_OPTION_NOT_NULL) {
                     PyErr_SetString(PyExc_ValueError, "Invalid value for column option");
                     SWIG_fail;
                 }
             } else if (sizeColumn == 2) {
-                    if (i == 0) {
-                        $1.columnInfo[i].options = GS_TYPE_OPTION_NOT_NULL;
-                    } else {
-                        $1.columnInfo[i].options = GS_TYPE_OPTION_NULLABLE;
-                    }
+                if (i == 0) {
+                    $1->columnInfo[i].options = GS_TYPE_OPTION_NOT_NULL;
+                } else {
+                    $1->columnInfo[i].options = GS_TYPE_OPTION_NULLABLE;
+                }
             } else {
                 PyErr_SetString(PyExc_ValueError, "Invalid element number for List");
                 SWIG_fail;
             }
 
+            char* v = 0;
+            size_t stringSize = 0;
+            int res;
             res = SWIG_AsCharPtrAndSize(PyList_GetItem(columInfoList, 0), &v, &stringSize, &alloc[i]);
             if (!SWIG_IsOK(res)) {
                 PyErr_SetString(PyExc_ValueError, "Can't convert field to string");
                 SWIG_fail;
             }
-            $1.columnInfo[i].name = v;
-            $1.columnInfo[i].type = PyInt_AsLong(PyList_GetItem(columInfoList, 1));
+            $1->columnInfo[i].name = v;
+            $1->columnInfo[i].type = PyInt_AsLong(PyList_GetItem(columInfoList, 1));
         }
     }
 }
 
-%typemap(freearg, fragment = "cleanString") (ColumnInfoList columnInfoList) {
+%typemap(freearg, fragment = "cleanString") (ColumnInfoList*) {
     size_t size = 0;
-    if ($1.size) {
-        size = $1.size;
-    }
-    if ($1.columnInfo != NULL) {
-        if (alloc$argnum) {
-            for (int i = 0; i < size; i++) {
-                if ($1.columnInfo[i].name) {
-                    cleanString($1.columnInfo[i].name, alloc$argnum[i]);
+    if ($1) {
+        if ($1->size) {
+            size = $1->size;
+        }
+        if ($1->columnInfo != NULL) {
+            if (alloc$argnum) {
+                for (int i = 0; i < size; i++) {
+                    if ($1->columnInfo[i].name) {
+                        cleanString($1->columnInfo[i].name, alloc$argnum[i]);
+                    }
                 }
             }
+            delete [] $1->columnInfo;
         }
-        delete [] $1.columnInfo;
+
+        delete $1;
     }
     if (alloc$argnum) {
         delete [] alloc$argnum;
     }
 }
 
-%typemap(out, fragment = "convertStrToObj") (ColumnInfoList) {
-    ColumnInfoList data = $1;
+%typemap(out, fragment = "convertStrToObj") (ColumnInfoList*) {
+    ColumnInfoList data = *$1;
     size_t size = data.size;
     $result = PyList_New(size);
     if ($result == NULL) {

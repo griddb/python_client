@@ -9,26 +9,26 @@ GridDB Python Client is developed using GridDB C Client and [SWIG](http://www.sw
 Building of the library and execution of the sample programs have been checked in the following environment.
 
     OS: CentOS 7.6(x64) (GCC 4.8.5)
-    SWIG: 3.0.12
-    Python: 3.6
+    SWIG: 4.0.2
+    Python: 3.9
     GridDB C client: V4.5 CE(Community Edition)
     GridDB server: V4.5 CE, CentOS 7.6(x64) (GCC 4.8.5)
 
     OS: Ubuntu 18.04(x64) (gcc 7.3.0)
-    SWIG: 3.0.12
-    Python: 3.6
+    SWIG: 4.0.2
+    Python: 3.9
     GridDB C client: V4.5 CE (Note: If you build from source code, please use GCC 4.8.5.)
     GridDB server: V4.5 CE, Ubuntu 18.04(x64) (Note: If you build from source code, please use GCC 4.8.5.)
     
     OS: Windows 10(x64) (VS2017)
-    SWIG: 3.0.12
-    Python: 3.6
+    SWIG: 4.0.2
+    Python: 3.9
     GridDB C client: V4.5 CE
     GridDB server: V4.5 CE, CentOS 7.6(x64) (GCC 4.8.5)
 
     OS: MacOS Catalina (x86_64)
-    SWIG: 3.0.12
-    Python: 3.6.9
+    SWIG: 4.0.2
+    Python: 3.9
     GridDB C client: V4.5 CE
     GridDB server: V4.5 CE, Centos 7.6(x64) (GCC 4.8.5)
 
@@ -37,9 +37,10 @@ Building of the library and execution of the sample programs have been checked i
 
 Install SWIG as below.
 
-    $ wget https://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
-    $ tar xvfz swig-3.0.12.tar.gz
-    $ cd swig-3.0.12
+    $ wget https://github.com/swig/swig/archive/refs/tags/v4.0.2.tar.gz
+    $ tar xvfz v4.0.2.tar.gz
+    $ cd swig-4.0.2
+    $ ./autogen.sh
     $ ./configure
     $ make
     $ sudo make install
@@ -114,9 +115,10 @@ Note: X.X.X is the software version.
 
 Install SWIG as below.
 
-    $ wget https://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
-    $ tar xvfz swig-3.0.12.tar.gz
-    $ cd swig-3.0.12
+    $ wget https://github.com/swig/swig/archive/refs/tags/v4.0.2.tar.gz
+    $ tar xvfz v4.0.2.tar.gz
+    $ cd swig-4.0.2
+    $ ./autogen.sh
     $ ./configure
     $ make
     $ sudo make install
@@ -141,8 +143,8 @@ Modify **Makefile** to make python_client compatible with MacOS:
 - Change python include path and numpy include path on MacOS. For example:
     ```bash
     INCLUDES_PYTHON = $(INCLUDES)	\
-                            -I$(HOME)/.pyenv/versions/3.6.9/include/python3.6m	\
-                            -I$(HOME)/.pyenv/versions/3.6.9/lib/python3.6/site-packages/numpy/core/include
+                            -I$(HOME)/.pyenv/versions/3.9.5/include/python3.9	\
+                            -I$(HOME)/.pyenv/versions/3.9.5/lib/python3.9/site-packages/numpy/core/include
     ```
 								
 - Remove "-Llibs -lrt" (not support on MacOS) from LDFLAGS on Makefile
