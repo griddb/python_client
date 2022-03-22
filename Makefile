@@ -3,14 +3,22 @@ CXX = g++
 
 ARCH = $(shell arch)
 
-LDFLAGS = -Llibs -lpthread -lrt -lgridstore
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S), Linux)
+    LDFLAGS = -Llibs -lpthread -lrt -lgridstore
+endif
+ifeq ($(UNAME_S), Darwin)
+    LDFLAGS = -lpthread -lgridstore -undefined dynamic_lookup
+endif
 
 CPPFLAGS = -fPIC -std=c++0x -g -O2
 INCLUDES = -Iinclude -Isrc
+PY_CFLAGS  := $(shell python3-config --includes)
+NUMPY_FLAGS := $(shell python3 -c "import site; print(site.getsitepackages()[0])")
 
 INCLUDES_PYTHON = $(INCLUDES)	\
-				-I/usr/include/python3.9/		\
-				-I$(HOME)/.pyenv/versions/3.9.5/lib/python3.9/site-packages/numpy/core/include
+				${PY_CFLAGS}	\
+				-I${NUMPY_FLAGS}/numpy/core/include
 
 PROGRAM = _griddb_python.so
 EXTRA = griddb_python.py griddb_python.pyc
