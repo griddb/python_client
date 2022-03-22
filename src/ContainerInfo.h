@@ -54,7 +54,8 @@ class ContainerInfo {
         ContainerInfo(GSContainerInfo *containerInfo);
         ContainerInfo(const GSChar* name, const GSColumnInfo* props,
                 int propsCount, GSContainerType type = GS_CONTAINER_COLLECTION,
-                bool row_key = true, ExpirationInfo* expiration = NULL);
+                bool row_key = true, ExpirationInfo* expiration = NULL,
+                const char* dataAffinity = NULL);
         ~ContainerInfo();
 
         void set_name(GSChar* containerName);
@@ -69,10 +70,13 @@ class ContainerInfo {
         void set_expiration_info(ExpirationInfo* expirationInfo);
         bool get_row_key_assigned();
         GSContainerInfo* gs_info();
+        void set_affinity(const char* affinity);
+        const char* get_affinity();
 
     private:
         void init(const GSChar* name, GSContainerType type, const GSColumnInfo* props,
-                int propsCount, bool rowKeyAssigned, ExpirationInfo* expiration);
+                int propsCount, bool rowKeyAssigned, ExpirationInfo* expiration,
+                const char* dataAffinity);
 };
 
 } /* namespace griddb */

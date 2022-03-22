@@ -59,6 +59,13 @@ class Container {
         int getColumnCount();
         GSRow* getGSRowPtr();
         void put_rows(GSRow** listRow, int rowCount);
+        Query* query_by_time_series_range(GSTimestamp* startTime, GSTimestamp* endTime,
+                GSQueryOrder order = GS_ORDER_ASCENDING);
+        AggregationResult* aggregate_time_series(GSTimestamp* startTime,
+                GSTimestamp* endTime, GSAggregation aggregation, const char* column = NULL);
+        Query* query_by_time_series_sampling(GSTimestamp* startTime,
+                GSTimestamp* endTime, const GSChar *const *columnSet, size_t columnCount,
+		        GSInterpolationMode mode, int32_t interval, GSTimeUnit intervalUnit);
 
     private:
         Container(GSContainer *container, GSContainerInfo* containerInfo);

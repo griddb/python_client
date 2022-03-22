@@ -24,9 +24,25 @@ namespace griddb {
      */
     ContainerInfo::ContainerInfo(GSContainerInfo *containerInfo) {
         assert(containerInfo != NULL);
+        const char* dataAffinity = NULL;
+        dataAffinity = containerInfo->dataAffinity;
+        ExpirationInfo* info = NULL;
+        if (containerInfo->timeSeriesProperties != NULL){
+            try {
+                info = new ExpirationInfo(containerInfo->timeSeriesProperties->rowExpirationTime,
+                        containerInfo->timeSeriesProperties->rowExpirationTimeUnit,
+                        containerInfo->timeSeriesProperties->expirationDivisionCount);
+            } catch (bad_alloc& ba) {
+                throw GSException("Memory allocation error");
+            }
+        }
+
         init(containerInfo->name, containerInfo->type,
                 containerInfo->columnInfoList, containerInfo->columnCount,
-                containerInfo->rowKeyAssigned, NULL);
+                containerInfo->rowKeyAssigned, info, dataAffinity);
+        if (info) {
+            delete info;
+        }
         //Assign values from argument to mContainer
         GSTimeSeriesProperties* gsProps = NULL;
         GSTriggerInfo* triggerInfoList = NULL;
@@ -40,11 +56,6 @@ namespace griddb {
                 triggerInfoList = new GSTriggerInfo();
             }
 
-            if (containerInfo->dataAffinity) {
-                Util::strdup(&mContainerInfo.dataAffinity, containerInfo->dataAffinity);
-            } else {
-                mContainerInfo.dataAffinity = NULL;
-            }
         } catch (bad_alloc& ba) {
             //case allocation memory error
             if (gsProps) {
@@ -57,6 +68,12 @@ namespace griddb {
                 delete[] mContainerInfo.dataAffinity;
             }
             throw GSException("Memory allocation error");
+        }
+
+        if (containerInfo->dataAffinity) {
+            Util::strdup(&mContainerInfo.dataAffinity, containerInfo->dataAffinity);
+        } else {
+            mContainerInfo.dataAffinity = NULL;
         }
 
         if (containerInfo->timeSeriesProperties) {
@@ -86,8 +103,9 @@ namespace griddb {
      * @param *expiration Stores the information about option of TimeSeries configuration
      */
     ContainerInfo::ContainerInfo(const GSChar* name, const GSColumnInfo* props, int propsCount,
-            GSContainerType type, bool row_key, ExpirationInfo* expiration) {
-        init(name, type, props, propsCount, row_key, expiration);
+            GSContainerType type, bool row_key, ExpirationInfo* expiration, 
+            const char* dataAffinity) {
+        init(name, type, props, propsCount, row_key, expiration, dataAffinity);
     }
 
     /**
@@ -95,7 +113,8 @@ namespace griddb {
      */
     void ContainerInfo::init(const GSChar* name,
             GSContainerType type, const GSColumnInfo* props,
-            int propsCount, bool rowKeyAssigned, ExpirationInfo* expiration) {
+            int propsCount, bool rowKeyAssigned, ExpirationInfo* expiration,
+            const char* dataAffinity) {
         GSColumnInfo* columnInfoList = NULL;
         GSChar* containerName = NULL;
         GSTimeSeriesProperties* timeProps = NULL;
@@ -152,6 +171,11 @@ namespace griddb {
         mExpInfo = NULL;
         mColumnInfoList.columnInfo = NULL;
         mColumnInfoList.size = 0;
+        if (dataAffinity) {
+            Util::strdup(&mContainerInfo.dataAffinity, dataAffinity);
+        } else {
+            mContainerInfo.dataAffinity = NULL;
+        }
     }
 
     ContainerInfo::~ContainerInfo() {
@@ -372,6 +396,35 @@ namespace griddb {
             mExpInfo = NULL;
         }
         return mExpInfo;
+    }
+
+    /**
+     * @brief Support set attribute ContainerInfo.dataAffinity
+     * 
+     * @param affinity 
+     */
+    void ContainerInfo::set_affinity(const char* affinity) {
+        if (mContainerInfo.dataAffinity) {
+            delete[] mContainerInfo.dataAffinity;
+        }
+        if (affinity == NULL) {
+            mContainerInfo.dataAffinity = NULL;
+        } else {
+            try {
+                Util::strdup(&(mContainerInfo.dataAffinity), affinity);
+            } catch (bad_alloc& ba) {
+                throw GSException("Memory allocation error");
+            }
+        }
+    }
+
+    /**
+    * @brief Support get attribute ContainerInfo.dataAffinity
+    * 
+    * @return const char* 
+    */
+    const char* ContainerInfo::get_affinity() {
+        return mContainerInfo.dataAffinity;
     }
 
 } /* namespace griddb */
