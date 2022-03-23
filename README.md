@@ -10,27 +10,27 @@ Building of the library and execution of the sample programs have been checked i
 
     OS: CentOS 7.9(x64) (GCC 4.8.5)
     SWIG: 4.0.2
-    Python: 3.9
-    GridDB C client: V4.5 CE(Community Edition)
-    GridDB server: V4.5 CE, CentOS 7.9(x64) (GCC 4.8.5)
+    Python: 3.10
+    GridDB C client: V4.6 CE(Community Edition)
+    GridDB server: V4.6 CE, CentOS 7.9(x64) (GCC 4.8.5)
 
-    OS: Ubuntu 18.04(x64) (gcc 7.5.0)
+    OS: Ubuntu 18.04/20.04(x64) (gcc 7.5.0)
     SWIG: 4.0.2
-    Python: 3.9
-    GridDB C client: V4.5 CE (Note: If you build from source code, please use GCC 4.8.5.)
-    GridDB server: V4.5 CE, Ubuntu 18.04(x64) (Note: If you build from source code, please use GCC 4.8.5.)
+    Python: 3.10
+    GridDB C client: V4.6 CE (Note: If you build from source code, please use GCC 4.8.5.)
+    GridDB server: V4.6 CE, Ubuntu 18.04(x64) (Note: If you build from source code, please use GCC 4.8.5.)
     
     OS: Windows 10(x64) (VS2017)
     SWIG: 4.0.2
-    Python: 3.9
-    GridDB C client: V4.5 CE
-    GridDB server: V4.5 CE, CentOS 7.9(x64) (GCC 4.8.5)
+    Python: 3.10
+    GridDB C client: V4.6 CE
+    GridDB server: V4.6 CE, CentOS 7.9(x64) (GCC 4.8.5)
 
     OS: MacOS Catalina (x86_64)
     SWIG: 4.0.2
-    Python: 3.9
-    GridDB C client: V4.5 CE
-    GridDB server: V4.5 CE, Centos 7.9(x64) (GCC 4.8.5)
+    Python: 3.10
+    GridDB C client: V4.6 CE
+    GridDB server: V4.6 CE, Centos 7.9(x64) (GCC 4.8.5)
 
 ## QuickStart (CentOS, Ubuntu)
 ### Preparations
@@ -173,12 +173,12 @@ GridDB Server need to be started in advance.
 - normal query, aggregation with TQL
 - Multi-Put/Get/Query (batch processing)
 - Array type for GridDB
+- timeseries-specific function, affinity
 
 (not available)
 - GEOMETRY type for GridDB
 - timeseries compression
-- timeseries-specific function like gsAggregateTimeSeries, gsQueryByTimeSeriesSampling in C client
-- trigger, affinity
+- trigger
 
 Please refer to the following files for more detailed information.  
 - [Python Client API Reference](https://griddb.github.io/python_client/PythonAPIReference.htm)
