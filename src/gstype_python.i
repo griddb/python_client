@@ -109,6 +109,30 @@ class TypeOption(IntEnum):
         return int(self.value)
     NULLABLE = 1 << 1
     NOT_NULL = 1 << 2
+
+class QueryOrder(IntEnum):
+    def __int__(self):
+        return int(self.value)
+    ASCENDING = 0
+    DESCENDING = 1
+
+class Aggregation(IntEnum):
+    def __int__(self):
+        return int(self.value)
+    MINIMUM = 0
+    MAXIMUM = 1	
+    TOTAL = 2
+    AVERAGE = 3
+    VARIANCE = 4
+    STANDARD_DEVIATION = 5
+    COUNT = 6
+    WEIGHTED_AVERAGE = 7
+
+class InterpolationMode(IntEnum):
+    def __int__(self):
+        return int(self.value)
+    LINEAR_OR_PREVIOUS = 0
+    EMPTY = 1
 }
 
 %include <attribute.i>
@@ -2266,6 +2290,8 @@ static bool getRowFields(GSRow* row, int columnCount, GSType* typeList, bool tim
 
 //Attribute ContainerInfo::columnInfoList
 %attributeval(griddb::ContainerInfo, ColumnInfoList, column_info_list, get_column_info_list, set_column_info_list);
+//Read and write attribute ContainerInfo::dataAffinity
+%attribute(griddb::ContainerInfo, char*, dataAffinity, get_affinity, set_affinity);
 
 /**
  * Typemap for Container::multi_put
@@ -2715,5 +2741,61 @@ static bool checkNullField(GSRow* row, int32_t rowField) {
             }
         }
         delete [] $1;
+    }
+}
+
+// Create typemap for Container::query_by_time_series_range
+%typemap(in, fragment= "convertObjectToGSTimestamp") (GSTimestamp*)
+        (GSTimestamp timestamp) {
+
+    $1 = &timestamp;
+    if (!(convertObjectToGSTimestamp($input, $1))) {
+        %variable_fail(1, "String", "can not convert to GSTimestamp pointer based on input");
+    }
+}
+
+%typemap(typecheck) (GSTimestamp*) {
+}
+
+%typemap(in) (GSQueryOrder) {
+    int checkConvert = SWIG_AsVal_int($input, &$1);
+    if (!SWIG_IsOK(checkConvert)) {
+        PyErr_SetString(PyExc_ValueError, "Invalid value for GSQueryOrder value");
+        SWIG_fail;
+    }
+}
+%typemap(typecheck) (GSQueryOrder) {
+}
+
+// Create typemap for GSAggregation type
+%typemap(in) (GSAggregation) {
+    int checkConvert = SWIG_AsVal_int($input, &$1);
+    if (!SWIG_IsOK(checkConvert)) {
+        PyErr_SetString(PyExc_ValueError, "Invalid value for GSAggregation value");
+        SWIG_fail;
+    }
+}
+%typemap(typecheck) (GSAggregation) {
+}
+
+// Create typemap for Container::query_by_time_series_sampling
+%typemap(in, fragment="convertObjectToStringArray") (const GSChar *const *columnSet, size_t columnCount) {
+    if (!convertObjectToStringArray($input, &$1, &$2)) {
+        PyErr_SetString(PyExc_ValueError, 
+                "Invalid value for const GSChar *const *columnSet, size_t columnCount");
+        SWIG_fail;
+    }
+}
+
+%typemap(freearg, fragment="cleanStringArray") (const GSChar *const *columnSet, size_t columnCount) {
+    cleanStringArray($1, $2);
+}
+
+// Create typemap for GSInterpolationMode type
+%typemap(in) (GSInterpolationMode) {
+    int checkConvert = SWIG_AsVal_int($input, &$1);
+    if (!SWIG_IsOK(checkConvert)) {
+        PyErr_SetString(PyExc_ValueError, "Invalid value for GSInterpolationMode value");
+        SWIG_fail;
     }
 }

@@ -50,6 +50,11 @@
 %feature("new") griddb::Store::partition_info;
 %feature("new") griddb::StoreFactory::get_store;
 %feature("new") griddb::StoreFactory::get_instance;
+%feature("new") griddb::Container::query_by_time_series_range;
+%feature("new") griddb::Container::aggregate_time_series;
+%feature("new") griddb::Container::query_by_time_series_range;
+%feature("new") griddb::Container::aggregate_time_series;
+%feature("new") griddb::Container::query_by_time_series_sampling;
 
 #if defined(SWIGPYTHON)
 %include "gstype_python.i"

@@ -64,7 +64,13 @@ namespace griddb {
 
         mContainerInfo->timeSeriesProperties = NULL;
         mContainerInfo->triggerInfoList = NULL;
-        mContainerInfo->dataAffinity = NULL;
+
+        if (containerInfo->dataAffinity) {
+            Util::strdup(&mContainerInfo->dataAffinity,
+                    containerInfo->dataAffinity);
+        } else {
+            mContainerInfo->dataAffinity = NULL;
+        }
 
         if (mTypeList && mContainerInfo->columnInfoList) {
             for (int i = 0; i < mContainerInfo->columnCount; i++){
@@ -91,6 +97,10 @@ namespace griddb {
             if (mContainerInfo->name) {
                 delete[] mContainerInfo->name;
             }
+            if (mContainerInfo->dataAffinity) {
+                delete[] mContainerInfo->dataAffinity;
+            }
+
             delete mContainerInfo;
             mContainerInfo = NULL;
         }
@@ -414,4 +424,89 @@ namespace griddb {
     void Container::put_rows(GSRow** listRow, int rowCount) {
         this->multi_put(listRow, rowCount);
     }
+
+    /**
+    * @brief Support query within specific time range
+    * 
+    * @param startKey start time
+    * @param finishKey end time
+    * @return Query* Query object to get data
+    */
+    Query* Container::query_by_time_series_range(GSTimestamp* startTime,
+            GSTimestamp* endTime, GSQueryOrder order) {
+        GSQuery *pQuery;
+        GSResult ret = gsQueryByTimeSeriesOrderedRange(mContainer, startTime,
+                endTime, (GSQueryOrder) order, &pQuery);
+        if (!GS_SUCCEEDED(ret)) {
+            throw GSException(mContainer, ret);
+        }
+
+        try {
+            Query* queryObj = new Query(pQuery, mContainerInfo, mRow);
+            return queryObj;
+        } catch(bad_alloc& ba) {
+            gsCloseQuery(&pQuery);
+            throw GSException(mContainer, "Memory allocation error");
+        }
+    }
+
+    /**
+     * @brief Performs an aggregation operation based on the specified start and end times. 
+     * 
+     * @param startTime 
+     * @param endTime 
+     * @param aggregation 
+     * @param column 
+     * @return AggregationResult* 
+     */
+    AggregationResult* Container::aggregate_time_series(GSTimestamp* startTime,
+                GSTimestamp* endTime, GSAggregation aggregation, const char* column) {
+        GSAggregationResult *pAggResult;
+        GSResult ret = gsAggregateTimeSeries(mContainer, *startTime,
+                *endTime, column, aggregation, &pAggResult);
+        if (!GS_SUCCEEDED(ret)) {
+            throw GSException(mContainer, ret);
+        }
+        try {
+            AggregationResult* aggObj = new AggregationResult(pAggResult);
+            return aggObj;
+        } catch(bad_alloc& ba) {
+            gsCloseAggregationResult(&pAggResult);
+            throw GSException(mContainer, "Memory allocation error");
+        }
+    }
+
+    /**
+    * @brief Creates a query to take a sampling of Rows within a specific range. 
+    * 
+    * @param startTime 
+    * @param endTime 
+    * @param columnSet 
+    * @param columnCount 
+    * @param mode 
+    * @param interval 
+    * @param intervalUnit 
+    * @return Query* 
+    */
+    Query* Container::query_by_time_series_sampling(GSTimestamp* startTime,
+                GSTimestamp* endTime, const GSChar *const *columnSet,
+                size_t columnCount, GSInterpolationMode mode, int32_t interval,
+                GSTimeUnit intervalUnit) {
+        GSQuery *pQuery;
+        GSResult ret = gsQueryByTimeSeriesSampling(mContainer, *startTime,
+                *endTime, columnSet, columnCount, mode, interval, intervalUnit, &pQuery);
+
+        if (!GS_SUCCEEDED(ret)) {
+            throw GSException(mContainer, ret);
+        }
+
+        try {
+            Query* queryObj = new Query(pQuery, mContainerInfo, mRow);
+            return queryObj;
+        } catch(bad_alloc& ba) {
+            gsCloseQuery(&pQuery);
+            throw GSException(mContainer, "Memory allocation error");
+        }
+    }
+
 }

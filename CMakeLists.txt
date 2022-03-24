@@ -43,7 +43,6 @@ ${SOURCE_HEADER}/RowSet.cpp
 ${SOURCE_HEADER}/TimestampUtils.cpp
 ${SOURCE_HEADER}/Field.cpp
 ${SOURCE_HEADER}/RowList.cpp
-${SOURCE_HEADER}/RowSet.cpp
 ${SOURCE_HEADER}/Util.cpp)
 
 target_link_libraries(griddb_python gridstore_c)

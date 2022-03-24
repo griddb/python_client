@@ -8,29 +8,29 @@ GridDB Python Client is developed using GridDB C Client and [SWIG](http://www.sw
 
 Building of the library and execution of the sample programs have been checked in the following environment.
 
-    OS: CentOS 7.6(x64) (GCC 4.8.5)
+    OS: CentOS 7.9(x64) (GCC 4.8.5)
     SWIG: 4.0.2
-    Python: 3.9
-    GridDB C client: V4.5 CE(Community Edition)
-    GridDB server: V4.5 CE, CentOS 7.6(x64) (GCC 4.8.5)
+    Python: 3.10
+    GridDB C client: V4.6 CE(Community Edition)
+    GridDB server: V4.6 CE, CentOS 7.9(x64) (GCC 4.8.5)
 
-    OS: Ubuntu 18.04(x64) (gcc 7.3.0)
+    OS: Ubuntu 18.04/20.04(x64) (gcc 7.5.0)
     SWIG: 4.0.2
-    Python: 3.9
-    GridDB C client: V4.5 CE (Note: If you build from source code, please use GCC 4.8.5.)
-    GridDB server: V4.5 CE, Ubuntu 18.04(x64) (Note: If you build from source code, please use GCC 4.8.5.)
+    Python: 3.10
+    GridDB C client: V4.6 CE (Note: If you build from source code, please use GCC 4.8.5.)
+    GridDB server: V4.6 CE, Ubuntu 18.04(x64) (Note: If you build from source code, please use GCC 4.8.5.)
     
     OS: Windows 10(x64) (VS2017)
     SWIG: 4.0.2
-    Python: 3.9
-    GridDB C client: V4.5 CE
-    GridDB server: V4.5 CE, CentOS 7.6(x64) (GCC 4.8.5)
+    Python: 3.10
+    GridDB C client: V4.6 CE
+    GridDB server: V4.6 CE, CentOS 7.9(x64) (GCC 4.8.5)
 
     OS: MacOS Catalina (x86_64)
     SWIG: 4.0.2
-    Python: 3.9
-    GridDB C client: V4.5 CE
-    GridDB server: V4.5 CE, Centos 7.6(x64) (GCC 4.8.5)
+    Python: 3.10
+    GridDB C client: V4.6 CE
+    GridDB server: V4.6 CE, Centos 7.9(x64) (GCC 4.8.5)
 
 ## QuickStart (CentOS, Ubuntu)
 ### Preparations
@@ -58,8 +58,8 @@ Set CPATH and LIBRARY_PATH.
 
 Install Pandas and Numpy as below:
 
-    $ python -m pip install numpy
-    $ python -m pip install pandas
+    $ python3 -m pip install numpy
+    $ python3 -m pip install pandas
 
 ### Build and Run 
 
@@ -79,11 +79,11 @@ GridDB Server need to be started in advance.
 
     1. Set LD_LIBRARY_PATH
 
-        export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:<C client library file directory path>
+        $ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:<C client library file directory path>
 
     2. The command to run sample
 
-        $ sample/sample1.py <GridDB notification address> <GridDB notification port>
+        $ python3 sample/sample1.py <GridDB notification address> <GridDB notification port>
             <GridDB cluster name> <GridDB user> <GridDB password>
           -->Person: name=name02 status=False count=2 lob=[65, 66, 67, 68, 69, 70, 71, 72, 73, 74]
 
@@ -124,7 +124,7 @@ Install SWIG as below.
     $ sudo make install
 
     Note: If MacOS, you might need to install pcre in advance.
-    $ sudo brew install pcre
+    $ brew install pcre
 
 Install [GridDB Server](https://github.com/griddb/griddb) and [C Client](https://github.com/griddb/c_client). (Note: If you build them from source code, please use clang 11.0.0)
 
@@ -136,22 +136,9 @@ Set CPATH and LIBRARY_PATH.
 
 Install Pandas and Numpy as below:
 
-    $ python -m pip install numpy
-    $ python -m pip install pandas
+    $ python3 -m pip install numpy
+    $ python3 -m pip install pandas
 
-Modify **Makefile** to make python_client compatible with MacOS:
-- Change python include path and numpy include path on MacOS. For example:
-    ```bash
-    INCLUDES_PYTHON = $(INCLUDES)	\
-                            -I$(HOME)/.pyenv/versions/3.9.5/include/python3.9	\
-                            -I$(HOME)/.pyenv/versions/3.9.5/lib/python3.9/site-packages/numpy/core/include
-    ```
-								
-- Remove "-Llibs -lrt" (not support on MacOS) from LDFLAGS on Makefile
-- Add "-undefined dynamic_lookup" like
-    ```bash
-    $(CXX) -shared -undefined dynamic_lookup -o $@ $(OBJS) $(SWIG_PYTHON_OBJS) $(LDFLAGS)
-    ```
 ### Build and Run
 
     1. Execute the command on project directory.
@@ -186,12 +173,12 @@ GridDB Server need to be started in advance.
 - normal query, aggregation with TQL
 - Multi-Put/Get/Query (batch processing)
 - Array type for GridDB
+- timeseries-specific function, affinity
 
 (not available)
 - GEOMETRY type for GridDB
 - timeseries compression
-- timeseries-specific function like gsAggregateTimeSeries, gsQueryByTimeSeriesSampling in C client
-- trigger, affinity
+- trigger
 
 Please refer to the following files for more detailed information.  
 - [Python Client API Reference](https://griddb.github.io/python_client/PythonAPIReference.htm)
