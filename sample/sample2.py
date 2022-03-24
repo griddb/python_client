@@ -19,6 +19,9 @@ conInfo = griddb.ContainerInfo("point01",
 			griddb.ContainerType.TIME_SERIES, True)
 ts = gridstore.put_container(conInfo)
 
+#Put row to timeseries with TIMESTAMP value and None. None means NULL value
+ts.put(['2020-10-01T15:00:00.000Z', True, None])
+
 #Put row to timeseries with current timestamp
 now = datetime.datetime.utcnow()
 ts.put([now, False, 100])
