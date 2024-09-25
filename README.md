@@ -8,29 +8,30 @@ GridDB Python Client is developed using GridDB C Client and [SWIG](http://www.sw
 
 Building of the library and execution of the sample programs have been checked in the following environment.
 
-    OS: CentOS 7.9(x64) (GCC 4.8.5)
-    SWIG: 4.0.2
-    Python: 3.10
-    GridDB C client: V5.0 CE(Community Edition)
-    GridDB server: V5.0 CE, CentOS 7.9(x64) (GCC 4.8.5)
 
-    OS: Ubuntu 18.04/20.04(x64) (gcc 7.5.0)
+    OS: Ubuntu 24.04(x64) (gcc 11)
     SWIG: 4.0.2
-    Python: 3.10
-    GridDB C client: V5.0 CE (Note: If you build from source code, please use GCC 4.8.5.)
-    GridDB server: V5.0 CE, Ubuntu 18.04(x64) (Note: If you build from source code, please use GCC 4.8.5.)
-    
-    OS: Windows 10(x64) (VS2017)
-    SWIG: 4.0.2
-    Python: 3.10
-    GridDB C client: V5.0 CE
-    GridDB server: V5.0 CE, CentOS 7.9(x64) (GCC 4.8.5)
+    Python: 3.12
+    GridDB C client: V5.6 CE
+    GridDB server: V5.6 CE
 
-    OS: MacOS Catalina (x86_64)
+    OS: RockyLinux 9.4(x64) (gcc 11)
     SWIG: 4.0.2
-    Python: 3.10
-    GridDB C client: V5.0 CE
-    GridDB server: V5.0 CE, Centos 7.9(x64) (GCC 4.8.5)
+    Python: 3.12
+    GridDB C client: V5.6 CE
+    GridDB server: V5.6 CE
+
+    OS: Windows 11(x64) (VS2017)
+    SWIG: 4.0.2
+    Python: 3.12
+    GridDB C client: V5.6 CE
+    GridDB server: V5.6 CE, Ubuntu 24.04
+
+    OS: MacOS 12
+    SWIG: 4.0.2
+    Python: 3.12
+    GridDB C client: V5.6 CE
+    GridDB server: V5.6 CE, Ubuntu 24.04
 
 ## QuickStart (CentOS, Ubuntu)
 ### Preparations
@@ -184,7 +185,7 @@ Please refer to the following files for more detailed information.
 Note:
 1. The current API might be changed in the next version. e.g. ContainerInfo
 2. When you install C Client with RPM or DEB, you don't need to set LIBRARY_PATH and LD_LIBRARY_PATH.
-3. There is [Python Client Package for CentOS, Ubuntu and MacOS on The Python Package Index (PyPI)](https://pypi.org/project/griddb-python/) .
+3. There is [Python Client Package for only Python 3.10 (Linux, MacOS) on The Python Package Index (PyPI)](https://pypi.org/project/griddb-python/) .
 
 ## Community
 
