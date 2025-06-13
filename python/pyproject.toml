@@ -1,0 +1,23 @@
+[project]
+name = "griddb_python"
+version = "5.8.0"
+authors = [
+        { name="Toshiba Digital Solutions Corporation", email="contact@griddb.org" },
+    ]
+description = "Python client for GridDB"
+readme = "README.rst"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = ['jpype1', 'pyarrow']
+license = "Apache-2.0"
+license-files = ["LICEN[CS]E*"]
+
+[project.urls]
+Homepage = "https://github.com/griddb/python_client"
+
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
