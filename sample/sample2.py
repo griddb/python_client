@@ -1,8 +1,8 @@
-#!/usr/bin/python
-
+import jpype
+jpype.startJVM(classpath=["./gridstore.jar", "./gridstore-arrow.jar"])
 import griddb_python as griddb
 import sys
-import datetime
+from datetime import datetime
 
 factory = griddb.StoreFactory.get_instance()
 
@@ -20,10 +20,10 @@ conInfo = griddb.ContainerInfo("point01",
 ts = gridstore.put_container(conInfo)
 
 #Put row to timeseries with TIMESTAMP value and None. None means NULL value
-ts.put(['2020-10-01T15:00:00.000Z', True, None])
+ts.put([datetime.strptime("2020-10-01T15:00:00.000Z", "%Y-%m-%dT%H:%M:%S.%f%z"), True, None])
 
 #Put row to timeseries with current timestamp
-now = datetime.datetime.utcnow()
+now = datetime.utcnow()
 ts.put([now, False, 100])
 
 #Create normal query for range of timestamp from 6 hours ago to now

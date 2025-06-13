@@ -1,5 +1,5 @@
-#!/usr/bin/python
-
+import jpype
+jpype.startJVM(classpath=["./gridstore.jar", "./gridstore-arrow.jar"])
 import griddb_python as griddb
 import sys
 
@@ -35,7 +35,7 @@ try:
         print( "ERROR Container not found. name=",containerName)
 
     # Create an index
-    col1.create_index(column_name="count", index_type=griddb.IndexType.TREE, name="tree_index")
+    col1.create_index("count", index_type=griddb.IndexType.TREE, name="tree_index")
     print("Create Index")
 
     print("success!")

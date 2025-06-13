@@ -1,5 +1,5 @@
-#!/usr/bin/python
-
+import jpype
+jpype.startJVM(classpath=["./gridstore.jar", "./gridstore-arrow.jar"])
 import griddb_python as griddb
 import sys, calendar
 

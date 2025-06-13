@@ -1,7 +1,10 @@
 #!/usr/bin/python
 
+import jpype
+jpype.startJVM(classpath=["./gridstore.jar", "./gridstore-arrow.jar"])
 import griddb_python as griddb
 import sys
+from datetime import datetime
 
 factory = griddb.StoreFactory.get_instance()
 
@@ -39,7 +42,7 @@ try:
     rowList = []
 
     for i in range(0, rowCount):
-        rowList.append([dateList[i], value1List[i], value2List[i]])
+        rowList.append([datetime.strptime(dateList[i], "%Y-%m-%dT%H:%M:%S.%f%z"), value1List[i], value2List[i]])
     col.multi_put(rowList)
     print("Sample data generation: Put Rows count=", rowCount)
 

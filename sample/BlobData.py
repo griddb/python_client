@@ -1,5 +1,5 @@
-#!/usr/bin/python
-
+import jpype
+jpype.startJVM(classpath=["./gridstore.jar", "./gridstore-arrow.jar"])
 import griddb_python as griddb
 import sys
 import os
@@ -34,7 +34,8 @@ try:
     f.close()
 
     # (2)Register a row
-    col.put([0, blobString])
+    blob_data = bytearray(blobString, 'utf-8')
+    col.put([0, blob_data])
     print("Put Row (Blob)")
 
     # Get binary

@@ -1,0 +1,1856 @@
+
+
+<!doctype html>
+
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>GridDB ドキュメント</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/bizstyle.css" />
+
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>ナビゲーション</h3>
+      <ul>
+        <li class="nav-item nav-item-0"><a href="#">GridDB  ドキュメント</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">GridDB  ドキュメント</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="griddb-python-api-nosql">
+<h1>GridDB Python API(NoSQL)リファレンス<a class="headerlink" href="#griddb-python-api-nosql" title="この見出しへのパーマリンク">¶</a></h1>
+<div class="toctree-wrapper compound">
+<span id="document-intro"></span><section id="id1">
+<h2>はじめに<a class="headerlink" href="#id1" title="この見出しへのパーマリンク">¶</a></h2>
+<p>本ドキュメントでは、GridDB Python APIのNoSQLインタフェースについて説明します。</p>
+<p>GridDB Python APIのNoSQLインタフェースは、JPype(OSS)を利用してGridDB Java API経由で
+サーバへの操作を提供します。</p>
+<p>また、大量データ操作を高速化するために、Apache Arrow(OSS)を利用したインタフェースも
+提供します。</p>
+<dl class="simple">
+<dt>※ JPype:</dt><dd><p><a class="reference external" href="https://jpype.readthedocs.io/en/latest/index.html">https://jpype.readthedocs.io/en/latest/index.html</a></p>
+</dd>
+</dl>
+<ul class="simple">
+<li><p>Python からJNI(Java Native Interface)経由で Java アクセスを提供するソフト(OSS)</p></li>
+</ul>
+<dl class="simple">
+<dt>※ Apahe Arrow:</dt><dd><p><a class="reference external" href="https://arrow.apache.org/">https://arrow.apache.org/</a></p>
+</dd>
+</dl>
+<ul class="simple">
+<li><p>Apacheプロジェクトの1つ。効率的なデータ交換のために設計された、カラム指向のデータフォーマット、ソフト(OSS)</p></li>
+</ul>
+</section>
+<span id="document-basic"></span><section id="id1">
+<h2>操作方法<a class="headerlink" href="#id1" title="この見出しへのパーマリンク">¶</a></h2>
+<section id="id2">
+<h3>事前処理<a class="headerlink" href="#id2" title="この見出しへのパーマリンク">¶</a></h3>
+<p>(A)推奨の方法：</p>
+<p>事前に以下のインポートとJVMの起動が必要です。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jpype</span>
+<span class="n">jpype</span><span class="o">.</span><span class="n">startJVM</span><span class="p">(</span><span class="n">classpath</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;./gridstore.jar&#39;</span><span class="p">,</span> <span class="s1">&#39;./gridstore-arrow.jar&#39;</span><span class="p">])</span>
+<span class="kn">import</span> <span class="nn">griddb_python</span> <span class="k">as</span> <span class="nn">griddb</span>
+</pre></div>
+</div>
+<p>startJVM()メソッドにて、GridDB Java APIのJarファイル(gridstore.jar)とGridDB JavaAPI Adapter for Apache ArrowのJarファイル(gridstore-arrow.jar)をクラスパスに指定します。</p>
+<p>(B)従来のPython APIと同じ方法で使う場合：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">griddb_python</span> <span class="k">as</span> <span class="nn">griddb</span>
+</pre></div>
+</div>
+<p>環境変数CLASSPATHにGridDB Java APIのJarファイル(gridstore.jar)とGridDB JavaAPI Adapter for Apache ArrowのJarファイル(gridstore-arrow.jar)の場所を設定します。
+「jpype」のインポートやJVMの起動の記述なしで、従来のPython APIと同じ方法で使うことができます。</p>
+<p>(Linux系のOSの場合の設定例)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># export CLASSPATH=&quot;./gridstore.jar:./gridstore-arrow.jar&quot;</span>
+</pre></div>
+</div>
+<p>(C)Apache Arrow形式でやり取りする場合：</p>
+<p>RootAllocatorオブジェクトを作成して、関連するメソッドに与えてください。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jpype</span>
+<span class="n">jpype</span><span class="o">.</span><span class="n">startJVM</span><span class="p">(</span><span class="n">classpath</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;./gridstore.jar&#39;</span><span class="p">,</span> <span class="s1">&#39;./gridstore-arrow.jar&#39;</span><span class="p">])</span>
+<span class="kn">import</span> <span class="nn">griddb_python</span> <span class="k">as</span> <span class="nn">griddb</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">ra</span> <span class="o">=</span><span class="n">RootAllocator</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">maxsize</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(D)Python API(SQL)と併用する場合：</p>
+<p>「jpype.dbapi2」のインポートを追加してください。</p>
+<p>GridDB JDBCドライバのJarファイル(gridstore-jdbc.jar)の場所をクラスパスに追加で指定してください。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jpype</span>
+<span class="kn">import</span> <span class="nn">jpype.dbapi2</span>
+<span class="n">jpype</span><span class="o">.</span><span class="n">startJVM</span><span class="p">(</span><span class="n">classpath</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;./gridstore.jar&#39;</span><span class="p">,</span> <span class="s1">&#39;./gridstore-arrow.jar&#39;</span><span class="p">,</span> <span class="s1">&#39;./gridstore-jdbc.jar&#39;</span><span class="p">])</span>
+<span class="kn">import</span> <span class="nn">griddb_python</span> <span class="k">as</span> <span class="nn">griddb</span>
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h3>その他<a class="headerlink" href="#id3" title="この見出しへのパーマリンク">¶</a></h3>
+<p>Pandasライブラリとやりとりするために以下の操作例をご利用ください。</p>
+<ul>
+<li><p>Pandas DataFrameオブジェクトによるGridDBへのデータ登録</p>
+<blockquote>
+<div><p>例. container.multi_put(df.values.tolist())</p>
+</div></blockquote>
+</li>
+<li><p>GridDBからPandas DataFrameオブジェクトへのデータ取得</p>
+<blockquote>
+<div><p>例. df = pd.DataFrame(list(rowset), colums=rowset.get_column_names())</p>
+</div></blockquote>
+</li>
+</ul>
+</section>
+</section>
+<span id="document-griddb_python"></span><section id="griddb-python">
+<h2>griddb_pythonモジュール<a class="headerlink" href="#griddb-python" title="この見出しへのパーマリンク">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="griddb_python.ContainerType">
+<em class="property"><span class="pre">class</span><span class="w">  </span></em><span class="sig-prename descclassname"><span class="pre">griddb_python.</span></span><span class="sig-name descname"><span class="pre">ContainerType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.ContainerType" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>コンテナの種別を表します。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.ContainerType.COLLECTION">
+<span class="sig-name descname"><span class="pre">COLLECTION</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">0</span></em><a class="headerlink" href="#griddb_python.ContainerType.COLLECTION" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>コレクションコンテナ</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.ContainerType.TIME_SERIES">
+<span class="sig-name descname"><span class="pre">TIME_SERIES</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">1</span></em><a class="headerlink" href="#griddb_python.ContainerType.TIME_SERIES" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>時系列コンテナ</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="griddb_python.IndexType">
+<em class="property"><span class="pre">class</span><span class="w">  </span></em><span class="sig-prename descclassname"><span class="pre">griddb_python.</span></span><span class="sig-name descname"><span class="pre">IndexType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.IndexType" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>Containerに設定する索引の種別を示します。</p>
+<p>DEFAULTが指定された場合、以下の基準に従い、デフォルト種別の索引が選択されます。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>カラム型</p></th>
+<th class="head"><p>コレクションコンテナ</p></th>
+<th class="head"><p>時系列コンテナ</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>STRING</p></td>
+<td><p>TREE</p></td>
+<td><p>TREE</p></td>
+</tr>
+<tr class="row-odd"><td><p>BOOL</p></td>
+<td><p>TREE</p></td>
+<td><p>TREE</p></td>
+</tr>
+<tr class="row-even"><td><p>数値型</p></td>
+<td><p>TREE</p></td>
+<td><p>TREE</p></td>
+</tr>
+<tr class="row-odd"><td><p>TIMESTAMP</p></td>
+<td><p>TREE</p></td>
+<td><p>TREE</p></td>
+</tr>
+<tr class="row-even"><td><p>GEOMETRY</p></td>
+<td><p>SPATIAL</p></td>
+<td><p>設定不可</p></td>
+</tr>
+<tr class="row-odd"><td><p>BLOB</p></td>
+<td><p>設定不可</p></td>
+<td><p>設定不可</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.IndexType.DEFAULT">
+<span class="sig-name descname"><span class="pre">DEFAULT</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">-1</span></em><a class="headerlink" href="#griddb_python.IndexType.DEFAULT" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>デフォルトの索引種別を示します。</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.IndexType.SPATIAL">
+<span class="sig-name descname"><span class="pre">SPATIAL</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">4</span></em><a class="headerlink" href="#griddb_python.IndexType.SPATIAL" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>空間索引を示します。この索引種別は、コレクションにおけるGEOMETRY型のカラムに対してのみ使用できます。時系列コンテナに対して設定することはできません。</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.IndexType.TREE">
+<span class="sig-name descname"><span class="pre">TREE</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">1</span></em><a class="headerlink" href="#griddb_python.IndexType.TREE" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>ツリー索引を示します。この索引種別は、時系列におけるロウキーと対応するカラムを除く任意の種別のコンテナにおける、STRING/BOOL/BYTE/SHORT/INTEGER/LONG/FLOAT/DOUBLE/TIMESTAMPの型のカラムに対して使用できます。</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="griddb_python.RowSetType">
+<em class="property"><span class="pre">class</span><span class="w">  </span></em><span class="sig-prename descclassname"><span class="pre">griddb_python.</span></span><span class="sig-name descname"><span class="pre">RowSetType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.RowSetType" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>RowSetから取り出すことのできる内容の種別を示します。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.RowSetType.AGGREGATION_RESULT">
+<span class="sig-name descname"><span class="pre">AGGREGATION_RESULT</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">1</span></em><a class="headerlink" href="#griddb_python.RowSetType.AGGREGATION_RESULT" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>集計演算の結果</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.RowSetType.CONTAINER_ROWS">
+<span class="sig-name descname"><span class="pre">CONTAINER_ROWS</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">0</span></em><a class="headerlink" href="#griddb_python.RowSetType.CONTAINER_ROWS" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>クエリ実行より求めたロウの集合</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.RowSetType.QUERY_ANALYSIS">
+<span class="sig-name descname"><span class="pre">QUERY_ANALYSIS</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">2</span></em><a class="headerlink" href="#griddb_python.RowSetType.QUERY_ANALYSIS" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>クエリプランならびにクエリ処理解析結果を構成する一連の情報</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="griddb_python.TimeUnit">
+<em class="property"><span class="pre">class</span><span class="w">  </span></em><span class="sig-prename descclassname"><span class="pre">griddb_python.</span></span><span class="sig-name descname"><span class="pre">TimeUnit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.TimeUnit" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>時系列処理で用いる時間の単位を示します。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.TimeUnit.DAY">
+<span class="sig-name descname"><span class="pre">DAY</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">2</span></em><a class="headerlink" href="#griddb_python.TimeUnit.DAY" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>日</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.TimeUnit.HOUR">
+<span class="sig-name descname"><span class="pre">HOUR</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">3</span></em><a class="headerlink" href="#griddb_python.TimeUnit.HOUR" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>時</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.TimeUnit.MICROSECOND">
+<span class="sig-name descname"><span class="pre">MICROSECOND</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">7</span></em><a class="headerlink" href="#griddb_python.TimeUnit.MICROSECOND" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>マイクロ秒</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.TimeUnit.MILLISECOND">
+<span class="sig-name descname"><span class="pre">MILLISECOND</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">6</span></em><a class="headerlink" href="#griddb_python.TimeUnit.MILLISECOND" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>ミリ秒</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.TimeUnit.MINUTE">
+<span class="sig-name descname"><span class="pre">MINUTE</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">4</span></em><a class="headerlink" href="#griddb_python.TimeUnit.MINUTE" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>分</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.TimeUnit.MONTH">
+<span class="sig-name descname"><span class="pre">MONTH</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">1</span></em><a class="headerlink" href="#griddb_python.TimeUnit.MONTH" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>月</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.TimeUnit.NANOSECOND">
+<span class="sig-name descname"><span class="pre">NANOSECOND</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">8</span></em><a class="headerlink" href="#griddb_python.TimeUnit.NANOSECOND" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>ナノ秒</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.TimeUnit.SECOND">
+<span class="sig-name descname"><span class="pre">SECOND</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">5</span></em><a class="headerlink" href="#griddb_python.TimeUnit.SECOND" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>秒</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.TimeUnit.YEAR">
+<span class="sig-name descname"><span class="pre">YEAR</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">0</span></em><a class="headerlink" href="#griddb_python.TimeUnit.YEAR" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>年</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="griddb_python.Type">
+<em class="property"><span class="pre">class</span><span class="w">  </span></em><span class="sig-prename descclassname"><span class="pre">griddb_python.</span></span><span class="sig-name descname"><span class="pre">Type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Type" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>GridDB上のフィールド値の型を表します。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.Type.BLOB">
+<span class="sig-name descname"><span class="pre">BLOB</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">10</span></em><a class="headerlink" href="#griddb_python.Type.BLOB" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>BLOB型</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.Type.BOOL">
+<span class="sig-name descname"><span class="pre">BOOL</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">1</span></em><a class="headerlink" href="#griddb_python.Type.BOOL" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>BOOL型</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.Type.BYTE">
+<span class="sig-name descname"><span class="pre">BYTE</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">2</span></em><a class="headerlink" href="#griddb_python.Type.BYTE" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>BYTE型</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.Type.DOUBLE">
+<span class="sig-name descname"><span class="pre">DOUBLE</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">7</span></em><a class="headerlink" href="#griddb_python.Type.DOUBLE" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>DOUBLE型</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.Type.FLOAT">
+<span class="sig-name descname"><span class="pre">FLOAT</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">6</span></em><a class="headerlink" href="#griddb_python.Type.FLOAT" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>FLOAT型</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.Type.GEOMETRY">
+<span class="sig-name descname"><span class="pre">GEOMETRY</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">9</span></em><a class="headerlink" href="#griddb_python.Type.GEOMETRY" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>GEOMETRY型</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.Type.INTEGER">
+<span class="sig-name descname"><span class="pre">INTEGER</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">4</span></em><a class="headerlink" href="#griddb_python.Type.INTEGER" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>INTEGER型</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.Type.LONG">
+<span class="sig-name descname"><span class="pre">LONG</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">5</span></em><a class="headerlink" href="#griddb_python.Type.LONG" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>LONG型</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.Type.SHORT">
+<span class="sig-name descname"><span class="pre">SHORT</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">3</span></em><a class="headerlink" href="#griddb_python.Type.SHORT" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>SHORT型</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.Type.STRING">
+<span class="sig-name descname"><span class="pre">STRING</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">0</span></em><a class="headerlink" href="#griddb_python.Type.STRING" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>STRING型</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.Type.TIMESTAMP">
+<span class="sig-name descname"><span class="pre">TIMESTAMP</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">8</span></em><a class="headerlink" href="#griddb_python.Type.TIMESTAMP" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>TIMESTAMP型</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="griddb_python.TypeOption">
+<em class="property"><span class="pre">class</span><span class="w">  </span></em><span class="sig-prename descclassname"><span class="pre">griddb_python.</span></span><span class="sig-name descname"><span class="pre">TypeOption</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.TypeOption" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>NOT NULL制約を示します。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.TypeOption.NOT_NULL">
+<span class="sig-name descname"><span class="pre">NOT_NULL</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">4</span></em><a class="headerlink" href="#griddb_python.TypeOption.NOT_NULL" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>NOT NULL制約を持つカラムであることを示します。</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="griddb_python.TypeOption.NULLABLE">
+<span class="sig-name descname"><span class="pre">NULLABLE</span></span><em class="property"><span class="w">  </span><span class="p"><span class="pre">=</span></span><span class="w">  </span><span class="pre">2</span></em><a class="headerlink" href="#griddb_python.TypeOption.NULLABLE" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>NOT NULL制約を持たないカラムであることを示します。</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="griddb_python.StoreFactory">
+<em class="property"><span class="pre">class</span><span class="w">  </span></em><span class="sig-prename descclassname"><span class="pre">griddb_python.</span></span><span class="sig-name descname"><span class="pre">StoreFactory</span></span><a class="headerlink" href="#griddb_python.StoreFactory" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>GridStoreインスタンスを管理します。</p>
+<p>GridStoreインスタンス共通のクライアント設定や使用済みのコネクションを管理します。</p>
+<p>GridDBにアクセスするためには、このファクトリを介して GridStoreインスタンスを取得する必要があります。</p>
+<p>このクラスの公開メソッドは、すべてスレッド安全です。</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.StoreFactory.get_instance">
+<span class="sig-name descname"><span class="pre">get_instance</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.StoreFactory.get_instance" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>StoreFactoryオブジェクトを取得します。</p>
+<dl class="simple">
+<dt>返り値:</dt><dd><p>StoreFactoryオブジェクト (StoreFactory)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.StoreFactory.get_store">
+<span class="sig-name descname"><span class="pre">get_store</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluster_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">username</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">notification_member</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">notification_provider</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">application_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_zone</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">authentication</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssl_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connection_route</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.StoreFactory.get_store" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>指定のプロパティを持つStoreオブジェクトを取得します。</p>
+<p>Storeオブジェクトを取得した時点では、各Containerを管理するマスタノード(以下、マスタ)のアドレス探索を必要に応じて行うだけであり、認証処理は行われません。実際に各Containerに対応するノードに接続する必要が生じたタイミングで、認証処理が行われます。</p>
+<p>取得のたびに、新たなStoreオブジェクトが生成されます。異なるStoreオブジェクトならびに関連するオブジェクトに対する操作は、スレッド安全です。すなわち、ある2つのオブジェクトがそれぞれStoreオブジェクトを基にして生成されたものまたはStoreオブジェクトそのものであり、かつ、該当する関連Storeオブジェクトが異なる場合、一方のオブジェクトに対してどのスレッドからどのタイミングでメソッドが呼び出されていたとしても、他方のオブジェクトのメソッドを呼び出すことができます。ただし、Store自体のスレッド安全性は保証されていないため、同一Storeオブジェクトに対して複数スレッドから任意のタイミングでメソッド呼び出しすることはできません。</p>
+<dl>
+<dt>パラメータ:</dt><dd><p>host (str): マスタ自動検出に用いられる通知情報を受信するためのIPアドレス (IPv4のみ)もしくは接続先ホスト名(IPアドレス)</p>
+<p>port (int): マスタ自動検出に用いられる通知情報を受信するためのポート番号もしくは接続先ポート番号</p>
+<p>cluster_name (str): クラスタ名</p>
+<p>database (str): データベース名</p>
+<p>username (str): ユーザ名</p>
+<p>password (str): パスワード</p>
+<p>notification_member (str): 固定リスト方式を使用して構成されたクラスタに接続する場合に、クラスタノードのアドレス・ポートのリストを&quot;(アドレス1):(ポート1),(アドレス2):(ポート2),...&quot;形式で指定する。</p>
+<p>notification_provider (str):プロバイダ方式を使用して構成されたクラスタに接続する場合に、アドレスプロバイダのURLを指定する。</p>
+<p>application_name (str): アプリケーション名</p>
+<p>time_zone (str): タイムゾーン。TQLでのTIMESTAMP値演算などに使用される。「±hh:mm」または「±hhmm」形式によるオフセット値 (±は+または-、hhは時、 mmは分)、「Z」(+00:00に相当)、「auto」(実行環境に応じ自動設定)のいずれかを指定する。 autoが使用できるのは夏時間を持たないタイムゾーンに限定される。</p>
+<p>authentication (str): 認証種別。&quot;INTERNAL&quot;(内部認証)もしくは&quot;LDAP&quot;(外部認証)を指定する。</p>
+<p>ssl_mode (str):      クラスタへの接続においてSSLの使用有無の判断に用いられるモード。&quot;DISABLED&quot;(SSLを常に使用しない)、&quot;PREFERRED&quot;(可能な限りSSLを使用する。SSL接続・非SSL接続共に使用できる場合は SSL接続を使用する)もしくは&quot;VERIFY&quot;(SSLを常に使用する。サーバ検証あり)を指定する。</p>
+<p>connection_route (str): クラスタ接続時における通信経路。&quot;PUBLIC&quot;を指定すると、クラスタの外部通信経路が設定されている場合に外部通信経路を経由した接続を行う。省略時は通常のクラスタ通信経路を用いた接続が行われる。外部接続が必要な場合のみ指定する。</p>
+</dd>
+<dt>返り値:</dt><dd><p>Storeオブジェクト (Store)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.StoreFactory.get_version">
+<span class="sig-name descname"><span class="pre">get_version</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.StoreFactory.get_version" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>このクライアントライブラリのバージョンを取得する</p>
+<dl class="simple">
+<dt>返り値:</dt><dd><p>このクライアントライブラリのバージョン (str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="griddb_python.Store">
+<em class="property"><span class="pre">class</span><span class="w">  </span></em><span class="sig-prename descclassname"><span class="pre">griddb_python.</span></span><span class="sig-name descname"><span class="pre">Store</span></span><a class="headerlink" href="#griddb_python.Store" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>接続したGridDBシステム内のデータベースに属するデータを操作するための機能を提供します。</p>
+<p>コレクションや時系列といったコンテナの追加・削除・構成変更、ならびに、コンテナを構成するロウの操作機能を提供します。</p>
+<p>コンテナ種別などの違いによらず、1つのデータベースのコンテナ間で、 ASCIIの大文字・小文字表記だけが異なる名前のものを複数定義することはできません。コンテナ名は、ベースコンテナ名単独、もしくは、ベースコンテナ名の後ろにノードアフィニティ名をアットマーク「&#64;」で連結した形式で表記します。その他、コンテナの定義において使用できるコンテナ名の文字種や長さには制限があります。具体的には、GridDB機能リファレンスを参照してください。特に記載のない限り、コンテナ名を指定する操作では、ASCIIの大文字・小文字表記の違いは区別されません。</p>
+<p>各メソッドのスレッド安全性は保証されません。</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Store.create_row_key">
+<span class="sig-name descname"><span class="pre">create_row_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Store.create_row_key" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>RowKeyオブジェクトを作成します。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>info (ContainerInfo): コンテナ情報</p>
+</dd>
+<dt>返り値:</dt><dd><p>RowKeyオブジェクト (RowKey)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Store.create_row_key_predicate">
+<span class="sig-name descname"><span class="pre">create_row_key_predicate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Store.create_row_key_predicate" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>指定のtypeをロウキーの型とする合致条件を作成します。</p>
+<p>合致条件の評価対象とするコンテナは、ロウキーを持ち、かつ、そのロウキーの型は指定のtypeと同一の型でなければなりません。</p>
+<p>第一パラメータ(type)にキーワードパラメータを使いことはできません。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>type (Type, RowKey): ロウキーの型</p>
+</dd>
+<dt>返り値:</dt><dd><p>RowKeyPredicateオブジェクト (RowKeyPredicate)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Store.drop_container">
+<span class="sig-name descname"><span class="pre">drop_container</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Store.drop_container" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>指定の名前を持つコンテナを削除します。</p>
+<p>削除済みの場合は何も変更しません。</p>
+<p>処理対象のコンテナにおいて実行中のトランザクションが存在する場合、それらの終了を待機してから削除を行います。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>name (str): コンテナ名</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Store.fetch_all">
+<span class="sig-name descname"><span class="pre">fetch_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">query_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Store.fetch_all" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>指定された任意個数のQueryについて、可能な限りリクエスト単位を大きくしてクエリ実行とフェッチを行います。</p>
+<p>指定のリストに含まれる各Queryに対して、個別にQuery.fetch() を行った場合と同様にクエリ実行とフェッチを行い、結果のRowSetを設定します。各Queryの実行結果を取り出すには、Query.getRowSet() を使用します。ただし、個別に行う場合と違い、同一の格納先などの可能な限り大きな単位で対象ノードに対しリクエストしようとします。これにより、リストの要素数が多くなるほど、対象ノードとやりとりする回数が削減される可能性が高くなります。リスト内のQueryの実行順序は不定です。</p>
+<p>指定のリストには、このGridStoreオブジェクトを介して得られた、対応するContainerを含めクローズされていないQuery のみを含めることができます。 Query.fetch()と同様、各Queryが持つ最後に生成された RowSetがクローズされます。同一のインスタンスがリストに複数含まれていた場合、それぞれ異なるインスタンスであった場合と同様に振る舞います。</p>
+<p>他のコンテナ・ロウ操作と同様、異なるコンテナ間での整合性は保証されません。したがって、あるコンテナに対する処理の結果は、その処理の開始前に完了した他の操作命令の影響を受けることがあります。</p>
+<p>指定のQueryに対応する各Containerのコミットモードが自動コミットモード、手動コミットモードのいずれであったとしても、使用できます。トランザクション状態はクエリの実行結果に反映されます。正常に操作が完了した場合、トランザクションタイムアウト時間に到達しない限り、対応する各Containerのトランザクションをアボートすることはありません。</p>
+<p>各Queryに対する処理の途中で例外が発生した場合、一部のQueryについてのみ新たなRowSet が設定されることがあります。また、指定のQueryに対応する各Containerの未コミットのトランザクションについては、アボートされることがあります。</p>
+<p>一度に大量のロウを取得しようとした場合、GridDBノードが管理する通信バッファのサイズの上限に到達し、失敗することがあります。上限サイズについては、GridDB機能リファレンスを参照してください。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>query_list (list[Query]): 対象Queryオブジェクトのリスト</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Store.get_container">
+<span class="sig-name descname"><span class="pre">get_container</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Store.get_container" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>コンテナ名からContainerオブジェクトを取得します。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>name (str): コンテナ名</p>
+</dd>
+<dt>返り値:</dt><dd><p>コンテナオブジェクト (Container)。指定した名前のコンテナが存在しない場合はNoneを返します。</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Store.get_container_info">
+<span class="sig-name descname"><span class="pre">get_container_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Store.get_container_info" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>指定の名前のコンテナに関する情報を取得します。</p>
+<p>返却されるContainerInfoに含まれるコンテナ名は、GridDB上に格納されているものが設定されます。したがって、指定したコンテナ名と比較すると、 ASCIIの大文字・小文字表記が異なる場合があります。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>name (str): コンテナ名</p>
+</dd>
+<dt>返り値:</dt><dd><p>ContainerInfoオブジェクト (ContainerInfo)。指定した名前のコンテナが存在しない場合はNoneを返します。</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Store.multi_get">
+<span class="sig-name descname"><span class="pre">multi_get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predicate_entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_allocator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Store.multi_get" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>指定の条件に基づき、任意のコンテナの任意個数・範囲のロウについて、可能な限りリクエスト単位を大きくして取得します。</p>
+<p>指定のdictに含まれる条件に従い、個別にContainer.get(Object) もしくはQuery.fetch()を呼び出した場合と同様に、ロウの内容を取得します。ただし、個別に行う場合と違い、同一の格納先などの可能な限り大きな単位で対象ノードに対しリクエストしようとします。これにより、対象コンテナの総数や条件に合致するロウの総数が多くなるほど、対象ノードとやりとりする回数が削減される可能性が高くなります。</p>
+<p>指定のdictは、コンテナ名をキー、RowKeyPredicateで表現される取得条件を値とする任意個数のエントリから構成されます。同一のRowKeyPredicateインスタンスを複数含めることもできます。また、対象とするコンテナとして、コンテナ種別やカラムレイアウトが異なるものを混在させることができます。ただし、コンテナの構成によっては評価できない取得条件が存在します。具体的な制限については、RowKeyPredicateに対する各種設定機能の定義を参照してください。dictのキーまたは値としてNoneを含めることはできません。</p>
+<p>返却されるdictは、コンテナ名をキー、ロウオブジェクトのリストを値とするエントリにより構成されます。また、返却されるマップには、取得条件として指定したマップに含まれるコンテナ名のうち、リクエスト時点で実在するコンテナに関するエントリのみが含まれます。 ASCIIの大文字・小文字表記だけが異なり同一のコンテナを指すコンテナ名の設定された、複数のエントリが指定のdictに含まれていた場合、返却されるdictにはこれらを1つにまとめたエントリが格納されます。指定のコンテナに対応するロウが1つも存在しない場合、対応するロウオブジェクトのリストは空になります。</p>
+<p>返却されたdictもしくはdictに含まれるリストに対して変更操作を行った場合に、 UnsupportedOperationExceptionなどの実行時例外が発生するかどうかは未定義です。</p>
+<p>他のコンテナ・ロウ操作と同様、異なるコンテナ間での整合性は保証されません。したがって、あるコンテナに対する処理の結果は、その処理の開始前に完了した他の操作命令の影響を受けることがあります。</p>
+<p>一度に大量のロウを取得しようとした場合、GridDBノードが管理する通信バッファのサイズの上限に到達し、失敗することがあります。上限サイズについては、GridDB機能リファレンスを参照してください。</p>
+<p>root_allocatorにRootAllocatorオブジェクトを指定した場合は、コンテナ名をキー、RecordBatchオブジェクトを値とするエントリにより構成されるdictを返却します。</p>
+<dl>
+<dt>パラメータ:</dt><dd><p>predicate_entry (dict[str, RowKeyPredicate]): 対象とするコンテナの名前と条件からなるdict型データ</p>
+<p>root_allocator (RootAllocator): RootAllocatorオブジェクト</p>
+</dd>
+<dt>返り値:</dt><dd><p>コンテナの名前とロウオブジェクトのリストからなるdict型データ (dict[str, list], dict[str, RecordBatch])</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Store.multi_put">
+<span class="sig-name descname"><span class="pre">multi_put</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">container_entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_allocator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Store.multi_put" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>任意のコンテナの任意個数のロウについて、可能な限りリクエスト単位を大きくして新規作成または更新操作を行います。</p>
+<p>指定のdictに含まれる各ロウオブジェクトについて、個別に Container.put(Object)を呼び出した場合と同様に新規作成または更新操作を行います。ただし、個別に行う場合と違い、同一の格納先などの可能な限り大きな単位で対象ノードに対しリクエストしようとします。これにより、対象コンテナの総数や指定のロウオブジェクトの総数が多くなるほど、対象ノードとやりとりする回数が削減される可能性が高くなります。</p>
+<p>指定のdictは、コンテナ名をキー、ロウオブジェクトのリストを値とする任意個数のエントリから構成されます。対象とするコンテナとして、コンテナ種別やカラムレイアウトが異なるものを混在させることができます。ただし、すでに存在するコンテナでなければなりません。dictのキーまたは値としてNoneを含めることはできません。</p>
+<p>各ロウオブジェクトのリストには、対象のコンテナと同一のカラムレイアウトの Rowのみを任意個数含めることができます。現バージョンでは、カラム順序についてもすべて同一でなければなりません。リストの要素としてnullを含めることはできません。</p>
+<p>指定のdictに含まれる各ロウオブジェクトにArrow形式のRecordBatchオブジェクトを指定した場合はroot_allocatorにRootAllocatorオブジェクトを指定する必要があります。</p>
+<dl>
+<dt>パラメータ:</dt><dd><p>container_entry (dict[str, list], dict[str, RecordBatch]): 対象とするコンテナの名前とロウオブジェクトのリスト(もしくはRecordBatchオブジェクト)からなるdict型データ</p>
+<p>root_allocator (RootAllocator): RootAllocatorオブジェクト</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="griddb_python.Store.partition_info">
+<em class="property"><span class="pre">property</span><span class="w">  </span></em><span class="sig-name descname"><span class="pre">partition_info</span></span><a class="headerlink" href="#griddb_python.Store.partition_info" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>対応するGridDBクラスタについてのPartitionControllerオブジェクトを取得します。</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Store.put_container">
+<span class="sig-name descname"><span class="pre">put_container</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modifiable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Store.put_container" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>ContainerInfoを指定して、コンテナを新規作成または変更します。</p>
+<dl>
+<dt>パラメータ:</dt><dd><p>info (ContainerInfo): 処理対象のContainerInfoオブジェクト</p>
+<p>modifiable (bool): 既存コンテナのカラムレイアウト変更を許可するかどうか</p>
+</dd>
+<dt>返り値:</dt><dd><p>コンテナオブジェクト (Container)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="griddb_python.ContainerInfo">
+<em class="property"><span class="pre">class</span><span class="w">  </span></em><span class="sig-prename descclassname"><span class="pre">griddb_python.</span></span><span class="sig-name descname"><span class="pre">ContainerInfo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_info_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ContainerType.COLLECTION</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">row_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">row_key_column_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.ContainerInfo" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>コンテナに関する情報を表します。</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="griddb_python.ContainerInfo.column_info_list">
+<em class="property"><span class="pre">property</span><span class="w">  </span></em><span class="sig-name descname"><span class="pre">column_info_list</span></span><a class="headerlink" href="#griddb_python.ContainerInfo.column_info_list" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>カラム情報のリスト(dict形式を利用しない場合)</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="griddb_python.ContainerInfo.column_info_list_dict">
+<em class="property"><span class="pre">property</span><span class="w">  </span></em><span class="sig-name descname"><span class="pre">column_info_list_dict</span></span><a class="headerlink" href="#griddb_python.ContainerInfo.column_info_list_dict" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>カラム情報のリスト(dict形式を利用する場合)</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="griddb_python.ContainerInfo.name">
+<em class="property"><span class="pre">property</span><span class="w">  </span></em><span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#griddb_python.ContainerInfo.name" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>コンテナ名</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="griddb_python.ContainerInfo.row_key">
+<em class="property"><span class="pre">property</span><span class="w">  </span></em><span class="sig-name descname"><span class="pre">row_key</span></span><a class="headerlink" href="#griddb_python.ContainerInfo.row_key" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>複合ロウキーが設定されていない場合に限定し、ロウキーに対応するカラムの有無を表します。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="griddb_python.ContainerInfo.row_key_column_list">
+<em class="property"><span class="pre">property</span><span class="w">  </span></em><span class="sig-name descname"><span class="pre">row_key_column_list</span></span><a class="headerlink" href="#griddb_python.ContainerInfo.row_key_column_list" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>ロウキーを構成するカラム名の一覧 (list[str])</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="griddb_python.ContainerInfo.type">
+<em class="property"><span class="pre">property</span><span class="w">  </span></em><span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#griddb_python.ContainerInfo.type" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>コンテナの種別</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="griddb_python.Container">
+<em class="property"><span class="pre">class</span><span class="w">  </span></em><span class="sig-prename descclassname"><span class="pre">griddb_python.</span></span><span class="sig-name descname"><span class="pre">Container</span></span><a class="headerlink" href="#griddb_python.Container" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>同一タイプのロウ集合からなるGridDBの構成要素に対しての、管理機能を提供します。</p>
+<p>GridDB上のスキーマを構成する各カラムは、ロウオブジェクト内のフィールドやメソッド定義と対応関係を持ちます。 1つのコンテナは1つ以上のカラムにより構成されます。</p>
+<p>カラム名の文字種や長さ、カラム数には制限があります。
+また、フィールドの値の表現範囲やサイズにも制限があります。
+詳細は機能リファレンスの「システムの制限値」をご覧ください。</p>
+<p>GridDB上のロウにおけるNULLは、NOT NULL制約が設定されていない限り保持することができます。
+PythonではNoneとして入出力できます。</p>
+<p>トランザクション処理では、デフォルトで自動コミットモードが有効になっています。自動コミットモードでは、変更操作は逐次確定し、明示的に取り消すことができません。手動コミットモードにおいて、このオブジェクトを介した操作によりクラスタノード上でエラーが検出されGSExceptionが送出された場合、コミット前の更新操作はすべて取り消されます。トランザクション分離レベルはREAD COMMITTEDのみをサポートします。ロック粒度は、コンテナの種別によって異なります。</p>
+<p>このContainerの生成後またはトランザクション終了後、最初にロウの更新・追加・削除、ならびに更新用ロック獲得が行われた時点で、新たなトランザクションが開始されます。</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Container.abort">
+<span class="sig-name descname"><span class="pre">abort</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Container.abort" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>手動コミットモードにおいて、現在のトランザクションの操作結果を元に戻し、トランザクションを終了します。</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Container.commit">
+<span class="sig-name descname"><span class="pre">commit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Container.commit" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>手動コミットモードにおいて、現在のトランザクションにおける操作結果を確定させ、トランザクションを終了します。</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Container.create_index">
+<span class="sig-name descname"><span class="pre">create_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">IndexType.DEFAULT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Container.create_index" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>索引を作成します。</p>
+<p>argにカラム名、index_typeに索引種別、nameに索引名を指定することで単一カラムの索引を作成します。
+argに索引情報(IndexInfoオブジェクト)を指定することで複合索引を作成します。</p>
+<p>時系列のロウキー(TIMESTAMP型)には索引を設定できません。</p>
+<p>第一パラメータ(arg)にキーワードパラメータを使うことはできません。</p>
+<dl>
+<dt>パラメータ:</dt><dd><p>arg (str, IndexInfo): カラム名もしくは索引情報</p>
+<p>index_type (IndexType): 索引種別</p>
+<p>name (str): 索引名</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Container.drop_index">
+<span class="sig-name descname"><span class="pre">drop_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">IndexType.DEFAULT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Container.drop_index" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>索引を削除します。</p>
+<p>argにカラム名、index_typeに索引種別、nameに索引名を指定することで単一カラムの索引を削除します。
+argに索引情報(IndexInfoオブジェクト)を指定することで複合索引を削除します。</p>
+<p>削除対象となる索引が一つも存在しない場合、索引の削除は行われません。</p>
+<p>第一パラメータ(arg)にキーワードパラメータを使うことはできません。</p>
+<dl>
+<dt>パラメータ:</dt><dd><p>arg (str, IndexInfo): カラム名もしくは索引情報</p>
+<p>index_type (IndexType): 索引種別</p>
+<p>name (str): 索引名</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Container.flush">
+<span class="sig-name descname"><span class="pre">flush</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Container.flush" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>これまでの更新結果をSSDなどの不揮発性記憶媒体に書き出し、すべてのクラスタノードが突然停止したとしても内容が失われないようにします。</p>
+<p>通常より信頼性が要求される処理のために使用します。ただし、頻繁に実行すると性能低下を引き起こす可能性が高まります。</p>
+<p>書き出し対象のクラスタノードの範囲など、挙動の詳細はGridDB上の設定によって変化します。</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Container.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Container.get" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>指定のロウキーに対応するロウの内容を取得します。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>key (int, str, datetime, Timestamp, RowKey): ロウキー</p>
+</dd>
+<dt>返り値:</dt><dd><p>ロウの内容と対応するlist形式のロウオブジェクト (list)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Container.multi_put">
+<span class="sig-name descname"><span class="pre">multi_put</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_allocator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Container.multi_put" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>指定のロウオブジェクト集合(もしくはRecordBatchオブジェクト)に基づき、任意個数のロウをまとめて新規作成または更新します。</p>
+<p>手動コミットモードの場合、対象のロウはロックされます。</p>
+<p>row_listにArrow形式のRecordBatchオブジェクトを指定した場合はroot_allocatorにRootAllocatorオブジェクトを指定する必要があります。</p>
+<p>第一パラメータ(row_list)にキーワードパラメータを使うことはできません。</p>
+<dl>
+<dt>パラメータ:</dt><dd><p>row_list (list, RecordBatch): list形式のロウオブジェクト、もしくはRecordBatchオブジェクト</p>
+<p>root_allocator (RootAllocator): RootAllocatorオブジェクト</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Container.put">
+<span class="sig-name descname"><span class="pre">put</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Container.put" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>ロウを新規作成または更新します。</p>
+<p>ロウキーに対応するカラムが存在する場合、ロウキーとコンテナの状態を基に、ロウを新規作成するか、更新するかを決定します。この際、対応するロウがコンテナ内に存在しない場合は新規作成、存在する場合は更新します。</p>
+<p>ロウキーに対応するカラムを持たない場合、常に新規のロウを作成します。</p>
+<p>手動コミットモードの場合、対象のロウがロックされます。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>row (list): 新規作成または更新するロウの内容と対応するlist形式のロウオブジェクト</p>
+</dd>
+<dt>返り値:</dt><dd><p>ロウキーと一致するロウが存在したかどうか (bool)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Container.query">
+<span class="sig-name descname"><span class="pre">query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">query_string</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Container.query" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>指定のTQL文を実行するためのクエリを作成します。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>query_string (str): TQL文</p>
+</dd>
+<dt>返り値:</dt><dd><p>Queryオブジェクト (Query)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Container.remove">
+<span class="sig-name descname"><span class="pre">remove</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Container.remove" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>指定のロウキーに対応するロウを削除します。</p>
+<p>手動コミットモードの場合、対象のロウはロックされます。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>key (int, str, datetime, Timestamp, RowKey): ロウキー</p>
+</dd>
+<dt>返り値:</dt><dd><p>対応するロウが存在したかどうか (bool)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Container.set_auto_commit">
+<span class="sig-name descname"><span class="pre">set_auto_commit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">enabled</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Container.set_auto_commit" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>コミットモードの設定を変更します。</p>
+<p>自動コミットモードでは、直接トランザクション状態を制御できず、変更操作が逐次コミットされます。自動コミットモードが有効でない場合、すなわち手動コミットモードの場合は、直接commit()を呼び出すかトランザクションがタイムアウトしない限り、このコンテナ内で同一のトランザクションが使用され続け、変更操作はコミットされません。</p>
+<p>自動コミットモードが無効から有効に切り替わる際、未コミットの変更内容は暗黙的にコミットされます。コミットモードに変更がない場合、トランザクション状態は変更されません。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>enabled (bool): 自動コミットモードが有効か否か</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="griddb_python.Container.type">
+<em class="property"><span class="pre">property</span><span class="w">  </span></em><span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#griddb_python.Container.type" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>コンテナの種別</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="griddb_python.Query">
+<em class="property"><span class="pre">class</span><span class="w">  </span></em><span class="sig-prename descclassname"><span class="pre">griddb_python.</span></span><span class="sig-name descname"><span class="pre">Query</span></span><a class="headerlink" href="#griddb_python.Query" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>特定のContainerに対応付けられたクエリを保持し、結果取得方法の設定ならびに実行・結果取得を行う機能を持ちます。</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Query.fetch">
+<span class="sig-name descname"><span class="pre">fetch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">for_update</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Query.fetch" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>オプションを指定してこのクエリを実行し、実行結果に対応するロウ集合を取得します。</p>
+<p>forUpdateにtrueが指定された場合、取得対象のロウすべてをロックします。ロックすると、対応するトランザクションが有効である間、他のトランザクションからの対象ロウに対する変更操作が阻止されます。対応するコンテナの自動コミットモードが無効の場合のみ、指定できます。</p>
+<p>新たなロウ集合を取得すると、このクエリについて前回実行した結果の RowSetはクローズされます。</p>
+<p>一度に大量のロウを取得しようとした場合、GridDBノードが管理する通信バッファのサイズの上限に到達し、失敗することがあります。上限サイズについては、GridDB機能リファレンスを参照してください。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>for_update (bool): trueが指定された場合、取得対象のロウすべてをロックします。</p>
+</dd>
+<dt>返り値:</dt><dd><p>RowSetオブジェクト (RowSet)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Query.get_row_set">
+<span class="sig-name descname"><span class="pre">get_row_set</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Query.get_row_set" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>Returns RowSe直近に実行した結果のRowSetを取得します。</p>
+<p>一度取得すると、以降新たにこのクエリを実行するまでNoneが返却されるようになります。</p>
+<dl class="simple">
+<dt>返り値:</dt><dd><p>RowSetオブジェクト (RowSet)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.Query.set_fetch_options">
+<span class="sig-name descname"><span class="pre">set_fetch_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partial</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_allocator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.Query.set_fetch_options" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>結果取得に関するオプションを設定します。</p>
+<dl>
+<dt>パラメータ:</dt><dd><p>limit (int): 取得するロウの数の最大値を設定するために使用します。-1は上限なしを意味します。</p>
+<p>partial (bool): 部分実行モードの設定に使われます。</p>
+<p>batch_size (int)： Arrow形式のRecordBatchオブジェクトを取得する時に使われます。-1は全件を意味します。</p>
+<p>root_allocator (RootAllocator)： RootAllocatorオブジェクト</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="griddb_python.RowSet">
+<em class="property"><span class="pre">class</span><span class="w">  </span></em><span class="sig-prename descclassname"><span class="pre">griddb_python.</span></span><span class="sig-name descname"><span class="pre">RowSet</span></span><a class="headerlink" href="#griddb_python.RowSet" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>クエリ実行より求めたロウの集合を管理します。</p>
+<p>ロウ単位・ロウフィールド単位での操作機能を持ち、対象とするロウを指し示すための、ResultSetと同様のカーソル状態を保持します。初期状態のカーソルは、ロウ集合の先頭より手前に位置しています。</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.RowSet.get_column_names">
+<span class="sig-name descname"><span class="pre">get_column_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.RowSet.get_column_names" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>カラム名の一覧を取得します。</p>
+<dl class="simple">
+<dt>返り値:</dt><dd><p>カラム名の一覧 (list[str])</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.RowSet.has_next">
+<span class="sig-name descname"><span class="pre">has_next</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.RowSet.has_next" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>現在のカーソル位置を基準として、ロウ集合内に後続のロウが存在するかどうかを取得します。</p>
+<dl class="simple">
+<dt>返り値:</dt><dd><p>現在のカーソル位置を基準として、ロウ集合内に後続のロウが存在するかどうか (bool)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.RowSet.next">
+<span class="sig-name descname"><span class="pre">next</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.RowSet.next" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>ロウ集合内の後続のロウにカーソル移動し、移動後の位置にあるロウオブジェクトを取得します。</p>
+<dl class="simple">
+<dt>返り値:</dt><dd><p>RowSetから取り出すことのできるオブジェクト (list, AggregationResult, QueryAnalysisEntry)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.RowSet.next_record_batch">
+<span class="sig-name descname"><span class="pre">next_record_batch</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.RowSet.next_record_batch" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>カーソル位置からbatch_size分(Queryオブジェクトで設定)のロウ集合をArrow形式のRecordBatchオブジェクトで返す。</p>
+<dl class="simple">
+<dt>返り値:</dt><dd><p>RecordBatchオブジェクト (RecordBatch)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.RowSet.remove">
+<span class="sig-name descname"><span class="pre">remove</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.RowSet.remove" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>現在のカーソル位置のロウを削除します。</p>
+<p>ロックを有効にして取得したRowSetに対してのみ使用できます。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="griddb_python.RowSet.size">
+<em class="property"><span class="pre">property</span><span class="w">  </span></em><span class="sig-name descname"><span class="pre">size</span></span><a class="headerlink" href="#griddb_python.RowSet.size" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>サイズ、すなわちロウ集合作成時点におけるロウの数</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="griddb_python.RowSet.type">
+<em class="property"><span class="pre">property</span><span class="w">  </span></em><span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#griddb_python.RowSet.type" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>RowSetから取り出すことのできる内容の種別
+next()実行前はNoneを返します。next()実行後に値が決まります。</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.RowSet.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.RowSet.update" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>現在のカーソル位置のロウについて、指定のロウオブジェクトを使用してロウキー以外の値を更新します。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>row (list): 更新に使われるロウオブジェクト</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="griddb_python.AggregationResult">
+<em class="property"><span class="pre">class</span><span class="w">  </span></em><span class="sig-prename descclassname"><span class="pre">griddb_python.</span></span><span class="sig-name descname"><span class="pre">AggregationResult</span></span><a class="headerlink" href="#griddb_python.AggregationResult" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>集計演算の結果を保持します。</p>
+<p>保持する型は、集計演算の種別や集計対象のカラムの型によって決定されます。具体的な規則はTQLの仕様を参照してください。</p>
+<p>取り出しできる型は、保持されている型によって決まります。保持されている型が数値型の場合はfloat型またはint型、TIMESTAMP型の場合はdatetime型またはTimestamp型の値としてのみ取り出しできます。</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.AggregationResult.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.AggregationResult.get" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>指定した型で集計値を取得します。</p>
+<p>指定可能な型はLONG、DOUBLE、TIMESTAMP。
+TIMESTAMP型でナノ秒精度の場合はdatatime型ではなく、Timestamp型で返します。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>type (Type): カラム型</p>
+</dd>
+<dt>返り値:</dt><dd><p>集計値</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="griddb_python.QueryAnalysisEntry">
+<em class="property"><span class="pre">class</span><span class="w">  </span></em><span class="sig-prename descclassname"><span class="pre">griddb_python.</span></span><span class="sig-name descname"><span class="pre">QueryAnalysisEntry</span></span><a class="headerlink" href="#griddb_python.QueryAnalysisEntry" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>クエリプランならびにクエリ処理解析結果を構成する一連の情報の一つを示します。</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.QueryAnalysisEntry.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.QueryAnalysisEntry.get" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>クエリプランならびにクエリ処理解析結果から構成される情報を返します。</p>
+<dl class="simple">
+<dt>返り値:</dt><dd><p>クエリプランならびにクエリ処理解析結果 (list)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="griddb_python.RowKey">
+<em class="property"><span class="pre">class</span><span class="w">  </span></em><span class="sig-prename descclassname"><span class="pre">griddb_python.</span></span><span class="sig-name descname"><span class="pre">RowKey</span></span><a class="headerlink" href="#griddb_python.RowKey" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>ロウキーを保持します。</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.RowKey.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.RowKey.get" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>ロウキーの値をリスト形式で取得します。</p>
+<p>取得されうる型はint、str、datetime、Timestamp。</p>
+<dl class="simple">
+<dt>返り値:</dt><dd><p>ロウキーの値 (list)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.RowKey.set">
+<span class="sig-name descname"><span class="pre">set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row_key_value_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.RowKey.set" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>ロウキーの値をリスト形式で設定します。</p>
+<p>指定可能な値はint、str、datetime、Timestampの型の値。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>row_key_value_list (list): ロウキーの値</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="griddb_python.RowKeyPredicate">
+<em class="property"><span class="pre">class</span><span class="w">  </span></em><span class="sig-prename descclassname"><span class="pre">griddb_python.</span></span><span class="sig-name descname"><span class="pre">RowKeyPredicate</span></span><a class="headerlink" href="#griddb_python.RowKeyPredicate" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>ロウキーの合致条件を表します。</p>
+<p>GridStore.multiGet(java.util.Map)における取得条件を構成するために使用できます。</p>
+<p>条件の種別として、範囲条件と個別条件の2つの種別があります。両方の種別の条件を共に指定することはできません。条件の内容を何も指定しない場合、対象とするすべてのロウキーに合致することを表します。</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.RowKeyPredicate.get_distinct_keys">
+<span class="sig-name descname"><span class="pre">get_distinct_keys</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.RowKeyPredicate.get_distinct_keys" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>個別条件を構成するロウキーの値のリストを取得します。</p>
+<p>取得されうる値の型はint、str、datetime、Timestamp、RowKey。</p>
+<dl class="simple">
+<dt>返り値:</dt><dd><p>個別条件を構成するロウキーの値のリスト (list)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.RowKeyPredicate.get_range">
+<span class="sig-name descname"><span class="pre">get_range</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.RowKeyPredicate.get_range" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>範囲条件の開始位置と終了位置に相当するロウキーの値を取得します。</p>
+<p>取得されうる値の型はint、str、datetime、Timestamp、RowKey。</p>
+<dl class="simple">
+<dt>返り値:</dt><dd><p>範囲条件の開始位置と終了位置に相当するロウキーの値 (list)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="griddb_python.RowKeyPredicate.key_type">
+<em class="property"><span class="pre">property</span><span class="w">  </span></em><span class="sig-name descname"><span class="pre">key_type</span></span><a class="headerlink" href="#griddb_python.RowKeyPredicate.key_type" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>合致条件の評価対象とするロウキーの型を取得します。</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.RowKeyPredicate.set_distinct_keys">
+<span class="sig-name descname"><span class="pre">set_distinct_keys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keys</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.RowKeyPredicate.set_distinct_keys" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>個別条件を構成するロウキーの値のリストを設定します。</p>
+<p>設定可能な値の型はint、str、datetime、Timestamp、RowKey。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>keys (list): 個別条件を構成するロウキーの値のlist</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.RowKeyPredicate.set_range">
+<span class="sig-name descname"><span class="pre">set_range</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.RowKeyPredicate.set_range" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>範囲条件の開始位置と終了位置に相当するロウキーの値を設定します。</p>
+<dl>
+<dt>パラメータ:</dt><dd><p>start (int, str, datetime, Timestamp, RowKey): 範囲条件の開始位置とするロウキーの値</p>
+<p>end (int, str, datetime, Timestamp, RowKey): 範囲条件の終了位置とするロウキーの値</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="griddb_python.IndexInfo">
+<em class="property"><span class="pre">class</span><span class="w">  </span></em><span class="sig-prename descclassname"><span class="pre">griddb_python.</span></span><span class="sig-name descname"><span class="pre">IndexInfo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">column_name_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">IndexType.DEFAULT</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.IndexInfo" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>索引に関する情報を表します。</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="griddb_python.IndexInfo.column_name_list">
+<em class="property"><span class="pre">property</span><span class="w">  </span></em><span class="sig-name descname"><span class="pre">column_name_list</span></span><a class="headerlink" href="#griddb_python.IndexInfo.column_name_list" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>カラム名の一覧</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="griddb_python.IndexInfo.name">
+<em class="property"><span class="pre">property</span><span class="w">  </span></em><span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#griddb_python.IndexInfo.name" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>索引名</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="griddb_python.IndexInfo.type">
+<em class="property"><span class="pre">property</span><span class="w">  </span></em><span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#griddb_python.IndexInfo.type" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>索引種別</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="griddb_python.PartitionController">
+<em class="property"><span class="pre">class</span><span class="w">  </span></em><span class="sig-prename descclassname"><span class="pre">griddb_python.</span></span><span class="sig-name descname"><span class="pre">PartitionController</span></span><a class="headerlink" href="#griddb_python.PartitionController" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>パーティション状態の取得や操作のためのコントローラです。</p>
+<p>パーティションとは、データを格納する論理的な領域です。 GridDBクラスタ内のデータ配置に基づいた操作を行うために使用します。</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.PartitionController.get_container_count">
+<span class="sig-name descname"><span class="pre">get_container_count</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">partition_index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.PartitionController.get_container_count" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>指定のパーティションに属するコンテナの総数を取得します。</p>
+<p>コンテナ数を求める際の計算量は、コンテナ数にはおおむね依存しません。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>partition_index (int): パーティションインデックス。0以上パーティション数未満の値</p>
+</dd>
+<dt>返り値:</dt><dd><p>コンテナ数 (int)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.PartitionController.get_container_names">
+<span class="sig-name descname"><span class="pre">get_container_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">partition_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.PartitionController.get_container_names" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>パーティションインデックス。0以上パーティション数未満の値</p>
+<p>指定のパーティションについてコンテナの新規作成・構成変更・削除が行われたとしても、該当コンテナを除くとその前後で一覧の取得結果の順序が変わることはありません。それ以外の一覧の順序に関しては不定です。重複する名前が含まれることはありません。</p>
+<p>取得件数の上限が指定された場合、上限を超える場合、後方のものから切り捨てられます。指定条件に該当するものが存在しない場合、空のリストが返却されます。</p>
+<dl>
+<dt>パラメータ:</dt><dd><p>partition_index (int): パーティションインデックス。0以上パーティション数未満の値</p>
+<p>start (int): 取得範囲の開始位置。0以上の値</p>
+<p>limit (int): 取得件数の上限。指定なしもしくはマイナス値を指定した場合、上限なしとみなされる</p>
+</dd>
+<dt>返り値:</dt><dd><p>コンテナ名の一覧 (list[str])</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.PartitionController.get_partition_index_of_container">
+<span class="sig-name descname"><span class="pre">get_partition_index_of_container</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">container_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.PartitionController.get_partition_index_of_container" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>指定のコンテナ名に対応するパーティションインデックスを取得します。</p>
+<p>一度GridDBクラスタが構築されると、コンテナの所属先のパーティションが変化することはなく、パーティションインデックスも一定となります。指定の名前に対応するコンテナが存在するかどうかは、結果に依存しません。</p>
+<p>パーティションインデックスの算出に必要とする情報はキャッシュされ、次にクラスタ障害・クラスタノード障害を検知するまで再びGridDBクラスタに問い合わせることはありません。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>container_name (str): コンテナ名</p>
+</dd>
+<dt>返り値:</dt><dd><p>パーティションインデックス (int)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="griddb_python.PartitionController.partition_count">
+<em class="property"><span class="pre">property</span><span class="w">  </span></em><span class="sig-name descname"><span class="pre">partition_count</span></span><a class="headerlink" href="#griddb_python.PartitionController.partition_count" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>対象とするGridDBクラスタのパーティション数を取得します。</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="griddb_python.TimestampUtils">
+<em class="property"><span class="pre">class</span><span class="w">  </span></em><span class="sig-prename descclassname"><span class="pre">griddb_python.</span></span><span class="sig-name descname"><span class="pre">TimestampUtils</span></span><a class="headerlink" href="#griddb_python.TimestampUtils" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>時刻データを操作するためのユーティリティ機能を提供します。</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.TimestampUtils.get_time_millis">
+<span class="sig-name descname"><span class="pre">get_time_millis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timestamp</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.TimestampUtils.get_time_millis" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>datetime.timestampからエポックからの経過ミリ秒を取得する</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>timestamp (float): Python datetimeのtimestamp値</p>
+</dd>
+<dt>返り値:</dt><dd><p>エポックからの経過ミリ秒 (int)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="griddb_python.GSException">
+<em class="property"><span class="pre">class</span><span class="w">  </span></em><span class="sig-prename descclassname"><span class="pre">griddb_python.</span></span><span class="sig-name descname"><span class="pre">GSException</span></span><a class="headerlink" href="#griddb_python.GSException" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>GridDB機能の処理中に発生した例外状態を示します。</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.GSException.get_error_code">
+<span class="sig-name descname"><span class="pre">get_error_code</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stack_index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.GSException.get_error_code" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>エラーコードを取得します。</p>
+<p>対応する番号が存在しない場合は0を返します。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>stack_index (int): エラースタックのインデックス</p>
+</dd>
+<dt>返り値:</dt><dd><p>エラーコード (int)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.GSException.get_error_stack_size">
+<span class="sig-name descname"><span class="pre">get_error_stack_size</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.GSException.get_error_stack_size" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>エラー情報のスタックサイズを返す</p>
+<dl class="simple">
+<dt>返り値:</dt><dd><p>エラー情報を含む場合は1、含まない場合は0 (int)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.GSException.get_location">
+<span class="sig-name descname"><span class="pre">get_location</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stack_index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.GSException.get_location" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>直前のエラーのメッセージの内部モジュールのエラー位置情報を取得します。(Deprecated)</p>
+<p>常に空文字列を返します。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>stack_index (int): エラースタックのインデックス</p>
+</dd>
+<dt>返り値:</dt><dd><p>空文字列 (str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="griddb_python.GSException.get_message">
+<span class="sig-name descname"><span class="pre">get_message</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stack_index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#griddb_python.GSException.get_message" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>エラーメッセージを取得します。</p>
+<dl class="simple">
+<dt>パラメータ:</dt><dd><p>stack_index (int): エラースタックのインデックス</p>
+</dd>
+<dt>返り値:</dt><dd><p>エラーメッセージ (str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="griddb_python.GSException.is_timeout">
+<em class="property"><span class="pre">property</span><span class="w">  </span></em><span class="sig-name descname"><span class="pre">is_timeout</span></span><a class="headerlink" href="#griddb_python.GSException.is_timeout" title="この定義へのパーマリンク">¶</a></dt>
+<dd><p>要求した処理が既定の時間内に終了しなかった場合に発生する例外であるか否か</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<span id="document-mapping"></span><section id="id1">
+<h2>データ型の対応関係<a class="headerlink" href="#id1" title="この見出しへのパーマリンク">¶</a></h2>
+<section id="getter">
+<span id="id2"></span><h3>データ取得時<a class="headerlink" href="#getter" title="この見出しへのパーマリンク">¶</a></h3>
+<p>各GridDB TypeがPython上で取得されるデータ型との対応関係を示します。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>GridDB Type</p></th>
+<th class="head"><p>取得されるデータ型</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>STRING</p></td>
+<td><p>str</p></td>
+</tr>
+<tr class="row-odd"><td><p>BOOL</p></td>
+<td><p>bool</p></td>
+</tr>
+<tr class="row-even"><td><p>BYTE</p></td>
+<td><p>int</p></td>
+</tr>
+<tr class="row-odd"><td><p>SHORT</p></td>
+<td><p>int</p></td>
+</tr>
+<tr class="row-even"><td><p>INTEGER</p></td>
+<td><p>int</p></td>
+</tr>
+<tr class="row-odd"><td><p>LONG</p></td>
+<td><p>int</p></td>
+</tr>
+<tr class="row-even"><td><p>FLOAT</p></td>
+<td><p>float</p></td>
+</tr>
+<tr class="row-odd"><td><p>DOUBLE</p></td>
+<td><p>float</p></td>
+</tr>
+<tr class="row-even"><td><p>TIMESTAMP(ms)</p></td>
+<td><p>datetime.datetime</p></td>
+</tr>
+<tr class="row-odd"><td><p>TIMESTAMP(us)</p></td>
+<td><p>datetime.datetime</p></td>
+</tr>
+<tr class="row-even"><td><p>TIMESTAMP(ns)</p></td>
+<td><p>java.sql.Timestamp</p></td>
+</tr>
+<tr class="row-odd"><td><p>BLOB</p></td>
+<td><p>bytearray</p></td>
+</tr>
+<tr class="row-even"><td><p>GEOMETRY</p></td>
+<td><p>str</p></td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li><p>日時を扱うデータ型では、タイムゾーンはOS等の設定に従います。</p></li>
+<li><p>GridDB Typeが配列型の場合はNoneを返します。</p></li>
+</ul>
+</section>
+<section id="setter">
+<span id="id3"></span><h3>データ設定時<a class="headerlink" href="#setter" title="この見出しへのパーマリンク">¶</a></h3>
+<p>Python上で入力するデータ型とデータ設定可能なGridDB Typeとの対応関係を
+示します。</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p>入力データ型</p></td>
+<td><p>入力データの作成例</p></td>
+<td><p>STRING</p></td>
+<td><p>BOOL</p></td>
+<td><p>BYTE</p></td>
+<td><p>SHORT</p></td>
+<td><p>INTEGER</p></td>
+<td><p>LONG</p></td>
+<td><p>FLOAT</p></td>
+<td><p>DOUBLE</p></td>
+<td><p>TIMESTAMP(ms)</p></td>
+<td><p>TIMESTAMP(us)</p></td>
+<td><p>TIMESTAMP(ns)</p></td>
+<td><p>BLOB</p></td>
+<td><p>GEOMETRY</p></td>
+</tr>
+<tr class="row-even"><td><p>str</p></td>
+<td><p>v = str('ABC')</p></td>
+<td><p>〇</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>〇</p></td>
+</tr>
+<tr class="row-odd"><td><p>bool</p></td>
+<td><p>v = bool(True)</p></td>
+<td><p>×</p></td>
+<td><p>〇</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+</tr>
+<tr class="row-even"><td><p>int</p></td>
+<td><p>v = int(100)</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>〇</p></td>
+<td><p>〇</p></td>
+<td><p>〇</p></td>
+<td><p>〇</p></td>
+<td><p>〇</p></td>
+<td><p>〇</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+</tr>
+<tr class="row-odd"><td><p>float</p></td>
+<td><p>v = float(100.12)</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>〇</p></td>
+<td><p>〇</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+</tr>
+<tr class="row-even"><td><p>datetime</p></td>
+<td><p>v = datetime.datetime(2024,9,3,10,55,45)</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>〇</p></td>
+<td><p>〇</p></td>
+<td><p>〇</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+</tr>
+<tr class="row-odd"><td><p>Timestamp</p></td>
+<td><p>v = griddb.Timestamp(2024,9,3,10,55,45,123456789)</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>〇</p></td>
+<td><p>〇</p></td>
+<td><p>〇</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+</tr>
+<tr class="row-even"><td><p>bytearray</p></td>
+<td><p>v = bytearray(b'abc')</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>〇</p></td>
+<td><p>×</p></td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li><p>〇はデータ設定できるケースがある場合、×は設定できないことを意味します。
+〇であっても、値を保持できる範囲の違いにより、エラーになる場合や値が丸められる場合があります。</p></li>
+<li><p>日時を扱うデータ型では、タイムゾーンはOS等の設定に従います。</p></li>
+<li><p>datetime型ではマイクロ秒精度に制限されますが、Timestamp型(java.sql.Timestamp型)を使うと、ナノ秒精度のデータを設定できます。</p></li>
+<li><p>GridDB Typeが配列型へのデータ設定はできません。</p></li>
+</ul>
+</section>
+<section id="apache-arrow">
+<h3>Apache Arrow形式でのデータ取得時<a class="headerlink" href="#apache-arrow" title="この見出しへのパーマリンク">¶</a></h3>
+<p>各GridDB Typeはpyarrowの配列のデータ型で取得されます。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>GridDB Type</p></th>
+<th class="head"><p>pyarrowで取得されるデータ型</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>STRING</p></td>
+<td><p>pyarrow.lib.StringArray</p></td>
+</tr>
+<tr class="row-odd"><td><p>BOOL</p></td>
+<td><p>pyarrow.lib.BooleanArray</p></td>
+</tr>
+<tr class="row-even"><td><p>BYTE</p></td>
+<td><p>pyarrow.lib.Int8Array</p></td>
+</tr>
+<tr class="row-odd"><td><p>SHORT</p></td>
+<td><p>pyarrow.lib.Int16Array</p></td>
+</tr>
+<tr class="row-even"><td><p>INTEGER</p></td>
+<td><p>pyarrow.lib.Int32Array</p></td>
+</tr>
+<tr class="row-odd"><td><p>LONG</p></td>
+<td><p>pyarrow.lib.Int64Array</p></td>
+</tr>
+<tr class="row-even"><td><p>FLOAT</p></td>
+<td><p>pyarrow.lib.FloatArray</p></td>
+</tr>
+<tr class="row-odd"><td><p>DOUBLE</p></td>
+<td><p>pyarrow.lib.DoubleArray</p></td>
+</tr>
+<tr class="row-even"><td><p>TIMESTAMP</p></td>
+<td><p>pyarrow.lib.TimestampArray</p></td>
+</tr>
+<tr class="row-odd"><td><p>BLOB</p></td>
+<td><p>pyarrow.lib.BinaryArray</p></td>
+</tr>
+<tr class="row-even"><td><p>GEOMETRY</p></td>
+<td><p>pyarrow.lib.StringArray</p></td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li><p>取得対象に配列型を含む場合はエラーとなります。</p></li>
+</ul>
+</section>
+<section id="id4">
+<h3>Apache Arrow形式でのデータ設定時<a class="headerlink" href="#id4" title="この見出しへのパーマリンク">¶</a></h3>
+<p>Python上で入力するArrowデータ型とデータ設定可能なGridDB Typeとの対応関係を
+示します。</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p>入力データ型</p></td>
+<td><p>STRING</p></td>
+<td><p>BOOL</p></td>
+<td><p>BYTE</p></td>
+<td><p>SHORT</p></td>
+<td><p>INTEGER</p></td>
+<td><p>LONG</p></td>
+<td><p>FLOAT</p></td>
+<td><p>DOUBLE</p></td>
+<td><p>TIMESTAMP</p></td>
+<td><p>BLOB</p></td>
+<td><p>GEOMETRY</p></td>
+</tr>
+<tr class="row-even"><td><p>str</p></td>
+<td><p>〇</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>〇</p></td>
+</tr>
+<tr class="row-odd"><td><p>bool</p></td>
+<td><p>×</p></td>
+<td><p>〇</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+</tr>
+<tr class="row-even"><td><p>int8</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>〇</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+</tr>
+<tr class="row-odd"><td><p>int16</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>〇</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+</tr>
+<tr class="row-even"><td><p>int32</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>〇</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+</tr>
+<tr class="row-odd"><td><p>int64</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>〇</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+</tr>
+<tr class="row-even"><td><p>float4</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>〇</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+</tr>
+<tr class="row-odd"><td><p>float8</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>〇</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+</tr>
+<tr class="row-even"><td><p>timestamp</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>〇</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+</tr>
+<tr class="row-odd"><td><p>binary</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>×</p></td>
+<td><p>〇</p></td>
+<td><p>×</p></td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li><p>〇はデータ設定できるケースがある場合、×は設定できないことを意味します。
+〇であっても、値を保持できる範囲の違いにより、エラーになる場合や値が丸められる場合があります。</p></li>
+<li><p>GridDB Typeが配列型へのデータ設定はできません。</p></li>
+</ul>
+</section>
+</section>
+<span id="document-samples"></span><section id="id1">
+<h2>サンプルコード一覧<a class="headerlink" href="#id1" title="この見出しへのパーマリンク">¶</a></h2>
+<p>サンプルコードの一覧は以下の通りです。</p>
+<p>startJVMメソッドのclasspath部分にjarファイルのパスを指定してください。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>ファイル名</p></th>
+<th class="head"><p>概要</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>sample1.py</p></td>
+<td><p>コレクション操作</p></td>
+</tr>
+<tr class="row-odd"><td><p>sample2.py</p></td>
+<td><p>時系列コンテナ操作(登録・範囲取得)</p></td>
+</tr>
+<tr class="row-even"><td><p>sample3.py</p></td>
+<td><p>時系列コンテナ操作(検索・集計)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Connect.py</p></td>
+<td><p>GridDBクラスタに接続</p></td>
+</tr>
+<tr class="row-even"><td><p>CreateCollection.py</p></td>
+<td><p>コレクションの作成</p></td>
+</tr>
+<tr class="row-odd"><td><p>CreateTimeSeries.py</p></td>
+<td><p>時系列コンテナの作成</p></td>
+</tr>
+<tr class="row-even"><td><p>PutRow.py</p></td>
+<td><p>ロウの登録</p></td>
+</tr>
+<tr class="row-odd"><td><p>PutRows.py</p></td>
+<td><p>複数のロウの登録</p></td>
+</tr>
+<tr class="row-even"><td><p>GetRow.py</p></td>
+<td><p>ロウの取得</p></td>
+</tr>
+<tr class="row-odd"><td><p>TQLSelect.py</p></td>
+<td><p>TQLでロウを検索</p></td>
+</tr>
+<tr class="row-even"><td><p>TQLAggregation.py</p></td>
+<td><p>TQLで集計</p></td>
+</tr>
+<tr class="row-odd"><td><p>multiPut.py</p></td>
+<td><p>複数コンテナにロウを登録</p></td>
+</tr>
+<tr class="row-even"><td><p>multiGet.py</p></td>
+<td><p>複数コンテナからロウを取得</p></td>
+</tr>
+<tr class="row-odd"><td><p>multiQuery.py</p></td>
+<td><p>複数コンテナにTQLを実行</p></td>
+</tr>
+<tr class="row-even"><td><p>BlobData.py</p></td>
+<td><p>バイナリデータを登録・検索</p></td>
+</tr>
+<tr class="row-odd"><td><p>UpdateRowByTQL.py</p></td>
+<td><p>ロウを更新</p></td>
+</tr>
+<tr class="row-even"><td><p>RemoveRowByRowkey.py</p></td>
+<td><p>ロウキーでロウを削除</p></td>
+</tr>
+<tr class="row-odd"><td><p>RemoveRowByTQL.py</p></td>
+<td><p>TQLでロウを削除</p></td>
+</tr>
+<tr class="row-even"><td><p>CreateIndex.py</p></td>
+<td><p>索引を作成</p></td>
+</tr>
+<tr class="row-odd"><td><p>TQLTimeseries.py</p></td>
+<td><p>時系列演算</p></td>
+</tr>
+<tr class="row-even"><td><p>ContainerNames.py</p></td>
+<td><p>コンテナ名一覧を取得</p></td>
+</tr>
+<tr class="row-odd"><td><p>ContainerInformation.py</p></td>
+<td><p>コンテナのスキーマ情報を取得</p></td>
+</tr>
+<tr class="row-even"><td><p>sampleArrow.py</p></td>
+<td><p>Arrow形式での登録・検索結果取得</p></td>
+</tr>
+<tr class="row-odd"><td><p>sampleSQLNoSQL.py</p></td>
+<td><p>SQLインタフェース併用</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</div>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="#">目次</a></h3>
+    <ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html#document-intro">はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#document-basic">操作方法</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="index.html#id2">事前処理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#id3">その他</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#document-griddb_python">griddb_pythonモジュール</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="index.html#griddb_python.ContainerType"><code class="docutils literal notranslate"><span class="pre">ContainerType</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.ContainerType.COLLECTION"><code class="docutils literal notranslate"><span class="pre">ContainerType.COLLECTION</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.ContainerType.TIME_SERIES"><code class="docutils literal notranslate"><span class="pre">ContainerType.TIME_SERIES</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#griddb_python.IndexType"><code class="docutils literal notranslate"><span class="pre">IndexType</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.IndexType.DEFAULT"><code class="docutils literal notranslate"><span class="pre">IndexType.DEFAULT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.IndexType.SPATIAL"><code class="docutils literal notranslate"><span class="pre">IndexType.SPATIAL</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.IndexType.TREE"><code class="docutils literal notranslate"><span class="pre">IndexType.TREE</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#griddb_python.RowSetType"><code class="docutils literal notranslate"><span class="pre">RowSetType</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.RowSetType.AGGREGATION_RESULT"><code class="docutils literal notranslate"><span class="pre">RowSetType.AGGREGATION_RESULT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.RowSetType.CONTAINER_ROWS"><code class="docutils literal notranslate"><span class="pre">RowSetType.CONTAINER_ROWS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.RowSetType.QUERY_ANALYSIS"><code class="docutils literal notranslate"><span class="pre">RowSetType.QUERY_ANALYSIS</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#griddb_python.TimeUnit"><code class="docutils literal notranslate"><span class="pre">TimeUnit</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.TimeUnit.DAY"><code class="docutils literal notranslate"><span class="pre">TimeUnit.DAY</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.TimeUnit.HOUR"><code class="docutils literal notranslate"><span class="pre">TimeUnit.HOUR</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.TimeUnit.MICROSECOND"><code class="docutils literal notranslate"><span class="pre">TimeUnit.MICROSECOND</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.TimeUnit.MILLISECOND"><code class="docutils literal notranslate"><span class="pre">TimeUnit.MILLISECOND</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.TimeUnit.MINUTE"><code class="docutils literal notranslate"><span class="pre">TimeUnit.MINUTE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.TimeUnit.MONTH"><code class="docutils literal notranslate"><span class="pre">TimeUnit.MONTH</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.TimeUnit.NANOSECOND"><code class="docutils literal notranslate"><span class="pre">TimeUnit.NANOSECOND</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.TimeUnit.SECOND"><code class="docutils literal notranslate"><span class="pre">TimeUnit.SECOND</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.TimeUnit.YEAR"><code class="docutils literal notranslate"><span class="pre">TimeUnit.YEAR</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#griddb_python.Type"><code class="docutils literal notranslate"><span class="pre">Type</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Type.BLOB"><code class="docutils literal notranslate"><span class="pre">Type.BLOB</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Type.BOOL"><code class="docutils literal notranslate"><span class="pre">Type.BOOL</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Type.BYTE"><code class="docutils literal notranslate"><span class="pre">Type.BYTE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Type.DOUBLE"><code class="docutils literal notranslate"><span class="pre">Type.DOUBLE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Type.FLOAT"><code class="docutils literal notranslate"><span class="pre">Type.FLOAT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Type.GEOMETRY"><code class="docutils literal notranslate"><span class="pre">Type.GEOMETRY</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Type.INTEGER"><code class="docutils literal notranslate"><span class="pre">Type.INTEGER</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Type.LONG"><code class="docutils literal notranslate"><span class="pre">Type.LONG</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Type.SHORT"><code class="docutils literal notranslate"><span class="pre">Type.SHORT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Type.STRING"><code class="docutils literal notranslate"><span class="pre">Type.STRING</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Type.TIMESTAMP"><code class="docutils literal notranslate"><span class="pre">Type.TIMESTAMP</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#griddb_python.TypeOption"><code class="docutils literal notranslate"><span class="pre">TypeOption</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.TypeOption.NOT_NULL"><code class="docutils literal notranslate"><span class="pre">TypeOption.NOT_NULL</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.TypeOption.NULLABLE"><code class="docutils literal notranslate"><span class="pre">TypeOption.NULLABLE</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#griddb_python.StoreFactory"><code class="docutils literal notranslate"><span class="pre">StoreFactory</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.StoreFactory.get_instance"><code class="docutils literal notranslate"><span class="pre">StoreFactory.get_instance()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.StoreFactory.get_store"><code class="docutils literal notranslate"><span class="pre">StoreFactory.get_store()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.StoreFactory.get_version"><code class="docutils literal notranslate"><span class="pre">StoreFactory.get_version()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#griddb_python.Store"><code class="docutils literal notranslate"><span class="pre">Store</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Store.create_row_key"><code class="docutils literal notranslate"><span class="pre">Store.create_row_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Store.create_row_key_predicate"><code class="docutils literal notranslate"><span class="pre">Store.create_row_key_predicate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Store.drop_container"><code class="docutils literal notranslate"><span class="pre">Store.drop_container()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Store.fetch_all"><code class="docutils literal notranslate"><span class="pre">Store.fetch_all()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Store.get_container"><code class="docutils literal notranslate"><span class="pre">Store.get_container()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Store.get_container_info"><code class="docutils literal notranslate"><span class="pre">Store.get_container_info()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Store.multi_get"><code class="docutils literal notranslate"><span class="pre">Store.multi_get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Store.multi_put"><code class="docutils literal notranslate"><span class="pre">Store.multi_put()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Store.partition_info"><code class="docutils literal notranslate"><span class="pre">Store.partition_info</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Store.put_container"><code class="docutils literal notranslate"><span class="pre">Store.put_container()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#griddb_python.ContainerInfo"><code class="docutils literal notranslate"><span class="pre">ContainerInfo</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.ContainerInfo.column_info_list"><code class="docutils literal notranslate"><span class="pre">ContainerInfo.column_info_list</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.ContainerInfo.column_info_list_dict"><code class="docutils literal notranslate"><span class="pre">ContainerInfo.column_info_list_dict</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.ContainerInfo.name"><code class="docutils literal notranslate"><span class="pre">ContainerInfo.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.ContainerInfo.row_key"><code class="docutils literal notranslate"><span class="pre">ContainerInfo.row_key</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.ContainerInfo.row_key_column_list"><code class="docutils literal notranslate"><span class="pre">ContainerInfo.row_key_column_list</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.ContainerInfo.type"><code class="docutils literal notranslate"><span class="pre">ContainerInfo.type</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#griddb_python.Container"><code class="docutils literal notranslate"><span class="pre">Container</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Container.abort"><code class="docutils literal notranslate"><span class="pre">Container.abort()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Container.commit"><code class="docutils literal notranslate"><span class="pre">Container.commit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Container.create_index"><code class="docutils literal notranslate"><span class="pre">Container.create_index()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Container.drop_index"><code class="docutils literal notranslate"><span class="pre">Container.drop_index()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Container.flush"><code class="docutils literal notranslate"><span class="pre">Container.flush()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Container.get"><code class="docutils literal notranslate"><span class="pre">Container.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Container.multi_put"><code class="docutils literal notranslate"><span class="pre">Container.multi_put()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Container.put"><code class="docutils literal notranslate"><span class="pre">Container.put()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Container.query"><code class="docutils literal notranslate"><span class="pre">Container.query()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Container.remove"><code class="docutils literal notranslate"><span class="pre">Container.remove()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Container.set_auto_commit"><code class="docutils literal notranslate"><span class="pre">Container.set_auto_commit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Container.type"><code class="docutils literal notranslate"><span class="pre">Container.type</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#griddb_python.Query"><code class="docutils literal notranslate"><span class="pre">Query</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Query.fetch"><code class="docutils literal notranslate"><span class="pre">Query.fetch()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Query.get_row_set"><code class="docutils literal notranslate"><span class="pre">Query.get_row_set()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.Query.set_fetch_options"><code class="docutils literal notranslate"><span class="pre">Query.set_fetch_options()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#griddb_python.RowSet"><code class="docutils literal notranslate"><span class="pre">RowSet</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.RowSet.get_column_names"><code class="docutils literal notranslate"><span class="pre">RowSet.get_column_names()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.RowSet.has_next"><code class="docutils literal notranslate"><span class="pre">RowSet.has_next()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.RowSet.next"><code class="docutils literal notranslate"><span class="pre">RowSet.next()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.RowSet.next_record_batch"><code class="docutils literal notranslate"><span class="pre">RowSet.next_record_batch()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.RowSet.remove"><code class="docutils literal notranslate"><span class="pre">RowSet.remove()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.RowSet.size"><code class="docutils literal notranslate"><span class="pre">RowSet.size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.RowSet.type"><code class="docutils literal notranslate"><span class="pre">RowSet.type</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.RowSet.update"><code class="docutils literal notranslate"><span class="pre">RowSet.update()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#griddb_python.AggregationResult"><code class="docutils literal notranslate"><span class="pre">AggregationResult</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.AggregationResult.get"><code class="docutils literal notranslate"><span class="pre">AggregationResult.get()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#griddb_python.QueryAnalysisEntry"><code class="docutils literal notranslate"><span class="pre">QueryAnalysisEntry</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.QueryAnalysisEntry.get"><code class="docutils literal notranslate"><span class="pre">QueryAnalysisEntry.get()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#griddb_python.RowKey"><code class="docutils literal notranslate"><span class="pre">RowKey</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.RowKey.get"><code class="docutils literal notranslate"><span class="pre">RowKey.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.RowKey.set"><code class="docutils literal notranslate"><span class="pre">RowKey.set()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#griddb_python.RowKeyPredicate"><code class="docutils literal notranslate"><span class="pre">RowKeyPredicate</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.RowKeyPredicate.get_distinct_keys"><code class="docutils literal notranslate"><span class="pre">RowKeyPredicate.get_distinct_keys()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.RowKeyPredicate.get_range"><code class="docutils literal notranslate"><span class="pre">RowKeyPredicate.get_range()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.RowKeyPredicate.key_type"><code class="docutils literal notranslate"><span class="pre">RowKeyPredicate.key_type</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.RowKeyPredicate.set_distinct_keys"><code class="docutils literal notranslate"><span class="pre">RowKeyPredicate.set_distinct_keys()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.RowKeyPredicate.set_range"><code class="docutils literal notranslate"><span class="pre">RowKeyPredicate.set_range()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#griddb_python.IndexInfo"><code class="docutils literal notranslate"><span class="pre">IndexInfo</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.IndexInfo.column_name_list"><code class="docutils literal notranslate"><span class="pre">IndexInfo.column_name_list</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.IndexInfo.name"><code class="docutils literal notranslate"><span class="pre">IndexInfo.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.IndexInfo.type"><code class="docutils literal notranslate"><span class="pre">IndexInfo.type</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#griddb_python.PartitionController"><code class="docutils literal notranslate"><span class="pre">PartitionController</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.PartitionController.get_container_count"><code class="docutils literal notranslate"><span class="pre">PartitionController.get_container_count()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.PartitionController.get_container_names"><code class="docutils literal notranslate"><span class="pre">PartitionController.get_container_names()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.PartitionController.get_partition_index_of_container"><code class="docutils literal notranslate"><span class="pre">PartitionController.get_partition_index_of_container()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.PartitionController.partition_count"><code class="docutils literal notranslate"><span class="pre">PartitionController.partition_count</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#griddb_python.TimestampUtils"><code class="docutils literal notranslate"><span class="pre">TimestampUtils</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.TimestampUtils.get_time_millis"><code class="docutils literal notranslate"><span class="pre">TimestampUtils.get_time_millis()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#griddb_python.GSException"><code class="docutils literal notranslate"><span class="pre">GSException</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.GSException.get_error_code"><code class="docutils literal notranslate"><span class="pre">GSException.get_error_code()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.GSException.get_error_stack_size"><code class="docutils literal notranslate"><span class="pre">GSException.get_error_stack_size()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.GSException.get_location"><code class="docutils literal notranslate"><span class="pre">GSException.get_location()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.GSException.get_message"><code class="docutils literal notranslate"><span class="pre">GSException.get_message()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#griddb_python.GSException.is_timeout"><code class="docutils literal notranslate"><span class="pre">GSException.is_timeout</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#document-mapping">データ型の対応関係</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="index.html#getter">データ取得時</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#setter">データ設定時</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#apache-arrow">Apache Arrow形式でのデータ取得時</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#id4">Apache Arrow形式でのデータ設定時</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#document-samples">サンプルコード一覧</a></li>
+</ul>
+
+  </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>ナビゲーション</h3>
+      <ul>
+        <li class="nav-item nav-item-0"><a href="#">GridDB  ドキュメント</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">GridDB  ドキュメント</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2024, Toshiba Digital Solutions Corporation.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.3.0.
+    </div>
+  </body>
+</html>
