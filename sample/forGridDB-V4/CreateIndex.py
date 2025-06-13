@@ -35,7 +35,7 @@ try:
         print( "ERROR Container not found. name=",containerName)
 
     # Create an index
-    col1.create_index(column_name="count", index_type=griddb.IndexType.TREE, name="tree_index")
+    col1.create_index(column_name="count", index_type=griddb.IndexType.HASH, name="hash_index")
     print("Create Index")
 
     print("success!")
