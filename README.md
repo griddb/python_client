@@ -103,6 +103,9 @@ import griddb_python as griddb
 - Timeseries-specific function
 - Implicit data type conversion
 
+Please refer to the following files for more detailed information.  
+- [Python Client API Reference(Japanese)](https://griddb.github.io/python_client/index.html)
+
 ## Community
 
   * Issues  
