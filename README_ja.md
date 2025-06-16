@@ -93,12 +93,13 @@ import griddb_python as griddb
 
 (利用できる主な機能)
 - STRING型, BOOL型, BYTE型, SHORT型, INTEGER型, LONG型, FLOAT型, DOUBLE型, TIMESTAMP型(ミリ秒精度), BLOB型
+- GEOMETRY型、マイクロ秒・ナノ秒精度のTIMESTAMP型 [Pythonクライアント V5.8以降]
 - キーを使ったデータ登録・取得(Put/Get)
 - NoSQLインタフェース用の検索言語TQLによる検索・集計
 - MultiPut/Get/Query (バッチ処理)
-- 複合ロウキー、複合索引、GEOMETRY型、マイクロ秒・ナノ秒精度のTIMESTAMP型 [Pythonクライアント V5.8以降]
 - Apache Arrowを使ったPut/Get/Fetch [Pythonクライアント V5.8以降]
 - パーティショニングされたテーブルへの上記操作 [Pythonクライアント V5.8以降]
+- 複合ロウキー、複合索引 [Pythonクライアント V5.8以降]
 
 (Pythonクライアント V0.8対比で利用できない機能)
 - 配列型
