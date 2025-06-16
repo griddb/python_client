@@ -1,0 +1,1 @@
+from griddb_python.griddb_python import *

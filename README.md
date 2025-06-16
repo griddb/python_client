@@ -2,190 +2,106 @@ GridDB Python Client
 
 ## Overview
 
-GridDB Python Client is developed using GridDB C Client and [SWIG](http://www.swig.org/) (Simplified Wrapper and Interface Generator).  
+GridDB Python Client has been renewed.
+
+New GridDB Python Client is developed using GridDB Java API(Java Client), [JPype](https://github.com/jpype-project/jpype) and [Apache Arrow](https://arrow.apache.org/).  
 
 ## Operating environment
 
 Building of the library and execution of the sample programs have been checked in the following environment.
 
-
-    OS: Ubuntu 24.04(x64) (gcc 11)
-    SWIG: 4.0.2
+    OS: Ubuntu 22.04 (x64) / RockyLinux 9.4 (x64) / Windows 11 (x64) / MacOS 12 (x86_64)
     Python: 3.12
-    GridDB C client: V5.6 CE
-    GridDB server: V5.6 CE
+    Java: 8
+    GridDB Java API: V5.8 CE
+    GridDB server: V5.8 CE, Ubuntu 22.04 (x64)
 
-    OS: RockyLinux 9.4(x64) (gcc 11)
-    SWIG: 4.0.2
-    Python: 3.12
-    GridDB C client: V5.6 CE
-    GridDB server: V5.6 CE
+## QuickStart 
 
-    OS: Windows 11(x64) (VS2017)
-    SWIG: 4.0.2
-    Python: 3.12
-    GridDB C client: V5.6 CE
-    GridDB server: V5.6 CE, Ubuntu 24.04
+This repository includes GridDB Python Client and GridDB JavaAPI Adapter for Apache Arrow.
+GridDB Python Client needs GridDB JavaAPI Adapter for Apache Arrow.
 
-    OS: MacOS 12
-    SWIG: 4.0.2
-    Python: 3.12
-    GridDB C client: V5.6 CE
-    GridDB server: V5.6 CE, Ubuntu 24.04
-
-## QuickStart (CentOS, Ubuntu)
 ### Preparations
 
-Install SWIG as below.
+(GridDB JavaAPI Adapter for Apache Arrow)
 
-    $ wget https://github.com/swig/swig/archive/refs/tags/v4.0.2.tar.gz
-    $ tar xvfz v4.0.2.tar.gz
-    $ cd swig-4.0.2
-    $ ./autogen.sh
-    $ ./configure
-    $ make
-    $ sudo make install
-   
-    Note: If CentOS, you might need to install pcre in advance.
-    $ sudo yum install pcre2-devel.x86_64
+    $ cd java
+    $ mvn install
+    $ cd ..
 
-Install [GridDB Server](https://github.com/griddb/griddb) and [C Client](https://github.com/griddb/c_client). (Note: If you build them from source code, please use GCC 4.8.5.) 
+The following file is created under `target/` folder. 
+- gridstore-arrow-X.Y.Z.jar
 
-Set CPATH and LIBRARY_PATH. 
+(GridDB Python Client)
 
-	export CPATH=$CPATH:<Python header file directory path>
-
-    export LIBRARY_PATH=$LIBRARY_PATH:<C client library file directory path>
-
-Install Pandas and Numpy as below:
-
-    $ python3 -m pip install numpy
-    $ python3 -m pip install pandas
-
-### Build and Run 
-
-    1. Execute the command on project directory.
-
-    $ make
-
-    2. Set the PYTHONPATH variable for griddb Python module files.
+    $ cd python
+    $ python -m pip install .
+    $ cd ..
     
-    $ export PYTHONPATH=$PYTHONPATH:<installed directory path>
+[JPype](https://pypi.org/project/jpype1/), [pyarrow](https://pypi.org/project/pyarrow/), GridDB Python Client(griddb_python) are installed.
 
-    3. Import griddb_python in Python.
+### How to run sample (on Linux, Ubuntu, MacOS)
 
-### How to run sample
-
+Install [GridDB Server](https://github.com/griddb/griddb).  
 GridDB Server need to be started in advance.
 
-    1. Set LD_LIBRARY_PATH
+```sh
+$ cd sample
+```
 
-        $ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:<C client library file directory path>
+1. Download GridDB Java API on sample folder
 
-    2. The command to run sample
+```sh
+$ curl -L -o gridstore.jar https://repo1.maven.org/maven2/com/github/griddb/gridstore/5.8.0/gridstore-5.8.0.jar
+```
 
-        $ python3 sample/sample1.py <GridDB notification address> <GridDB notification port>
-            <GridDB cluster name> <GridDB user> <GridDB password>
-          -->Person: name=name02 status=False count=2 lob=[65, 66, 67, 68, 69, 70, 71, 72, 73, 74]
+2. Place GridDB JavaAPI Adapter for Apache Arrow on sample folder
 
-## QuickStart (Windows)
+```sh
+$ cp ../java/target/gridstore-arrow-X.Y.Z.jar gridstore-arrow.jar
+```
 
-### Using source code
+3. Run sample
 
-Please refer to [Cmake Build Guide](https://griddb.github.io/python_client/cmake_build_guide.html)
+```sh
+$ python3 sample1.py <GridDB notification address> <GridDB notification port>
+    <GridDB cluster name> <GridDB user> <GridDB password>
+  --> Person: name=name02 status=False count=2 lob=[65, 66, 67, 68, 69, 70, 71, 72, 73, 74]
+```
 
-### Using MSI
+Note:
 
-#### Install Python Client
+Please insert the following description in python code.
+```sh
+import jpype
+jpype.startJVM(classpath=["./gridstore.jar", "./gridstore-arrow.jar"])
+import griddb_python as griddb
+```
+When you set the path of gridstore.jar and gridstore-arrow.jar into the environment variable "CLASSPATH",
+You can use GridDB Python Client without "import jpype" and "startJVM()" like old GridDB Python Client.
 
-Install the MSI package, the package is extracted into C:/Program Files/griddb/Python Client/X.X.X folder.
-
-#### Execute a Python client sample program
-
-* Put sample1.py into C:/Program Files/GridDB/Python Client/X.X.X
-* Run following command to execute program
-    ```
-    <PATH_TO>/python.exe sample1.py <GridDB notification address> <GridDB notification port>
-            <GridDB cluster name> <GridDB user> <GridDB password>
-    ```
-
-Note: X.X.X is the software version.
-
-## QuickStart (MacOS)
-### Preparations
-
-Install SWIG as below.
-
-    $ wget https://github.com/swig/swig/archive/refs/tags/v4.0.2.tar.gz
-    $ tar xvfz v4.0.2.tar.gz
-    $ cd swig-4.0.2
-    $ ./autogen.sh
-    $ ./configure
-    $ make
-    $ sudo make install
-
-    Note: If MacOS, you might need to install pcre in advance.
-    $ brew install pcre
-
-Install [GridDB Server](https://github.com/griddb/griddb) and [C Client](https://github.com/griddb/c_client). (Note: If you build them from source code, please use clang 11.0.0)
-
-Set CPATH and LIBRARY_PATH.
-
-    export CPATH=$CPATH:<Python header file directory path>
-
-    export LIBRARY_PATH=$LIBRARY_PATH:<C client library file directory path>
-
-Install Pandas and Numpy as below:
-
-    $ python3 -m pip install numpy
-    $ python3 -m pip install pandas
-
-### Build and Run
-
-    1. Execute the command on project directory.
-
-    $ make
-
-    2. Set the PYTHONPATH variable for griddb Python module files.
-
-    $ export PYTHONPATH=$PYTHONPATH:<installed directory path>
-
-    3. Import griddb_python in Python.
-
-### How to run sample
-
-GridDB Server need to be started in advance.
-
-    1. Set DYLD_LIBRARY_PATH
-
-        export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:<C client library file directory path>
-
-    2. The command to run sample
-
-        $ python3 sample/sample1.py <GridDB notification address> <GridDB notification port>
-            <GridDB cluster name> <GridDB user> <GridDB password>
-          -->Person: name=name02 status=False count=2 lob=[65, 66, 67, 68, 69, 70, 71, 72, 73, 74]
+```sh
+$ export CLASSPATH=$CLASSPATH:./gridstore.jar:./gridstore-arrow.jar
+```
+```sh
+import griddb_python as griddb
+```
 
 ## Function
 
-(available)
-- STRING, BOOL, BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE, TIMESTAMP, BLOB type for GridDB
-- put single row, get row with key
-- normal query, aggregation with TQL
+(Available)
+- STRING, BOOL, BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE, TIMESTAMP(milli-second), BLOB type for GridDB
+- Put single row, get row with key
+- Normal query, aggregation with TQL
 - Multi-Put/Get/Query (batch processing)
+- Compsite RowKey, Composite Index GEOMETRY type and TIMESTAP(micro/nano-second) type [since Python Client V5.8]
+- Put/Get/Fetch with Apache Arrow [since Python Client V5.8]
+- Operations for Partitioning table [since Python Client V5.8]
+
+(Not available compared to Python Client V0.8)
 - Array type for GridDB
-- timeseries-specific function, affinity
-
-(not available)
-- GEOMETRY type for GridDB
-
-Please refer to the following files for more detailed information.  
-- [Python Client API Reference](https://griddb.github.io/python_client/PythonAPIReference.htm)
-
-Note:
-1. The current API might be changed in the next version. e.g. ContainerInfo
-2. When you install C Client with RPM or DEB, you don't need to set LIBRARY_PATH and LD_LIBRARY_PATH.
-3. There is [Python Client Package for only Python 3.10 (Linux, MacOS) on The Python Package Index (PyPI)](https://pypi.org/project/griddb-python/) .
+- Timeseries-specific function
+- Implicit data type conversion
 
 ## Community
 
@@ -199,3 +115,7 @@ Note:
 ## License
   
   GridDB Python Client source license is Apache License, version 2.0.
+  
+## Trademarks
+
+  Apache Arrow, Arrow are either registered trademarks or trademarks of The Apache Software Foundation in the United States and other countries.
