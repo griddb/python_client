@@ -106,6 +106,9 @@ import griddb_python as griddb
 - 時系列特化の関数(集計、サンプリングなど)
 - 暗黙的データ型変換
 
+詳細は以下のファイルをご覧ください
+- [GridDB Python API(NoSQL)リファレンス](https://griddb.github.io/python_client/index.html)
+
 ## コミュニティ
   * Issues  
     質問、不具合報告はissue機能をご利用ください。
