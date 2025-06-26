@@ -106,6 +106,9 @@ import griddb_python as griddb
 Please refer to the following files for more detailed information.  
 - [Python Client API Reference(Japanese)](https://griddb.github.io/python_client/index.html)
 
+Note:
+- There are [Jar for GridDB JavaAPI Adapter for Apache Arrow on Maven Central Repository](https://mvnrepository.com/artifact/com.github.griddb/gridstore-arrow) and [Python Client Package on The Python Package Index (PyPI)](https://pypi.org/project/griddb-python/) .
+
 ## Community
 
   * Issues  
