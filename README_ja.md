@@ -109,6 +109,9 @@ import griddb_python as griddb
 詳細は以下のファイルをご覧ください
 - [GridDB Python API(NoSQL)リファレンス](https://griddb.github.io/python_client/index.html)
 
+※ GridDB JavaAPI Adapter for Apache ArrowのJarパッケージは[Maven Central Repository上](https://mvnrepository.com/artifact/com.github.griddb/gridstore-arrow)に、GridDB Python ClientのWHLパッケージは[PyPI上](
+https://pypi.org/project/griddb-python/)にあります。
+
 ## コミュニティ
   * Issues  
     質問、不具合報告はissue機能をご利用ください。
