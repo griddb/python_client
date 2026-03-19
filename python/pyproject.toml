@@ -1,6 +1,6 @@
 [project]
 name = "griddb_python"
-version = "5.8.0"
+version = "5.9.0"
 authors = [
         { name="Toshiba Digital Solutions Corporation", email="contact@griddb.org" },
     ]

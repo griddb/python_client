@@ -2,7 +2,7 @@ GridDB Python Client
 
 ## Overview
 
-GridDB Python Client has been renewed.
+GridDB Python Client has been renewed in V5.8.
 
 New GridDB Python Client is developed using GridDB Java API(Java Client), [JPype](https://github.com/jpype-project/jpype) and [Apache Arrow](https://arrow.apache.org/).  
 
@@ -13,8 +13,8 @@ Building of the library and execution of the sample programs have been checked i
     OS: Ubuntu 22.04 (x64) / RockyLinux 9.4 (x64) / Windows 11 (x64) / MacOS 12 (x86_64)
     Python: 3.12
     Java: 8
-    GridDB Java API: V5.8 CE
-    GridDB server: V5.8 CE, Ubuntu 22.04 (x64)
+    GridDB Java API: V5.9 CE
+    GridDB server: V5.9 CE, Ubuntu 22.04 (x64)
 
 ## QuickStart 
 
@@ -52,7 +52,7 @@ $ cd sample
 1. Download GridDB Java API on sample folder
 
 ```sh
-$ curl -L -o gridstore.jar https://repo1.maven.org/maven2/com/github/griddb/gridstore/5.8.0/gridstore-5.8.0.jar
+$ curl -L -o gridstore.jar https://repo1.maven.org/maven2/com/github/griddb/gridstore/5.9.0/gridstore-5.9.0.jar
 ```
 
 2. Place GridDB JavaAPI Adapter for Apache Arrow on sample folder

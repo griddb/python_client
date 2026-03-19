@@ -74,7 +74,7 @@ from com.toshiba.mwcloud.gs import TimestampUtils as JTimestampUtils
 from com.toshiba.mwcloud.gs import TimeUnit as JTimeUnit
 from com.toshiba.mwcloud.gs import FetchOption as JFetchOption
 from com.toshiba.mwcloud.gs import Geometry as JGeometry
-CLIENT_VERSION = "Python Client for GridDB V5.8"
+CLIENT_VERSION = "Python Client for GridDB V5.9"
 
 import warnings
 warnings.filterwarnings(action="ignore", message=r"datetime.datetime.utcfromtimestamp")
