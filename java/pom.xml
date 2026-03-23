@@ -4,7 +4,7 @@
 
     <groupId>com.github.griddb</groupId>
     <artifactId>gridstore-arrow</artifactId>
-    <version>5.8.0</version>
+    <version>5.9.0</version>
     <packaging>jar</packaging>
 
     <name>GridDB JavaAPI Adapter for Apache Arrow</name>
@@ -13,7 +13,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <arrow.version>17.0.0</arrow.version>
         <slf4j.version>1.7.36</slf4j.version>
-        <griddb.version>5.8.0</griddb.version>
+        <griddb.version>5.9.0</griddb.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
     </properties>

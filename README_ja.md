@@ -2,7 +2,7 @@ GridDB Pythonクライアント
 
 ## 概要
 
-GridDB Pythonクライアントをリニューアルしました。
+V5.8にてGridDB Pythonクライアントをリニューアルしました。
 
 これまではGridDB C API(Cクライアント)経由でサーバへの操作を提供していましたが、
 様々な機能強化のために、
@@ -18,8 +18,8 @@ GridDB Pythonクライアントをリニューアルしました。
     OS: Ubuntu 22.04 (x64) / RockyLinux 9.4 (x64) / Windows 11 (x64) / MacOS 12 (x86_64)
     Python: 3.12
     Java: 8
-    GridDB Java API: V5.8 CE
-    GridDB Server: V5.8 CE, Ubuntu 22.04 (x64)
+    GridDB Java API: V5.9 CE
+    GridDB Server: V5.9 CE, Ubuntu 22.04 (x64)
 
 ## クイックスタート
 
@@ -55,7 +55,7 @@ $ cd sample
 1. sampleフォルダ上にGridDB Java APIのダウンロード
 
 ```sh
-$ curl -L -o gridstore.jar https://repo1.maven.org/maven2/com/github/griddb/gridstore/5.8.0/gridstore-5.8.0.jar
+$ curl -L -o gridstore.jar https://repo1.maven.org/maven2/com/github/griddb/gridstore/5.9.0/gridstore-5.9.0.jar
 ```
 
 2. sampleフォルダ上にGridDB JavaAPI Adapter for Apache Arrowの配置
